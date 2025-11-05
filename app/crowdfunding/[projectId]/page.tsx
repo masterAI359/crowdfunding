@@ -94,7 +94,7 @@ const params = use(paramsPromise);
                 <p className="text-lg mb-8 leading-relaxed">{project.description}</p>
                 <Link
                   href={`/crowdfunding/${project.id}/support`}
-                  className="bg-[#E23D43] hover:bg-red-700 text-white font-bold py-3 px-8 sm:w-1/2 rounded-3xl transition-colors inline-block text-center"
+                  className="bg-[#FF0066] hover:bg-red-700 text-white font-bold py-3 px-8 sm:w-1/2 rounded-3xl transition-colors inline-block text-center"
                 >
                   プロジェクトを支援する
                 </Link>
@@ -134,7 +134,7 @@ const params = use(paramsPromise);
                 <p className="sm:text-sm text-xs mb-4 line-clamp-3">{project.description}</p>
                 <Link
                   href={`/crowdfunding/${project.id}/support`}
-                  className="bg-[#E23D43] hover:bg-red-700 text-white font-bold py-2 px-6 rounded-lg transition-colors sm:text-sm text-xs inline-block text-center"
+                  className="bg-[#FF0066] hover:bg-red-700 text-white font-bold py-2 px-6 rounded-lg transition-colors sm:text-sm text-xs inline-block text-center"
                 >
                   プロジェクトを支援する
                 </Link>
@@ -171,12 +171,14 @@ const params = use(paramsPromise);
                   <button 
                   onClick={() => setSelectedImage(prev => prev > 0 ? prev - 1 : dummyImages.length - 1)}
                   className="absolute cursor-pointer left-2 top-1/2 transform -translate-y-1/2 bg-black hover:bg-black/50 text-white font-extrabold rounded-full w-10 h-10 flex items-center justify-center transition-colors"
+                  aria-label="Previous image"
                   >
                   &lt;
                   </button>
                   <button 
                   onClick={() => setSelectedImage(prev => prev < dummyImages.length - 1 ? prev + 1 : 0)}
                   className="absolute cursor-pointer right-2 top-1/2 transform -translate-y-1/2 bg-black hover:bg-black/50 text-white font-extrabold rounded-full w-10 h-10 flex items-center justify-center transition-colors"
+                  aria-label="Next image"
                   >
                   &gt;
                   </button>
@@ -191,6 +193,7 @@ const params = use(paramsPromise);
                       className={`flex-shrink-0 w-1/3 h-36.5 cursor-pointer ${
                       selectedImage === index ? 'border-red-500' : 'border-gray-300'
                       }`}
+                      aria-label={`View image ${index + 1}`}
                   >
                       <Image
                       src={image}
@@ -250,6 +253,7 @@ const params = use(paramsPromise);
                   <button 
                   onClick={() => setIsFavorited(!isFavorited)}
                   className="w-12 h-12 cursor-pointer flex items-center justify-center  rounded-3xl hover:bg-gray-50/60 transition-colors"
+                  aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
                   >
                   <svg 
                       xmlns="http://www.w3.org/2000/svg" 
@@ -295,6 +299,7 @@ const params = use(paramsPromise);
               <button
                 onClick={scrollLeft}
                 className="cursor-pointer absolute left-0 top-1/2 transform -translate-y-1/2 bg-[#EB4040] hover:bg-red-900 text-white rounded-full w-12 h-12 flex items-center justify-center shadow-lg transition-colors -ml-5"
+                aria-label="Scroll left"
               >
                 <svg
                   width="14"
@@ -315,6 +320,7 @@ const params = use(paramsPromise);
               <button
                 onClick={scrollRight}
                 className="cursor-pointer absolute right-0 top-1/2 transform -translate-y-1/2 bg-[#EB4040] hover:bg-red-900 text-white rounded-full w-12 h-12 flex items-center justify-center shadow-lg transition-colors -mr-5"
+                aria-label="Scroll right"
               >
                 <svg
                   width="14"
@@ -350,7 +356,7 @@ const params = use(paramsPromise);
                 <div key={creator.id} className="bg-white rounded-lg pb-10">
                   <div className="flex flex-col md:flex-column gap-6">
                     <div className="md:w-full">
-                      <h3 className="text-2xl font-bold mb-4 text-[#E23D43]">プロジェクト実行者について</h3>
+                      <h3 className="text-2xl font-bold mb-4 text-[#FF0066]">プロジェクト実行者について</h3>
                       <div className="relative h-[40vh] bg-gray-200 rounded-lg overflow-hidden">
                         <Image src={creator.image} alt="クリエイターとの対話" fill className="h-[70%] object-cover" />
                       </div>
@@ -379,7 +385,7 @@ const params = use(paramsPromise);
                       <h3 className="text-xl font-bold text-black mb-2">{reward.title}</h3>
                       <p className="text-3xl font-bold text-black mb-4">{reward.price}</p>
                       <p className="text-sm text-black whitespace-pre-line mb-6">{reward.description}</p>
-                      <button className="w-full bg-[#E23D43] hover:bg-red-700 text-white font-bold py-3 px-6 rounded-3xl transition-colors">
+                      <button className="w-full bg-[#FF0066] hover:bg-red-700 text-white font-bold py-3 px-6 rounded-3xl transition-colors">
                         このリターンを選択する
                       </button>
                     </div>
@@ -413,7 +419,7 @@ const params = use(paramsPromise);
         <section>
         {/* Pagination */}
         <div className="flex md:hidden justify-center space-x-0 ">
-          <button className="h-8 w-8 flex items-center justify-center rounded-full border border-black hover:bg-gray-100 transition-colors mr-5 mb-10">
+          <button className="h-8 w-8 flex items-center justify-center rounded-full border border-black hover:bg-gray-100 transition-colors mr-5 mb-10" aria-label="Previous page">
             <svg width="10" height="10" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M13.5307 19.6687L6.66191 12.7999H21.9995V9.59995H6.66191L13.5307 2.73115L11.2683 0.46875L0.537109 11.1999L11.2683 21.9312L13.5307 19.6687Z" fill="black"/>
             </svg>
@@ -424,14 +430,14 @@ const params = use(paramsPromise);
             <button 
               key={page} 
               className={`h-8 w-8 flex items-center font-regular text-2xl justify-center rounded-full ${page === 1 
-                ? 'bg-red-600 text-white border border-[#E23D43]' 
+                ? 'bg-red-600 text-white border border-[#FF0066]' 
                 : ' hover:bg-gray-100'}`}
             >
               {page}  
             </button>
           ))}
           
-          <button className="h-8 w-8 flex items-center justify-center rounded-full border border-black hover:bg-gray-100 transition-colors ml-5">
+          <button className="h-8 w-8 flex items-center justify-center rounded-full border border-black hover:bg-gray-100 transition-colors ml-5" aria-label="Next page">
             <svg width="10" height="12" viewBox="0 0 23 22" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M9.26861 19.6687L11.531 21.9312L22.2622 11.1999L11.531 0.46875L9.26861 2.73115L16.1374 9.59995H0.799805V12.7999H16.1374L9.26861 19.6687Z" fill="black"/>
             </svg>

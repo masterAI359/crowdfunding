@@ -21,7 +21,8 @@ const SearchPage: React.FC = () => {
         <div className="flex gap-2 mb-3">
             {/* Category Select */}
             <div className="relative flex-1">
-            <select className="w-full appearance-none border border-[#d5d5d5] bg-white rounded-sm p-2 text-sm pr-8">
+            <label htmlFor="category-select" className="sr-only">カテゴリー</label>
+            <select id="category-select" className="w-full appearance-none border border-[#d5d5d5] bg-white rounded-sm p-2 text-sm pr-8">
                 <option>全カテゴリー</option>
                 <option>映画</option>
                 <option>音楽</option>
@@ -43,7 +44,8 @@ const SearchPage: React.FC = () => {
 
             {/* Region Select */}
             <div className="relative flex-1">
-            <select className="w-full appearance-none border border-[#d5d5d5] bg-white rounded-sm p-2 text-sm pr-8">
+            <label htmlFor="region-select" className="sr-only">地域</label>
+            <select id="region-select" className="w-full appearance-none border border-[#d5d5d5] bg-white rounded-sm p-2 text-sm pr-8">
                 <option>全地域</option>
                 <option>東京</option>
                 <option>大阪</option>
@@ -85,7 +87,7 @@ const SearchPage: React.FC = () => {
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 className={`${
-                activeTab === tab ? "font-bold text-[#E23D43]" : "text-black"
+                activeTab === tab ? "font-bold text-[#FF0066]" : "text-black"
                 }`}
             >
                 {tab}
@@ -110,7 +112,7 @@ const SearchPage: React.FC = () => {
                 onClick={() => setActiveTab(tab)}
                 className={`px-3 py-1.5 rounded-sm text-sm font-medium border flex-shrink-0 ${
                   activeTab === tab
-                    ? "bg-[#E23D43] text-white border-red-500"
+                    ? "bg-[#FF0066] text-white border-red-500"
                     : "bg-[#F9F9F5] text-black hover:bg-gray-100 border-[#D5D5D5]"
                 }`}
               >
