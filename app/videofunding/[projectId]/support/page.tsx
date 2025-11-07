@@ -120,7 +120,8 @@ const SupportPage = ({
 
     // Pass via query string (encoded JSON)
     const data = encodeURIComponent(JSON.stringify(payload));
-    router.push(`/crowdfunding/checkout?data=${data}`);
+    // router.push(`/videofunding/checkout`);
+    router.push(`/videofunding/checkout?data=${data}`);
   };
 
   const handleContinueSupport = () => {
