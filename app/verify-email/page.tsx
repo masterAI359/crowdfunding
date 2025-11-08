@@ -109,7 +109,7 @@ const VerifyEmailPage = () => {
                         <button
                             type="submit"
                             disabled={isLoading || code.length !== 6}
-                            className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-lg font-bold rounded-full text-white bg-[#FF0066] hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FF0066] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="group relative w-full flex justify-center py-3 px-4 border-2 border-transparent hover:border-[#FF0066] text-lg font-bold rounded-full text-white hover:text-[#FF0066] bg-[#FF0066] hover:bg-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FF0066] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {isLoading ? "確認中..." : "新規登録"}
                         </button>

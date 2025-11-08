@@ -42,7 +42,7 @@ const LandingPage = () => {
             <div className="grid sm:grid-cols-2 grid-cols-1 gap-4 justify-center items-center mx-auto  sm:px-10">
               <Link
                 href="/crowdfunding"
-                className="w-full bg-[rgba(14,44,95,0.85)] border-2 border-[rgba(255,255,255,0.8)] text-white px-10 py-6 rounded-full font-semibold text-lg transition-all duration-300 flex items-center justify-center space-x-2 shadow-lg"
+                className="w-full bg-[rgba(14,44,95,0.85)] border-2 border-[rgba(255,255,255,0.8)] text-white hover:bg-transparent hover:border-[rgba(14,44,95,0.85)] px-10 py-6 rounded-full font-semibold text-lg transition-all duration-300 flex items-center justify-center space-x-2 shadow-lg"
                 aria-label="クラファンサイトへ"
               >
                 <p>クラファンサイトへ</p>
@@ -52,7 +52,7 @@ const LandingPage = () => {
               </Link>
               <Link
                 href="/videofunding"
-                className="w-full bg-[rgba(255,0,102,0.85)] border-2 border-[rgba(255,255,255,0.8)] text-white px-10 py-6 rounded-full font-semibold text-lg transition-all duration-300 flex items-center justify-center space-x-2 shadow-lg"
+                className="w-full bg-[rgba(255,0,102,0.85)] border-2 border-[rgba(255,255,255,0.8)] text-white hover:bg-transparent hover:border-[rgba(255,0,102,0.85)] px-10 py-6 rounded-full font-semibold text-lg transition-all duration-300 flex items-center justify-center space-x-2 shadow-lg"
                 aria-label="クラファンサイトへ"
               >
                 <p>動画サイトへ</p>

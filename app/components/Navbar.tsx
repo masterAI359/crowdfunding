@@ -191,16 +191,17 @@ const Navbar: React.FC<NavbarProps> = ({
             </Link>
             <div className="hidden lg:flex gap-3">
               <a
-                className={`bg-none ${theme === "dark"
-                  ? " border border-white text-white"
-                  : "text-black border border-black "
-                  } text-sm font-semibold rounded-full px-10 py-3 hover:bg-gray-100 transition-colors `}
+                href={`/signup`}
+                className={`bg-none border-2 ${theme === "dark"
+                  ? "border-white text-white"
+                  : "text-black border-black"
+                  } text-sm font-semibold rounded-full px-10 py-3 hover:bg-[#FF0066] transition-colors hover:text-white hover:border-[#FF0066]`}
               >
                 Get Start
               </a>
               <a
                 href={`/login`}
-                className="bg-[#FF0066] border border-red-600 text-white text-sm font-semibold rounded-full px-10 py-3 hover:bg-red-700 transition-colors">
+                className="bg-[#FF0066] border-2 hover:bg-white hover:text-[#FF0066] hover:border-[#FF0066] border-white text-white text-sm font-semibold rounded-full px-10 py-3 transition-colors">
                 ログイン
               </a>
             </div>

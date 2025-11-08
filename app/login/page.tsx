@@ -78,7 +78,7 @@ const LoginPage = () => {
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-base font-bold rounded-full text-white bg-[#FF0066] hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FF0066] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="group relative w-full flex justify-center py-3 px-4 border-2 border-transparent hover:border-[#FF0066] text-base font-bold rounded-full text-white hover:text-[#FF0066] bg-[#FF0066] hover:bg-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FF0066] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {isLoading ? "ログイン中..." : "メールアドレスで続行"}
                         </button>
@@ -89,7 +89,7 @@ const LoginPage = () => {
                 <div className="space-y-6">
                     {/* Section Title */}
                     <div className="text-center">
-                        <h3 className="text-sm font-medium text-gray-700">
+                        <h3 className="text-sm font-semibold text-gray-700">
                             その他のログインオプション
                         </h3>
                     </div>

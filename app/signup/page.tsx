@@ -77,7 +77,7 @@ const SignupPage = () => {
                             onChange={(e) => setMarketingConsent(e.target.checked)}
                             className="h-4 w-4 mt-1 text-[#FF0066] focus:ring-[#FF0066] border-gray-300 rounded"
                         />
-                        <label htmlFor="marketing-consent" className="ml-3 block text-sm text-gray-700">
+                        <label htmlFor="marketing-consent" className="ml-3 block text-sm font-semibold text-gray-700">
                             セール情報、個人向けのおすすめ、学習のヒントを送ってください。
                         </label>
                     </div>
@@ -94,7 +94,7 @@ const SignupPage = () => {
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-base font-bold rounded-full text-white bg-[#FF0066] hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FF0066] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="group relative w-full flex justify-center py-3 px-4 border-2 border-transparent hover:border-[#FF0066] text-base font-bold rounded-full text-white hover:text-[#FF0066] bg-[#FF0066] hover:bg-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FF0066] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {isLoading ? "登録中..." : "メールアドレスで続行"}
                         </button>
@@ -105,7 +105,7 @@ const SignupPage = () => {
                 <div className="space-y-6">
                     {/* Section Title */}
                     <div className="text-center">
-                        <h3 className="text-sm font-medium text-gray-700">
+                        <h3 className="text-sm font-semibold text-gray-700">
                             その他の登録オプション
                         </h3>
                     </div>
