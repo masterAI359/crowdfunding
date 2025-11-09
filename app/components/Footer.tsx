@@ -125,7 +125,7 @@ const Footer = () => {
 
         {/* Copyright */}
         <div className="text-center">
-          <p className="text-xs text-[#D9D9D9]">© 2025 TsukuruTV.</p>
+          <p className="text-md text-[#D9D9D9]">© 2025 TsukuruTV.</p>
         </div>
       </div>
     </footer>
