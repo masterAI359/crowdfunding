@@ -14,7 +14,8 @@ const SupportPage = ({
   const [selectedRewards, setSelectedRewards] = useState<number[]>([]);
   const [quantities, setQuantities] = useState<{ [key: number]: number }>({});
   const [email, setEmail] = useState("");
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const isLoggedIn = false;
+  // const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   // ✅ Find project by ID
   const project = projects.find((p) => p.id === Number(params.projectId));
@@ -115,10 +116,7 @@ const SupportPage = ({
       rewards: selected,
     };
 
-    // Pass via query string (encoded JSON)
-    const data = encodeURIComponent(JSON.stringify(payload));
-    router.push(`/crowdfunding/checkout?data=""`);
-    // router.push(`/crowdfunding/checkout?data=${data}`);
+    router.push(`/crowdfunding/checkout?data="${JSON.stringify(payload)}"`);
   };
 
   const handleContinueSupport = () => {

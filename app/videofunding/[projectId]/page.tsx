@@ -1,8 +1,7 @@
 "use client";
 import React, { use } from "react";
 import Image from "next/image";
-import { bannerProjects, projects, videos } from "@/app/data/projects";
-import Link from "next/link";
+import { videos, bannerProjects } from "@/app/data/projects";
 import { Play, Heart } from "lucide-react";
 import ProjectCarousel from "@/app/components/project-carousel";
 import VideoRecommendationsFlow from "@/app/components/video-recommendations-flow";
@@ -56,27 +55,6 @@ const ProjectDetailPage = ({
     {
       id: 8,
       thumbnail: "/assets/videofunding/video-1.png",
-    },
-  ];
-
-  const returns = [
-    {
-      title: "エンドロールお名前掲載",
-      price: "5,000円",
-      description:
-        "・同窓会実行委員より５年間のメッセージ\n・活動報告「印象式レベル」開催\n・運営・井上記二本書Ｐ３６\n・フェブムページト掲示ツグ\n・ココオ協議作タマロロ",
-    },
-    {
-      title: "エンドロールお名前掲載",
-      price: "5,000円",
-      description:
-        "・同窓会実行委員より５年間のメッセージ\n・活動報告「印象式レベル」開催\n・運営・井上記二本書Ｐ３６\n・フェブムページト掲示ツグ\n・ココオ協議作タマロロ",
-    },
-    {
-      title: "エンドロールお名前掲載",
-      price: "5,000円",
-      description:
-        "・同窓会実行委員より５年間のメッセージ\n・活動報告「印象式レベル」開催\n・運営・井上記二本書Ｐ３６\n・フェブムページト掲示ツグ\n・ココオ協議作タマロロ",
     },
   ];
 

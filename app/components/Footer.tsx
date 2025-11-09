@@ -34,12 +34,12 @@ const Footer = () => {
               <a href="/about" className="text-sm font-bold hover:text-white">
                 つくるテレビとは
               </a>
-              <a href="/crowdfunding" className="text-sm font-bold hover:text-white">
+              <Link href="/crowdfunding" className="text-sm font-bold hover:text-white">
                 プロジェクト
-              </a>
-              <a href="/videofunding" className="text-sm font-bold hover:text-white">
+              </Link>
+              <Link href="/videofunding" className="text-sm font-bold hover:text-white">
                 動画一覧
-              </a>
+              </Link>
               <a href="/faq" className="text-sm font-bold hover:text-white">
                 よくある質問
               </a>
@@ -91,12 +91,12 @@ const Footer = () => {
           <div className="grid grid-cols-2 gap-6 md:gap-12">
             {/* Main Content Navigation */}
             <div className="flex flex-col space-y-3">
-              <a href="/crowdfunding" className="text-sm font-bold hover:text-white">
+              <Link href="/crowdfunding" className="text-sm font-bold hover:text-white">
                 プロジェクト
-              </a>
-              <a href="/videofunding" className="text-sm font-bold hover:text-white">
+              </Link>
+              <Link href="/videofunding" className="text-sm font-bold hover:text-white">
                 動画一覧
-              </a>
+              </Link>
             </div>
 
             {/* Legal / Informational Links */}

@@ -2,7 +2,6 @@
 import React from 'react';
 import type { Metadata, Viewport } from 'next';
 import { Inter, Roboto } from 'next/font/google';
-import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import './globals.css';
 import NavbarWrapper from './components/NavbarWrapper';

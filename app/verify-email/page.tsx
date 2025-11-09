@@ -1,6 +1,5 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import Link from "next/link";
 import Image from "next/image";
 
 const VerifyEmailPage = () => {
@@ -8,7 +7,7 @@ const VerifyEmailPage = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
     const [resendCountdown, setResendCountdown] = useState(0);
-    const [email, setEmail] = useState("sample@mail.com"); // This would come from context/query params in real app
+    const [email] = useState("sample@mail.com"); // This would come from context/query params in real app
 
     // Countdown timer for resend
     useEffect(() => {

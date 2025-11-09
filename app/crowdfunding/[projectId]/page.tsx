@@ -38,20 +38,10 @@ const ProjectDetailPage = ({ params: paramsPromise }: { params: Promise<{ projec
     );
   }
 
-  // Dummy images for placeholder
   const dummyImages = [
     '/assets/crowdfunding/cf-4.png', '/assets/crowdfunding/cf-3.png', '/assets/crowdfunding/cf-2.png'
   ]
 
-  // Recommended projects
-  const recommendedProjects = [
-    { id: 1, title: '伝説のバンド・ピンクサワファイヤーが復活 1日だけの復活ライブ', amount: '¥2,000,000', supporters: '22人', daysLeft: '11日', achievementRate: 85, image: '/assets/crowdfunding/cf-1.png' },
-    { id: 2, title: 'スピリチャルアイドル 占い師五人が占いだけでアイドルを選抜プロデュースするドキュメント番組', amount: '¥2,000,000', supporters: '22人', daysLeft: '11日', achievementRate: 65, image: '/assets/crowdfunding/cf-2.png' },
-    { id: 3, title: '大島テルの怖い話 速りすぐりの怖い実話をここだけで披露 あの恐怖の顔の今は？', amount: '¥2,000,000', supporters: '22人', daysLeft: '11日', achievementRate: 120, image: '/assets/crowdfunding/cf-3.png' },
-    { id: 4, title: '大島テルの怖い話 速りすぐりの怖い実話をここだけで披露 あの恐怖の顔の今は？', amount: '¥2,000,000', supporters: '22人', daysLeft: '11日', achievementRate: 95, image: '/assets/crowdfunding/cf-4.png' }
-  ];
-
-  // Returns/rewards data
   const returns = [
     {
       title: 'エンドロールお名前掲載',

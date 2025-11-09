@@ -28,8 +28,8 @@ const CheckoutPage = ({
   searchParams: Promise<{ data?: string }>;
 }) => {
   const searchParams = use(searchParamsPromise);
-  const router = useRouter();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const isLoggedIn = false;
+  // const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [email, setEmail] = useState("");
 
   let project: Project | null = null;
