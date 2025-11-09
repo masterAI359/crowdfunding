@@ -86,7 +86,6 @@ const Navbar: React.FC<NavbarProps> = ({
               </svg>
               ホーム
             </Link>
-
             <Link
               href="/crowdfunding"
               className={`flex items-center gap-2 text-lg ${textColor} hover:text-red-600 transition-colors duration-200 font-semibold`}

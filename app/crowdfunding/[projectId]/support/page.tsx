@@ -104,20 +104,17 @@ const SupportPage = ({
 
   // Go to checkout
   const handlePurchase = () => {
-    const selected = rewards
-      .filter((r) => selectedRewards.includes(r.id))
-      .map((r) => ({
-        ...r,
-        quantity: quantities[r.id] || 1,
-      }));
+    const selectedRewardIds = selectedRewards
+      .map((id) => {
+        const reward = rewards.find((r) => r.id === id);
+        return reward ? { id: reward.id, quantity: quantities[id] || 1 } : null;
+      })
+      .filter((item): item is { id: number; quantity: number } => item !== null);
 
-    const payload = {
-      project,
-      rewards: selected,
-    };
-
-    const data = encodeURIComponent(JSON.stringify(payload));
-    router.push(`/crowdfunding/checkout?data=${data}`);
+    // Pass only IDs in the URL
+    const rewardIds = selectedRewardIds.map((r) => r.id).join(',');
+    const quantitiesStr = selectedRewardIds.map((r) => r.quantity).join(',');
+    router.push(`/crowdfunding/checkout?projectId=${params.projectId}&rewardIds=${rewardIds}&quantities=${quantitiesStr}`);
   };
 
   const handleContinueSupport = () => {

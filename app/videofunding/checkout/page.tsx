@@ -2,6 +2,7 @@
 import React, { use, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { videos } from "@/app/data/projects";
 
 interface Project {
   id: string;
@@ -25,23 +26,91 @@ interface Reward {
 const CheckoutPage = ({
   searchParams: searchParamsPromise,
 }: {
-  searchParams: Promise<{ data?: string }>;
+  searchParams: Promise<{ projectId?: string; rewardIds?: string; quantities?: string }>;
 }) => {
   const searchParams = use(searchParamsPromise);
   const isLoggedIn = false;
   // const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [email, setEmail] = useState("");
 
+  // Fetch project and rewards based on IDs
   let project: Project | null = null;
   let rewards: Reward[] = [];
 
-  if (searchParams?.data) {
-    try {
-      const parsed = JSON.parse(decodeURIComponent(searchParams.data));
-      project = parsed.project as Project;
-      rewards = parsed.rewards as Reward[];
-    } catch (err) {
-      console.error("Failed to parse checkout data:", err);
+  if (searchParams?.projectId) {
+    const foundVideo = videos.find((v) => v.id.toString() === searchParams.projectId);
+
+    if (foundVideo) {
+      // Map video to project format
+      project = {
+        id: foundVideo.id.toString(),
+        title: foundVideo.title,
+        description: "『太秦ライムライト』のプロデューサーと監督より、感謝の気持ちを込めて、お礼のメッセージをお送りします。・支援者様との連絡方法：詳細はメールで連絡します。『太秦ライムライト』のプロデューサー",
+        image: foundVideo.image,
+        amount: "¥2,000,000",
+        supporters: "22人",
+        daysLeft: "11日",
+      };
+
+      // Parse reward IDs and quantities
+      if (searchParams.rewardIds && searchParams.quantities) {
+        const rewardIds = searchParams.rewardIds.split(',').map(Number);
+        const quantities = searchParams.quantities.split(',').map(Number);
+
+        // Static rewards data (same as in support page)
+        const allRewards = [
+          {
+            id: 1,
+            title: "伝説のバンド・ピンクサワファイヤーが復活 １日だけの復活ライブ vol.01",
+            price: "995,000",
+            description: "『太秦ライムライト』のプロデューサーと監督より、感謝の気持ちを込めて、お礼のメッセージをお送りします。・支援者様との連絡方法：詳細はメールで連絡します。『太秦ライムライト』のプロデューサーと監督より、感謝の気持ちを込めて、お礼のメッセージをお送りします。",
+            image: "/assets/crowdfunding/cf-3.png",
+          },
+          {
+            id: 2,
+            title: "伝説のバンド・ピンクサワファイヤーが復活 １日だけの復活ライブ vol.02",
+            price: "995,000",
+            description: "『太秦ライムライト』のプロデューサーと監督より、感謝の気持ちを込めて、お礼のメッセージをお送りします。・支援者様との連絡方法：詳細はメールで連絡します。『太秦ライムライト』のプロデューサーと監督より、感謝の気持ちを込めて、お礼のメッセージをお送りします。",
+            image: "/assets/crowdfunding/cf-3.png",
+          },
+          {
+            id: 3,
+            title: "伝説のバンド・ピンクサワファイヤーが復活 １日だけの復活ライブ vol.03",
+            price: "995,000",
+            description: "『太秦ライムライト』のプロデューサーと監督より、感謝の気持ちを込めて、お礼のメッセージをお送りします。・支援者様との連絡方法：詳細はメールで連絡します。『太秦ライムライト』のプロデューサーと監督より、感謝の気持ちを込めて、お礼のメッセージをお送りします。",
+            image: "/assets/crowdfunding/cf-3.png",
+          },
+          {
+            id: 4,
+            title: "伝説のバンド・ピンクサワファイヤーが復活 １日だけの復活ライブ vol.04",
+            price: "995,000",
+            description: "『太秦ライムライト』のプロデューサーと監督より、感謝の気持ちを込めて、お礼のメッセージをお送りします。・支援者様との連絡方法：詳細はメールで連絡します。『太秦ライムライト』のプロデューサーと監督より、感謝の気持ちを込めて、お礼のメッセージをお送りします。",
+            image: "/assets/crowdfunding/cf-3.png",
+          },
+          {
+            id: 5,
+            title: "伝説のバンド・ピンクサワファイヤーが復活 １日だけの復活ライブ vol.05",
+            price: "995,000",
+            description: "『太秦ライムライト』のプロデューサーと監督より、感謝の気持ちを込めて、お礼のメッセージをお送りします。・支援者様との連絡方法：詳細はメールで連絡します。『太秦ライムライト』のプロデューサーと監督より、感謝の気持ちを込めて、お礼のメッセージをお送りします。",
+            image: "/assets/crowdfunding/cf-3.png",
+          },
+        ];
+
+        rewards = rewardIds.map((id, index) => {
+          const reward = allRewards.find((r) => r.id === id);
+          if (reward) {
+            return {
+              id: reward.id,
+              title: reward.title,
+              price: reward.price,
+              description: reward.description,
+              image: reward.image,
+              quantity: quantities[index] || 1,
+            };
+          }
+          return null;
+        }).filter((r): r is Reward => r !== null);
+      }
     }
   }
 
