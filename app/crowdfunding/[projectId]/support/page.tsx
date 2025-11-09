@@ -116,7 +116,8 @@ const SupportPage = ({
       rewards: selected,
     };
 
-    router.push(`/crowdfunding/checkout?data="${JSON.stringify(payload)}"`);
+    const data = encodeURIComponent(JSON.stringify(payload));
+    router.push(`/crowdfunding/checkout?data=${data}`);
   };
 
   const handleContinueSupport = () => {

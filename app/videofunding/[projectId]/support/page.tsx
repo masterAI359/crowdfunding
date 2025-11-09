@@ -117,10 +117,7 @@ const SupportPage = ({
       project,
       rewards: selected,
     };
-
-    // Pass via query string (encoded JSON)
     const data = encodeURIComponent(JSON.stringify(payload));
-    // router.push(`/videofunding/checkout`);
     router.push(`/videofunding/checkout?data=${data}`);
   };
 
