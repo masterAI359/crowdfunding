@@ -6,43 +6,44 @@ import Image from "next/image";
 const LandingPage = () => {
   return (
     <div className="relative bg-[url('/assets/mainPage/main-page-bg1.png')] bg-cover bg-center min-h-screen bg-black">
-      <div className="absolute inset-0 bg-[#1D2635]/60 "></div>
+      <div className="absolute inset-0 bg-[#24293b]/30 "></div>
       
       <main className="pt-16">
         {/* Hero Section */}
-        <section className="relative flex mt-20 md:mt-[142px] justify-center overflow-hidden">
+        <section className="relative flex mt-12 md:mt-[126px] justify-center overflow-hidden">
           {/* Hero Content */}
           <div className="z-10 flex flex-col items-center text-center px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
             {/* Main Logo */}
             <div className="relative mb-8">
               <Image
                 src="/assets/common/main-pc.png"
-                width={800}
-                height={231}
+                width={1000}
+                height={300}
                 alt="ツクルTV"
-                className="hidden md:block"
+                className="hidden md:block w-[840px] h-[256px]"
               />
               <Image
                 src="/assets/common/main-sp.png"
-                width={806}
-                height={572}
+                width={340}
+                height={250}
                 alt="ツクルTV"
-                className="md:hidden"
+                className="md:hidden w-[340px] h-[250px]"
               />
             </div>
 
             {/* Tagline */}
-            <div className="mb-20 -mt-10">
-              <p className="text-lg sm:text-xl md:text-2xl text-white mb-2">
-                クリエーターとファンでつくる
+            <div className="mb-6 md:mb-20 -mt-10">
+              <p className="text-md sm:text-xl md:text-2xl text-white mb-2 flex flex-col md:flex-row">
+                <span className="block">クリエーターとファンでつくる</span>
+                <span className="block">次世代テレビ</span>
               </p>
             </div>
 
             {/* CTA Buttons */}
-            <div className="grid sm:grid-cols-2 grid-cols-1 gap-4 justify-center items-center mx-auto  sm:px-10">
+            <div className="grid sm:grid-cols-2 grid-cols-1 gap-4 justify-center items-center mx-auto px-6 sm:px-10 font-semibold text-md">
               <Link
                 href="/crowdfunding"
-                className="w-full bg-[rgba(14,44,95,0.85)] border-2 border-[rgba(255,255,255,0.8)] text-white hover:bg-transparent hover:border-[rgba(14,44,95,0.85)] px-10 py-6 rounded-full font-semibold text-lg transition-all duration-300 flex items-center justify-center space-x-2 shadow-lg"
+                className="w-full bg-[rgba(14,44,95,0.85)] border-2 border-[rgba(255,255,255,0.8)] text-white hover:bg-transparent hover:border-[rgba(14,44,95,0.85)] px-8 py-5 sm:px-16 sm:py-8 rounded-full transition-all duration-300 flex items-center justify-center space-x-2 shadow-lg"
                 aria-label="クラファンサイトへ"
               >
                 <p>クラファンサイトへ</p>
@@ -52,7 +53,7 @@ const LandingPage = () => {
               </Link>
               <Link
                 href="/videofunding"
-                className="w-full bg-[rgba(255,0,102,0.85)] border-2 border-[rgba(255,255,255,0.8)] text-white hover:bg-transparent hover:border-[rgba(255,0,102,0.85)] px-10 py-6 rounded-full font-semibold text-lg transition-all duration-300 flex items-center justify-center space-x-2 shadow-lg"
+                className="w-full bg-[rgba(255,0,102,0.85)] border-2 border-[rgba(255,255,255,0.8)] text-white hover:bg-transparent hover:border-[rgba(255,0,102,0.85)] px-8 py-5 sm:px-16 sm:py-8 rounded-full transition-all duration-300 flex items-center justify-center space-x-2 shadow-lg"
                 aria-label="クラファンサイトへ"
               >
                 <p>動画サイトへ</p>
