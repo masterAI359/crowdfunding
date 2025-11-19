@@ -36,13 +36,13 @@ const Navbar: React.FC<NavbarProps> = ({
 
   // Icon fill color for mobile search and menu icons
   // Landing page: always white, Non-landing: black on small screens, white on larger screens
-  const mobileIconFillClass = isLanding 
-    ? "fill-white" 
+  const mobileIconFillClass = isLanding
+    ? "fill-white"
     : "fill-black lg:fill-white";
-  
+
   // Icon stroke color for X icon (close button)
-  const mobileIconStrokeClass = isLanding 
-    ? "stroke-white" 
+  const mobileIconStrokeClass = isLanding
+    ? "stroke-white"
     : "stroke-black lg:stroke-white";
 
   // Handle scroll event for non-landing pages
@@ -64,10 +64,10 @@ const Navbar: React.FC<NavbarProps> = ({
   }, [isLanding]);
 
   // Background color for non-landing pages: white when scrolled, transparent at top
-  const navBackgroundClass = isLanding 
-    ? "" 
-    : isScrolled 
-      ? "bg-white" 
+  const navBackgroundClass = isLanding
+    ? ""
+    : isScrolled
+      ? "bg-white"
       : "bg-transparent";
 
   return (
@@ -260,14 +260,14 @@ const Navbar: React.FC<NavbarProps> = ({
 
           {/* Mobile Hamburger Button */}
           <div className="lg:hidden flex items-center hover:cursor-pointer">
-            <button
+            <Link href="/search"
               className="p-2 rounded-full hover:cursor-pointer transition-colors ml-auto"
               aria-label="Search"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-[24px] h-[24px] sm:w-[28px] sm:h-[28px]" viewBox="0 0 38 41" fill="none">
-                <path d="M4.61536 5.05713C10.7968 -1.6858 20.7288 -1.6858 26.9103 5.05713C32.4924 11.1884 33.0089 20.8285 28.4523 27.6099L36.5011 36.4243C37.4155 37.4212 37.423 39.0543 36.5157 40.0669C36.0905 40.5456 35.509 40.8206 34.8995 40.8286C34.2829 40.8208 33.694 40.5379 33.2687 40.0435L25.1622 31.2319C22.4532 33.4393 19.1626 34.6481 15.7589 34.6353C11.5838 34.6508 7.57837 32.8293 4.61536 29.5796C-1.50189 22.8681 -1.54414 11.9339 4.52356 5.15967C4.55187 5.12832 4.57999 5.0885 4.61536 5.05713ZM15.7589 5.14404C12.8101 5.14417 9.98184 6.42333 7.89075 8.71533C3.60218 13.4251 3.56646 21.0942 7.81946 25.8433C7.84064 25.8667 7.86951 25.8979 7.89075 25.9214C12.2574 30.6862 19.275 30.6862 23.6417 25.9214C27.9304 21.2351 27.9804 13.5738 23.7413 8.82471C23.706 8.78557 23.6771 8.7545 23.6417 8.71533C21.5435 6.41545 18.7078 5.12834 15.7589 5.14404Z" className={mobileIconFillClass} />
-              </svg>
-            </button>
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-[24px] h-[24px] sm:w-[28px] sm:h-[28px]" viewBox="0 0 38 41" fill="none">
+                  <path d="M4.61536 5.05713C10.7968 -1.6858 20.7288 -1.6858 26.9103 5.05713C32.4924 11.1884 33.0089 20.8285 28.4523 27.6099L36.5011 36.4243C37.4155 37.4212 37.423 39.0543 36.5157 40.0669C36.0905 40.5456 35.509 40.8206 34.8995 40.8286C34.2829 40.8208 33.694 40.5379 33.2687 40.0435L25.1622 31.2319C22.4532 33.4393 19.1626 34.6481 15.7589 34.6353C11.5838 34.6508 7.57837 32.8293 4.61536 29.5796C-1.50189 22.8681 -1.54414 11.9339 4.52356 5.15967C4.55187 5.12832 4.57999 5.0885 4.61536 5.05713ZM15.7589 5.14404C12.8101 5.14417 9.98184 6.42333 7.89075 8.71533C3.60218 13.4251 3.56646 21.0942 7.81946 25.8433C7.84064 25.8667 7.86951 25.8979 7.89075 25.9214C12.2574 30.6862 19.275 30.6862 23.6417 25.9214C27.9304 21.2351 27.9804 13.5738 23.7413 8.82471C23.706 8.78557 23.6771 8.7545 23.6417 8.71533C21.5435 6.41545 18.7078 5.12834 15.7589 5.14404Z" className={mobileIconFillClass} />
+                </svg>
+            </Link>
             <button
               onClick={() => setIsOpen(!isOpen)}
               className={`flex items-center justify-center w-[32px] h-[32px] sm:w-[40px] sm:h-[40px] rounded-md transition ${theme === "dark"
