@@ -1,13 +1,17 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import Image from "next/image";
+import { useRouter, useSearchParams } from "next/navigation";
+import { verifySignupCode, initiateSignup } from "@/app/lib/api";
 
-const VerifyEmailPage = () => {
+const VerifyEmailForm = () => {
+    const router = useRouter();
+    const searchParams = useSearchParams();
     const [code, setCode] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
     const [resendCountdown, setResendCountdown] = useState(0);
-    const [email] = useState("sample@mail.com"); // This would come from context/query params in real app
+    const email = searchParams?.get("email") || "";
 
     // Countdown timer for resend
     useEffect(() => {
@@ -28,22 +32,34 @@ const VerifyEmailPage = () => {
             return;
         }
 
+        if (!email) {
+            setError("メールアドレスが取得できませんでした");
+            return;
+        }
+
         setIsLoading(true);
 
-        // TODO: Implement actual verification logic here
-        setTimeout(() => {
+        try {
+            // コードを検証
+            await verifySignupCode(email, code);
+            // パスワード設定ページへ遷移
+            window.location.href = `/set-password?email=${encodeURIComponent(email)}`;
+            return;
+        } catch (err: any) {
             setIsLoading(false);
-            // Redirect or handle successful verification
-            console.log("Verification attempt:", { code });
-        }, 1000);
+            setError(err.response?.data?.message || "認証コードが正しくありません");
+        }
     };
 
-    const handleResendCode = () => {
-        if (resendCountdown > 0) return;
+    const handleResendCode = async () => {
+        if (resendCountdown > 0 || !email) return;
 
-        // TODO: Implement resend code logic
-        setResendCountdown(60); // 60 seconds countdown
-        console.log("Resending code to:", email);
+        try {
+            await initiateSignup(email);
+            setResendCountdown(60); // 60秒のカウントダウン
+        } catch (err: any) {
+            setError(err.response?.data?.message || "コードの再送信に失敗しました");
+        }
     };
 
     const handleCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -136,6 +152,18 @@ const VerifyEmailPage = () => {
                 </div>
             </div>
         </div>
+    );
+};
+
+const VerifyEmailPage = () => {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center">
+                <p className="text-gray-600">読み込み中...</p>
+            </div>
+        }>
+            <VerifyEmailForm />
+        </Suspense>
     );
 };
 

@@ -1,17 +1,66 @@
 "use client";
-import React, { useState, use, useRef } from 'react';
+import React, { useState, use, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import ProjectCard from '@/app/components/project-card';
 import ImageGallery from '@/app/components/image-gallery';
-import { projects } from "@/app/data/projects";
 import Link from 'next/link';
 import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
+import { getProjectById, toggleFavorite, getRecommendedProjects } from '@/app/lib/api';
+
+interface Project {
+  id: string;
+  title: string;
+  description?: string;
+  amount: string;
+  supporters: string;
+  daysLeft: string;
+  achievementRate: number;
+  image: string;
+  media?: Array<{ url: string; type: string }>;
+  returns?: Array<{ id: string; title: string; price: number; description: string }>;
+  isFavorited?: boolean;
+}
 
 const ProjectDetailPage = ({ params: paramsPromise }: { params: Promise<{ projectId: string }> }) => {
   const params = use(paramsPromise);
+  const [project, setProject] = useState<Project | null>(null);
+  const [recommendedProjects, setRecommendedProjects] = useState<Project[]>([]);
   const [isFavorited, setIsFavorited] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // プロジェクト詳細を取得
+  useEffect(() => {
+    const fetchProject = async () => {
+      try {
+        setLoading(true);
+        const data = await getProjectById(params.projectId);
+        setProject(data);
+        setIsFavorited(data.isFavorited || false);
+      } catch (error) {
+        console.error("プロジェクトの取得に失敗しました:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProject();
+  }, [params.projectId]);
+
+  // レコメンドプロジェクトを取得
+  useEffect(() => {
+    const fetchRecommended = async () => {
+      try {
+        const recommended = await getRecommendedProjects(params.projectId, 20);
+        setRecommendedProjects(recommended || []);
+      } catch (error) {
+        console.error("レコメンドプロジェクトの取得に失敗しました:", error);
+      }
+    };
+
+    fetchRecommended();
+  }, [params.projectId]);
 
   const scrollLeft = () => {
     if (scrollRef.current) {
@@ -25,10 +74,24 @@ const ProjectDetailPage = ({ params: paramsPromise }: { params: Promise<{ projec
     }
   };
 
-  //  Find the project by ID from your projects array
-  const project = projects.find(
-    (p) => p.id.toString() === params.projectId
-  );
+  // お気に入り切り替え
+  const handleToggleFavorite = async () => {
+    if (!project) return;
+    try {
+      await toggleFavorite(project.id);
+      setIsFavorited(!isFavorited);
+    } catch (error) {
+      console.error("お気に入りの更新に失敗しました:", error);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-gray-700">
+        <p>読み込み中...</p>
+      </div>
+    );
+  }
 
   if (!project) {
     return (
@@ -37,6 +100,23 @@ const ProjectDetailPage = ({ params: paramsPromise }: { params: Promise<{ projec
       </div>
     );
   }
+
+  // メディア画像を取得（メディアがない場合はデフォルト画像を使用）
+  const dummyImages = project.media?.filter(m => m.type === 'IMAGE').map(m => m.url) || [
+    project.image,
+    '/assets/crowdfunding/cf-4.png',
+    '/assets/crowdfunding/cf-3.png',
+  ];
+
+  // リターン情報（APIから取得したデータを使用、なければデフォルト）
+  const returns = project.returns || [
+    {
+      id: '1',
+      title: 'エンドロールお名前掲載',
+      price: 5000,
+      description: '・同窓会実行委員より５年間のメッセージ\n・活動報告「印象式レベル」開催\n・運営・井上記二本書Ｐ３６\n・フェブムページト掲示ツグ\n・ココオ協議作タマロロ'
+    },
+  ];
 
   const dummyImages = [
     '/assets/crowdfunding/cf-4.png', '/assets/crowdfunding/cf-3.png', '/assets/crowdfunding/cf-2.png'
@@ -178,7 +258,7 @@ const ProjectDetailPage = ({ params: paramsPromise }: { params: Promise<{ projec
                   プロジェクトを支援する
                 </Link>
                 <button
-                  onClick={() => setIsFavorited(!isFavorited)}
+                  onClick={handleToggleFavorite}
                   className="w-12 h-12 cursor-pointer flex items-center justify-center  rounded-3xl hover:bg-gray-50/60 transition-colors"
                   aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
                 >
@@ -209,17 +289,14 @@ const ProjectDetailPage = ({ params: paramsPromise }: { params: Promise<{ projec
                 ref={scrollRef}
                 className="flex space-x-6 overflow-x-auto pb-4 hide-scrollbar"
               >
-                {/* Repeat projects multiple times to simulate infinity */}
-                {Array.from({ length: 20 }).map((_, loopIndex) =>
-                  projects.map((project) => (
-                    <div
-                      key={`${project.id}-${loopIndex}`}
-                      className="flex-shrink-0 w-75"
-                    >
-                      <ProjectCard project={project} />
-                    </div>
-                  ))
-                )}
+                {recommendedProjects.map((recProject) => (
+                  <div
+                    key={recProject.id}
+                    className="flex-shrink-0 w-75"
+                  >
+                    <ProjectCard project={recProject} />
+                  </div>
+                ))}
               </div>
 
               {/* Navigation Arrows */}
@@ -284,11 +361,14 @@ const ProjectDetailPage = ({ params: paramsPromise }: { params: Promise<{ projec
                     </div>
                     <div className="p-6 pt-0">
                       <h3 className="text-xl font-bold text-black mb-2">{reward.title}</h3>
-                      <p className="text-3xl font-bold text-black mb-4">{reward.price}</p>
+                      <p className="text-3xl font-bold text-black mb-4">¥{reward.price.toLocaleString()}</p>
                       <p className="text-sm text-black whitespace-pre-line mb-6">{reward.description}</p>
-                      <button className="w-full bg-[#FF0066] hover:bg-[#FF0066]/80 text-white font-bold py-3 px-6 rounded-3xl transition-colors">
+                      <Link
+                        href={`/crowdfunding/${project.id}/support?returnId=${reward.id}`}
+                        className="block w-full bg-[#FF0066] hover:bg-[#FF0066]/80 text-white font-bold py-3 px-6 rounded-3xl transition-colors text-center"
+                      >
                         このリターンを選択する
-                      </button>
+                      </Link>
                     </div>
                   </div>
                 ))}
@@ -304,8 +384,8 @@ const ProjectDetailPage = ({ params: paramsPromise }: { params: Promise<{ projec
             「映画」で検索した結果1944件のプロジェクトが見つかりました。
           </h2>
           <div className="grid grid-cols-2 lg:grid-cols-3 sm:max-w-5xl max-w-lg mx-auto gap-4 md:gap-y-8 mb-12  px-4  ">
-            {projects.map(project => (
-              <ProjectCard key={project.id} project={project} />
+            {recommendedProjects.map(recProject => (
+              <ProjectCard key={recProject.id} project={recProject} />
             ))}
           </div>
         </section>

@@ -1,8 +1,12 @@
 "use client";
 import React, { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/app/hooks/useAuth";
 
 const LoginPage = () => {
+    const router = useRouter();
+    const { login } = useAuth();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [isLoading, setIsLoading] = useState(false);
@@ -13,13 +17,20 @@ const LoginPage = () => {
         setError("");
         setIsLoading(true);
 
-        // TODO: Implement actual login logic here
-        // For now, just simulate a login
-        setTimeout(() => {
+        try {
+            const result = await login(email, password);
+            if (result.success) {
+                // ログイン成功後、トップページまたは元のページへリダイレクト
+                window.location.href = "/crowdfunding";
+                return;
+            } else {
+                setError(result.error || "ログインに失敗しました");
+                setIsLoading(false);
+            }
+        } catch (err: any) {
             setIsLoading(false);
-            // Redirect or handle successful login
-            console.log("Login attempt:", { email, password });
-        }, 1000);
+            setError(err.response?.data?.message || "ログインに失敗しました。もう一度お試しください。");
+        }
     };
 
     return (
@@ -99,6 +110,7 @@ const LoginPage = () => {
                         {/* Google Login */}
                         <button
                             type="button"
+                            onClick={() => window.location.href = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api'}/auth/google`}
                             className="w-14 h-14 flex items-center justify-center border border-gray-300 rounded-lg bg-white hover:bg-gray-50 transition-colors shadow-sm"
                             aria-label="Googleでログイン"
                         >
@@ -113,6 +125,7 @@ const LoginPage = () => {
                         {/* Apple Login */}
                         <button
                             type="button"
+                            onClick={() => window.location.href = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api'}/auth/apple`}
                             className="w-14 h-14 flex items-center justify-center border border-gray-300 rounded-lg bg-white hover:bg-gray-50 transition-colors shadow-sm"
                             aria-label="Appleでログイン"
                         >
@@ -124,6 +137,7 @@ const LoginPage = () => {
                         {/* Facebook Login */}
                         <button
                             type="button"
+                            onClick={() => window.location.href = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api'}/auth/facebook`}
                             className="w-14 h-14 flex items-center justify-center border border-gray-300 rounded-lg bg-white hover:bg-gray-50 transition-colors shadow-sm"
                             aria-label="Facebookでログイン"
                         >

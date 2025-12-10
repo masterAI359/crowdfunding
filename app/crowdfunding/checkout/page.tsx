@@ -1,117 +1,128 @@
 "use client";
-import React, { use, useState } from "react";
+import React, { use, useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { projects } from "@/app/data/projects";
+import { getProjectById, createPayment } from "@/app/lib/api";
+import { useAuth } from "@/app/hooks/useAuth";
 
 interface Project {
   id: string;
   title: string;
-  description: string;
+  description?: string;
   image: string;
   amount: string;
   supporters: string;
   daysLeft: string;
+  achievementRate: number;
+  returns?: Array<{ id: string; title: string; price: number; description: string }>;
 }
 
 interface Reward {
-  id: number;
+  id: string;
   title: string;
-  price: string;
+  price: number;
   description: string;
-  image: string;
+  image?: string;
   quantity: number;
 }
 
 const CheckoutPage = ({
   searchParams: searchParamsPromise,
 }: {
-  searchParams: Promise<{ projectId?: string; rewardIds?: string; quantities?: string }>;
+  searchParams: Promise<{ projectId?: string; returnIds?: string; quantities?: string }>;
 }) => {
   const searchParams = use(searchParamsPromise);
-  const isLoggedIn = false;
-  // const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const router = useRouter();
+  const { isAuthenticated } = useAuth();
+  const [project, setProject] = useState<Project | null>(null);
+  const [rewards, setRewards] = useState<Reward[]>([]);
   const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [processing, setProcessing] = useState(false);
 
-  // Fetch project and rewards based on IDs
-  let project: Project | null = null;
-  let rewards: Reward[] = [];
+  // プロジェクトとリターン情報を取得
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!searchParams?.projectId) return;
 
-  if (searchParams?.projectId) {
-    const foundProject = projects.find((p) => p.id.toString() === searchParams.projectId);
+      try {
+        setLoading(true);
+        const projectData = await getProjectById(searchParams.projectId);
+        setProject(projectData);
 
-    if (foundProject) {
-      // Map project to checkout format
-      project = {
-        id: foundProject.id.toString(),
-        title: foundProject.title,
-        description: foundProject.description,
-        image: foundProject.image,
-        amount: foundProject.amount,
-        supporters: foundProject.supporters,
-        daysLeft: foundProject.daysLeft,
-      };
+        // リターンIDと数量を解析
+        if (searchParams.returnIds && searchParams.quantities && projectData.returns) {
+          const returnIds = searchParams.returnIds.split(',');
+          const quantities = searchParams.quantities.split(',').map(Number);
 
-      // Parse reward IDs and quantities
-      if (searchParams.rewardIds && searchParams.quantities) {
-        const rewardIds = searchParams.rewardIds.split(',').map(Number);
-        const quantities = searchParams.quantities.split(',').map(Number);
+          const selectedReturns = returnIds.map((id, index) => {
+            const returnItem = projectData.returns?.find((r: any) => r.id === id);
+            if (returnItem) {
+              return {
+                id: returnItem.id,
+                title: returnItem.title,
+                price: returnItem.price,
+                description: returnItem.description,
+                quantity: quantities[index] || 1,
+              };
+            }
+            return null;
+          }).filter((r): r is Reward => r !== null);
 
-        // Static rewards data (same as in support page)
-        const allRewards = [
-          {
-            id: 1,
-            title: "【お礼のメッセージ動画】",
-            price: "995,000",
-            description: "『太秦ライムライト』のプロデューサーと監督より、感謝の気持ちを込めて、お礼のメッセージをお送りします。・支援者様との連絡方法：詳細はメールで連絡します。『太秦ライムライト』のプロデューサーと監督より、感謝の気持ちを込めて、お礼のメッセージをお送りします。",
-            image: "/assets/crowdfunding/cf-3.png",
-          },
-          {
-            id: 2,
-            title: "【お礼のメッセージ動画】",
-            price: "995,000",
-            description: "『太秦ライムライト』のプロデューサーと監督より、感謝の気持ちを込めて、お礼のメッセージをお送りします。・支援者様との連絡方法：詳細はメールで連絡します。『太秦ライムライト』のプロデューサーと監督より、感謝の気持ちを込めて、お礼のメッセージをお送りします。",
-            image: "/assets/crowdfunding/cf-3.png",
-          },
-          {
-            id: 3,
-            title: "【お礼のメッセージ動画】",
-            price: "995,000",
-            description: "『太秦ライムライト』のプロデューサーと監督より、感謝の気持ちを込めて、お礼のメッセージをお送りします。・支援者様との連絡方法：詳細はメールで連絡します。『太秦ライムライト』のプロデューサーと監督より、感謝の気持ちを込めて、お礼のメッセージをお送りします。",
-            image: "/assets/crowdfunding/cf-3.png",
-          },
-          {
-            id: 4,
-            title: "【お礼のメッセージ動画】",
-            price: "995,000",
-            description: "『太秦ライムライト』のプロデューサーと監督より、感謝の気持ちを込めて、お礼のメッセージをお送りします。・支援者様との連絡方法：詳細はメールで連絡します。『太秦ライムライト』のプロデューサーと監督より、感謝の気持ちを込めて、お礼のメッセージをお送りします。",
-            image: "/assets/crowdfunding/cf-3.png",
-          },
-        ];
-
-        rewards = rewardIds.map((id, index) => {
-          const reward = allRewards.find((r) => r.id === id);
-          if (reward) {
-            return {
-              ...reward,
-              quantity: quantities[index] || 1,
-            };
-          }
-          return null;
-        }).filter((r): r is Reward => r !== null);
+          setRewards(selectedReturns);
+        }
+      } catch (error) {
+        console.error("データの取得に失敗しました:", error);
+      } finally {
+        setLoading(false);
       }
-    }
-  }
+    };
 
-  const handlePurchase = () => {
-    console.log("Confirming checkout for project:", project);
-    console.log("Rewards:", rewards);
-    // router.push(`/crowdfunding/checkout/success`);
+    fetchData();
+  }, [searchParams]);
+
+  const handlePurchase = async () => {
+    if (!project || rewards.length === 0) return;
+
+    if (!isAuthenticated && !email) {
+      alert("メールアドレスを入力してください");
+      return;
+    }
+
+    try {
+      setProcessing(true);
+      const returnIds = rewards.map((r) => r.id);
+      const quantities: Record<string, number> = {};
+      rewards.forEach((r) => {
+        quantities[r.id] = r.quantity;
+      });
+
+      // 決済インテントを作成
+      const payment = await createPayment(project.id, returnIds, quantities);
+      
+      // Stripeの決済画面へリダイレクト
+      if (payment.clientSecret) {
+        // Stripe CheckoutまたはPayment Intentを使用
+        window.location.href = payment.checkoutUrl || `/payment/stripe?clientSecret=${payment.clientSecret}`;
+      }
+    } catch (error: any) {
+      console.error("決済処理に失敗しました:", error);
+      alert(error.response?.data?.message || "決済処理に失敗しました");
+      setProcessing(false);
+    }
   };
 
   const handleContinueSupport = () => {
     console.log("Email:", email);
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-lg text-gray-600">読み込み中...</p>
+      </div>
+    );
+  }
 
   if (!project) {
     return (
@@ -235,7 +246,7 @@ const CheckoutPage = ({
                       className="h-5 w-5 sm:h-6 sm:w-6 text-red-600 rounded opacity-80 ml-4"
                     />
                     <label htmlFor={`reward-checkbox-${reward.id}`} className="text-2xl sm:text-3xl font-bold flex items-center gap-1">
-                      {reward.price}
+                      ¥{reward.price.toLocaleString()}
                       <span className="text-sm sm:text-base font-bold">円</span>
                     </label>
 
@@ -268,7 +279,7 @@ const CheckoutPage = ({
                 {/* Right: Reward Image */}
                 <div className="relative bg-gray-200 w-full h-40 sm:h-50 overflow-hidden rounded-md">
                   <Image
-                    src={reward.image}
+                    src={reward.image || ""}
                     alt={reward.title}
                     fill
                     className="object-cover"
@@ -292,7 +303,7 @@ const CheckoutPage = ({
 
       {/* ❻ Non-Registered User Flow - UPDATED STYLE & FEATURES */}
 
-      {!isLoggedIn && (
+      {!isAuthenticated && (
         <div className="w-full bg-[#F5F7F9]">
           <div className="w-full max-w-3xl mx-auto  p-8 md:p-12">
 

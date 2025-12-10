@@ -1,8 +1,28 @@
 "use client";
-import React, { use, useState } from "react";
+import React, { use, useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { projects } from "@/app/data/projects"; // import your projects list
+import { getProjectById, getProjectReturns } from "@/app/lib/api";
+import { useAuth } from "@/app/hooks/useAuth";
+
+interface Project {
+  id: string;
+  title: string;
+  description?: string;
+  amount: string;
+  supporters: string;
+  daysLeft: string;
+  achievementRate: number;
+  image: string;
+}
+
+interface Return {
+  id: string;
+  title: string;
+  price: number;
+  description: string;
+  imageUrl?: string;
+}
 
 const SupportPage = ({
   params: paramsPromise,
@@ -11,14 +31,42 @@ const SupportPage = ({
 }) => {
   const params = use(paramsPromise);
   const router = useRouter();
-  const [selectedRewards, setSelectedRewards] = useState<number[]>([]);
-  const [quantities, setQuantities] = useState<{ [key: number]: number }>({});
+  const { isAuthenticated } = useAuth();
+  const [project, setProject] = useState<Project | null>(null);
+  const [returns, setReturns] = useState<Return[]>([]);
+  const [selectedRewards, setSelectedRewards] = useState<string[]>([]);
+  const [quantities, setQuantities] = useState<{ [key: string]: number }>({});
   const [email, setEmail] = useState("");
-  const isLoggedIn = false;
-  // const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  // ✅ Find project by ID
-  const project = projects.find((p) => p.id === Number(params.projectId));
+  // プロジェクトとリターン情報を取得
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const [projectData, returnsData] = await Promise.all([
+          getProjectById(params.projectId),
+          getProjectReturns(params.projectId),
+        ]);
+        setProject(projectData);
+        setReturns(returnsData || []);
+      } catch (error) {
+        console.error("データの取得に失敗しました:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [params.projectId]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-lg text-gray-600">読み込み中...</p>
+      </div>
+    );
+  }
 
   if (!project) {
     return (
@@ -28,58 +76,8 @@ const SupportPage = ({
     );
   }
 
-  // Rewards (example static rewards — you can extend this later)
-  const rewards = [
-    {
-      id: 1,
-      title: "【お礼のメッセージ動画】",
-      price: "995,000",
-      description: [
-        "『太秦ライムライト』のプロデューサーと監督より、感謝の気持ちを込めて、お礼のメッセージをお送りします。",
-        "・支援者様との連絡方法：詳細はメールで連絡します。",
-        "『太秦ライムライト』のプロデューサーと監督より、感謝の気持ちを込めて、お礼のメッセージをお送りします。",
-      ],
-      image: "/assets/crowdfunding/cf-3.png",
-    },
-    {
-      id: 2,
-      title: "【お礼のメッセージ動画】",
-      price: "995,000",
-      description: [
-        "『太秦ライムライト』のプロデューサーと監督より、感謝の気持ちを込めて、お礼のメッセージをお送りします。",
-        "・支援者様との連絡方法：詳細はメールで連絡します。",
-        "『太秦ライムライト』のプロデューサーと監督より、感謝の気持ちを込めて、お礼のメッセージをお送りします。",
-      ],
-      image: "/assets/crowdfunding/cf-3.png",
-    },
-    {
-      id: 3,
-      title: "【お礼のメッセージ動画】",
-      price: "995,000",
-      description: [
-        "『太秦ライムライト』のプロデューサーと監督より、感謝の気持ちを込めて、お礼のメッセージをお送りします。",
-        "・支援者様との連絡方法：詳細はメールで連絡します。",
-        "『太秦ライムライト』のプロデューサーと監督より、感謝の気持ちを込めて、お礼のメッセージをお送りします。",
-      ],
-      image: "/assets/crowdfunding/cf-3.png",
-    },
-
-    {
-      id: 4,
-      title: "【お礼のメッセージ動画】",
-      price: "995,000",
-      description: [
-        "『太秦ライムライト』のプロデューサーと監督より、感謝の気持ちを込めて、お礼のメッセージをお送りします。",
-        "・支援者様との連絡方法：詳細はメールで連絡します。",
-        "『太秦ライムライト』のプロデューサーと監督より、感謝の気持ちを込めて、お礼のメッセージをお送りします。",
-      ],
-      image: "/assets/crowdfunding/cf-3.png",
-    },
-
-  ];
-
   // Select reward
-  const handleRewardSelection = (rewardId: number) => {
+  const handleRewardSelection = (rewardId: string) => {
     setSelectedRewards((prev) =>
       prev.includes(rewardId)
         ? prev.filter((id) => id !== rewardId)
@@ -95,7 +93,7 @@ const SupportPage = ({
   };
 
   // Change qty
-  const handleQuantityChange = (rewardId: number, quantity: number) => {
+  const handleQuantityChange = (rewardId: string, quantity: number) => {
     setQuantities((prev) => ({
       ...prev,
       [rewardId]: quantity,
@@ -104,17 +102,23 @@ const SupportPage = ({
 
   // Go to checkout
   const handlePurchase = () => {
-    const selectedRewardIds = selectedRewards
-      .map((id) => {
-        const reward = rewards.find((r) => r.id === id);
-        return reward ? { id: reward.id, quantity: quantities[id] || 1 } : null;
-      })
-      .filter((item): item is { id: number; quantity: number } => item !== null);
+    if (selectedRewards.length === 0) {
+      alert("リターンを選択してください");
+      return;
+    }
+
+    if (!isAuthenticated) {
+      // 未ログインの場合は、メールアドレスが必要
+      if (!email) {
+        alert("メールアドレスを入力してください");
+        return;
+      }
+    }
 
     // Pass only IDs in the URL
-    const rewardIds = selectedRewardIds.map((r) => r.id).join(',');
-    const quantitiesStr = selectedRewardIds.map((r) => r.quantity).join(',');
-    router.push(`/crowdfunding/checkout?projectId=${params.projectId}&rewardIds=${rewardIds}&quantities=${quantitiesStr}`);
+    const rewardIds = selectedRewards.join(',');
+    const quantitiesStr = selectedRewards.map((id) => quantities[id] || 1).join(',');
+    router.push(`/crowdfunding/checkout?projectId=${params.projectId}&returnIds=${rewardIds}&quantities=${quantitiesStr}`);
   };
 
   const handleContinueSupport = () => {
@@ -207,14 +211,14 @@ const SupportPage = ({
 
         {/* Rewards */}
         <div className="max-w-5xl mx-auto space-y-6 mb-6 sm:mb-8">
-          {rewards.map((reward) => (
+          {returns.map((returnItem) => (
             <div
-              key={reward.id}
+              key={returnItem.id}
               className="bg-white border border-[#E9E9E9] rounded-lg"
             >
               <div className="bg-[#ECEBD9] px-3 sm:px-4 py-2 rounded-t-lg border-b border-gray-300">
                 <h3 className="font-bold text-lg sm:text-xl text-black">
-                  {reward.title}
+                  {returnItem.title}
                 </h3>
               </div>
 
@@ -224,37 +228,37 @@ const SupportPage = ({
                   <div className="flex items-center gap-3 sm:gap-4 md:ml-10">
                     <input
                       type="checkbox"
-                      id={`reward-${reward.id}`}
-                      checked={selectedRewards.includes(reward.id)}
-                      onChange={() => handleRewardSelection(reward.id)}
+                      id={`reward-${returnItem.id}`}
+                      checked={selectedRewards.includes(returnItem.id)}
+                      onChange={() => handleRewardSelection(returnItem.id)}
                       className="h-5 w-5 sm:h-6 sm:w-6 text-red-600 rounded focus:ring-red-500 cursor-pointer opacity-80 ml-4"
                     />
                     <label
-                      htmlFor={`reward-${reward.id}`}
+                      htmlFor={`reward-${returnItem.id}`}
                       className="text-2xl sm:text-3xl font-bold flex items-center gap-1"
                     >
-                      {reward.price}
+                      ¥{returnItem.price.toLocaleString()}
                       <span className="text-sm sm:text-base font-bold">円</span>
                     </label>
 
                     {/* Quantity selector */}
                     <div className="flex items-center justify-between bg-[#F4F3E5] rounded-sm md:pl-6 px-2 py-1 w-fit ml-auto md:mr-[10vw]">
                       <label
-                        htmlFor={`quantity-${reward.id}`}
+                        htmlFor={`quantity-${returnItem.id}`}
                         className="text-sm sm:text-lg font-bold text-black"
                       >
                         数量
                       </label>
                       <select
-                        id={`quantity-${reward.id}`}
-                        value={quantities[reward.id] || 1}
+                        id={`quantity-${returnItem.id}`}
+                        value={quantities[returnItem.id] || 1}
                         onChange={(e) =>
                           handleQuantityChange(
-                            reward.id,
+                            returnItem.id,
                             parseInt(e.target.value)
                           )
                         }
-                        disabled={!selectedRewards.includes(reward.id)}
+                        disabled={!selectedRewards.includes(returnItem.id)}
                         className="ml-3 sm:ml-6 bg-white cursor-pointer rounded-sm border border-gray-300 focus:border-red-500 focus:ring-red-500 text-sm sm:text-lg font-medium px-2 sm:px-4 py-1 disabled:opacity-50"
                       >
                         {[1, 2, 3, 4, 5].map((num) => (
@@ -268,14 +272,8 @@ const SupportPage = ({
 
                   {/* Description */}
                   <div className="leading-relaxed">
-                    <p className="text-sm sm:text-lg text-black text-left md:mx-10">
-                      {reward.description[0]}
-                    </p>
-                    <p className="text-sm sm:text-lg text-black text-left md:mx-10">
-                      {reward.description[1]}
-                    </p>
-                    <p className="text-sm sm:text-lg text-black text-left md:mx-10">
-                      {reward.description[2]}
+                    <p className="text-sm sm:text-lg text-black text-left md:mx-10 whitespace-pre-line">
+                      {returnItem.description}
                     </p>
                   </div>
                 </div>
@@ -283,8 +281,8 @@ const SupportPage = ({
                 {/* Right: Reward Image */}
                 <div className="relative bg-gray-200 w-full h-40 sm:h-50 overflow-hidden rounded-md">
                   <Image
-                    src={reward.image}
-                    alt={reward.title}
+                    src={returnItem.imageUrl || project.image}
+                    alt={returnItem.title}
                     fill
                     className="object-cover"
                   />
@@ -308,7 +306,7 @@ const SupportPage = ({
       </main>
 
       {/* ❻ Non-Registered User Flow - UPDATED STYLE & FEATURES */}
-      {!isLoggedIn && (
+      {!isAuthenticated && (
         <div className="w-full bg-[#F5F7F9]">
           <div className="w-full max-w-3xl mx-auto  p-8 md:p-12">
 
