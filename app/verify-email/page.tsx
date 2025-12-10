@@ -1,13 +1,17 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import Image from "next/image";
+import { useRouter, useSearchParams } from "next/navigation";
+import { verifySignupCode, initiateSignup } from "@/app/lib/api";
 
-const VerifyEmailPage = () => {
+const VerifyEmailContent = () => {
     const [code, setCode] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
     const [resendCountdown, setResendCountdown] = useState(0);
-    const [email] = useState("sample@mail.com"); // This would come from context/query params in real app
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const email = searchParams.get('email') || '';
 
     // Countdown timer for resend
     useEffect(() => {
@@ -28,22 +32,46 @@ const VerifyEmailPage = () => {
             return;
         }
 
+        if (!email) {
+            setError("メールアドレスが見つかりません。サインアップページに戻ってください。");
+            return;
+        }
+
         setIsLoading(true);
 
-        // TODO: Implement actual verification logic here
-        setTimeout(() => {
+        try {
+            const response = await verifySignupCode(email, code);
+            
+            // Verification successful, redirect to set password page
+            if (response.message) {
+                router.push(`/set-password?email=${encodeURIComponent(email)}`);
+            }
+        } catch (err: any) {
             setIsLoading(false);
-            // Redirect or handle successful verification
-            console.log("Verification attempt:", { code });
-        }, 1000);
+            // Set error message
+            if (err.response?.data?.message) {
+                setError(err.response.data.message);
+            } else if (err.message) {
+                setError(err.message);
+            } else {
+                setError('コードの確認に失敗しました。コードを確認してください。');
+            }
+        }
     };
 
-    const handleResendCode = () => {
-        if (resendCountdown > 0) return;
+    const handleResendCode = async () => {
+        if (resendCountdown > 0 || !email) return;
 
-        // TODO: Implement resend code logic
-        setResendCountdown(60); // 60 seconds countdown
-        console.log("Resending code to:", email);
+        try {
+            await initiateSignup(email);
+            setResendCountdown(60); // 60 seconds countdown
+        } catch (err: any) {
+            if (err.response?.data?.message) {
+                setError(err.response.data.message);
+            } else {
+                setError('コードの再送信に失敗しました。');
+            }
+        }
     };
 
     const handleCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -61,11 +89,17 @@ const VerifyEmailPage = () => {
                     <h2 className="text-3xl font-bold text-gray-900 mb-8">
                         受信ボックスを確認
                     </h2>
-                    <p className="text-md text-black leading-relaxed font-semibold">
-                        登録を完了するには、{" "}
-                        <span className="font-medium text-gray-900">{email}</span>{" "}
-                        に送信された <br /> 6桁のコードを入力してください。
-                    </p>
+                    {email ? (
+                        <p className="text-md text-black leading-relaxed font-semibold">
+                            登録を完了するには、{" "}
+                            <span className="font-medium text-gray-900">{email}</span>{" "}
+                            に送信された <br /> 6桁のコードを入力してください。
+                        </p>
+                    ) : (
+                        <p className="text-md text-red-600 leading-relaxed font-semibold">
+                            メールアドレスが見つかりません。サインアップページに戻ってください。
+                        </p>
+                    )}
                 </div>
 
                 {/* Verification Form */}
@@ -136,6 +170,18 @@ const VerifyEmailPage = () => {
                 </div>
             </div>
         </div>
+    );
+};
+
+const VerifyEmailPage = () => {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-white flex items-center justify-center">
+                <p>読み込み中...</p>
+            </div>
+        }>
+            <VerifyEmailContent />
+        </Suspense>
     );
 };
 

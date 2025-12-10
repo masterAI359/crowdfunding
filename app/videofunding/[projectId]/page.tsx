@@ -1,27 +1,67 @@
 "use client";
-import React, { use } from "react";
+import React, { use, useEffect, useState } from "react";
 import Image from "next/image";
-import { videos, bannerProjects } from "@/app/data/projects";
+import { getVideoById, getRecommendedProjects } from "@/app/lib/api";
+import { transformBannerProject } from "@/app/lib/utils";
 import { Play, Heart } from "lucide-react";
 import ProjectCarousel from "@/app/components/project-carousel";
 import VideoRecommendationsFlow from "@/app/components/video-recommendations-flow";
+
 const ProjectDetailPage = ({
   params: paramsPromise,
 }: {
   params: Promise<{ projectId: string }>;
 }) => {
   const params = use(paramsPromise);
+  const [video, setVideo] = useState<any>(null);
+  const [bannerProjects, setBannerProjects] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  //  Find the project by ID from your projects array
-  const video = videos.find((p) => p.id.toString() === params.projectId);
-  console.log("video===>", video);
-  if (!video) {
+  useEffect(() => {
+    const fetchVideo = async () => {
+      try {
+        setIsLoading(true);
+        const videoData = await getVideoById(params.projectId);
+        setVideo(videoData);
+
+        // Fetch recommended projects for banner
+        const recommended = await getRecommendedProjects(undefined, 5);
+        const transformedBanner = recommended.map(transformBannerProject);
+        setBannerProjects(transformedBanner);
+      } catch (err: any) {
+        setError(err.response?.data?.message || '動画の読み込みに失敗しました');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchVideo();
+  }, [params.projectId]);
+
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center text-gray-700">
-        <p>プロジェクトが見つかりませんでした。</p>
+        <p>読み込み中...</p>
       </div>
     );
   }
+
+  if (error || !video) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-gray-700">
+        <p>{error || '動画が見つかりませんでした。'}</p>
+      </div>
+    );
+  }
+
+  // Transform video data for display
+  const videoDisplay = {
+    id: video.id,
+    title: video.title,
+    image: video.thumbnailUrl || '/assets/crowdfunding/cf-1.png',
+    description: video.description || '',
+  };
 
   const thumbnailVideos = [
     {
@@ -68,8 +108,8 @@ const ProjectDetailPage = ({
             <div className="w-full xl:w-3/5">
               <div className="relative mb-3 aspect-video overflow-hidden rounded-lg bg-black shadow-lg">
                 <Image
-                  src={video.image}
-                  alt="The Last Message - 人生最後の暴露トーク"
+                  src={videoDisplay.image}
+                  alt={videoDisplay.title}
                   className="h-full w-full object-cover"
                   width={344}
                   height={200}
@@ -84,7 +124,7 @@ const ProjectDetailPage = ({
                 </div>
                 <div className="absolute left-4 bottom-4">
                   <div className="rounded bg-[#FFD700] px-4 py-1.5 text-sm font-bold text-black shadow-md">
-                    人生最後の暴露トーク
+                    {videoDisplay.title}
                   </div>
                 </div>
               </div>
@@ -115,8 +155,8 @@ const ProjectDetailPage = ({
                 <h3 className="mb-4 text-[26px] font-bold text-black">最新の動画</h3>
                 <div className="relative mb-4 aspect-video overflow-hidden rounded-lg bg-black shadow-md">
                   <Image
-                    src={video.image}
-                    alt="Latest video"
+                    src={videoDisplay.image}
+                    alt={videoDisplay.title}
                     className="h-full w-full object-cover"
                     width={344}
                     height={100}
@@ -136,12 +176,12 @@ const ProjectDetailPage = ({
                   </div>
                 </div>
                 <p className="mb-6 text-[20px] font-bold leading-relaxed text-black">
-                  この文章はダミーですこの文章はダミーですこの文章はダミーですこの文章はダミーですこの文章はダミーですこの文章はダミーですこの文章はダミーですこの文章はダミーですこの文章
+                  {videoDisplay.description || '動画の説明がありません'}
                 </p>
                 <div className="grid grid-cols-4 gap-3">
                   <div className="col-span-3 flex flex-col gap-3 text-xl sm:text-[23px]">
                     <a
-                      href={`/videofunding/${video.id}/support`}
+                      href={`/videofunding/${videoDisplay.id}/support`}
                       className="w-full text-center rounded-full text-white font-bold sm:py-4 py-2 bg-[#FF0066]"
                     >
                       この動画を購入
@@ -162,14 +202,14 @@ const ProjectDetailPage = ({
         </section>
         {/* Section 3: video Recommendations */}
         <VideoRecommendationsFlow
-          title="〇〇プロジェクトその他の映像"
-          videos={videos}
+          title="その他の映像"
+          videos={[]}
         />
 
         {/* Section 3: video Recommendations */}
         <VideoRecommendationsFlow
           title="このプロジェクトを見た人はこちらもチェックしています"
-          videos={videos}
+          videos={[]}
           detail={true}
         />
 

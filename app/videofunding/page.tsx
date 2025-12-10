@@ -1,25 +1,96 @@
 "use client";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import VideoCard from "../components/video-card";
 import VideoCarousel from "../components/video-carousel";
-import { bannerVideos, videos } from "@/app/data/projects";
+import { getPublicVideos, getVideosByOwner } from "@/app/lib/api";
 
 const VideofundingPage = () => {
+  const [videos, setVideos] = useState<any[]>([]);
+  const [bannerVideos, setBannerVideos] = useState<any[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchVideos = async () => {
+      try {
+        setIsLoading(true);
+        // Try to get videos - use owner/list if authenticated, otherwise we need a public endpoint
+        let videosData;
+        try {
+          videosData = await getVideosByOwner(currentPage, 12);
+        } catch {
+          // If not authenticated, try public endpoint (may not exist yet)
+          videosData = await getPublicVideos(currentPage, 12);
+        }
+
+        if (videosData?.videos) {
+          const transformedVideos = videosData.videos.map((video: any) => ({
+            id: video.id,
+            title: video.title,
+            image: video.thumbnailUrl || '/assets/crowdfunding/cf-1.png',
+            categoryLabel: '動画', // You may want to add category to the backend
+            userLabel: video.owner?.name || 'ユーザー',
+            viewCount: video.viewCount ? `${Math.floor(video.viewCount / 10000)}万` : '0',
+            viewDate: Math.floor((Date.now() - new Date(video.createdAt).getTime()) / (1000 * 60 * 60 * 24)),
+          }));
+          setVideos(transformedVideos);
+          
+          // Use first 5 videos for banner
+          setBannerVideos(transformedVideos.slice(0, 5).map(v => ({
+            id: v.id,
+            image: v.image,
+            categoryLabel: v.categoryLabel,
+          })));
+          
+          setTotalPages(videosData.pagination?.totalPages || 1);
+        }
+      } catch (error) {
+        console.error('Failed to fetch videos:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchVideos();
+  }, [currentPage]);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-white text-gray-700 flex items-center justify-center">
+        <p>読み込み中...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-white text-gray-700">
       <main className="xl:max-w-[1440px] mx-auto px-0  py-16 pt-18">
-        <VideoCarousel videos={bannerVideos} />
+        {bannerVideos.length > 0 && <VideoCarousel videos={bannerVideos} />}
 
         <div className="grid grid-cols-2 lg:grid-cols-3 sm:max-w-5xl max-w-md mx-auto gap-4 md:gap-y-8 mb-12 px-4 md:px-4  ">
-          {videos.map((video) => (
-            <VideoCard key={video.id} video={video} />
-          ))}
+          {videos.length > 0 ? (
+            videos.map((video) => (
+              <VideoCard key={video.id} video={video} />
+            ))
+          ) : (
+            <div className="col-span-full text-center py-12">
+              <p>動画が見つかりませんでした</p>
+            </div>
+          )}
         </div>
 
         <div className="flex justify-center space-x-0">
           <button
             type="button"
-            className="h-8 w-8 flex items-center justify-center rounded-full border border-black hover:bg-gray-100 transition-colors mr-5"
+            onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+            disabled={currentPage === 1}
+            className="h-8 w-8 flex items-center justify-center rounded-full border border-black hover:bg-gray-100 transition-colors mr-5 disabled:opacity-50 disabled:cursor-not-allowed"
             aria-label="Previous page"
           >
             <svg
@@ -36,11 +107,12 @@ const VideofundingPage = () => {
             </svg>
           </button>
 
-          {[1, 2, 3, 4, 5, 6, 7, 8].map((page) => (
+          {Array.from({ length: Math.min(totalPages, 8) }, (_, i) => i + 1).map((page) => (
             <button
               key={page}
               type="button"
-              className={`h-8 w-8 flex items-center font-regular text-2xl justify-center rounded-full ${page === 1
+              onClick={() => handlePageChange(page)}
+              className={`h-8 w-8 flex items-center font-regular text-2xl justify-center rounded-full ${page === currentPage
                 ? "bg-[#FF0066] text-white border border-[#FF0066]"
                 : " hover:bg-gray-100"
                 }`}
@@ -52,7 +124,9 @@ const VideofundingPage = () => {
 
           <button
             type="button"
-            className="h-8 w-8 flex items-center justify-center rounded-full border border-black hover:bg-gray-100 transition-colors ml-5"
+            onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+            disabled={currentPage >= totalPages}
+            className="h-8 w-8 flex items-center justify-center rounded-full border border-black hover:bg-gray-100 transition-colors ml-5 disabled:opacity-50 disabled:cursor-not-allowed"
             aria-label="Next page"
           >
             <svg

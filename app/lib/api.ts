@@ -226,6 +226,25 @@ export const getVideosByOwner = async (page: number = 1, limit: number = 20) => 
 };
 
 /**
+ * 公開動画一覧取得（パブリック）
+ * Note: This endpoint may need to be added to the backend if it doesn't exist
+ */
+export const getPublicVideos = async (page: number = 1, limit: number = 20) => {
+  // For now, try to use owner/list if authenticated, otherwise we'll need a public endpoint
+  try {
+    const response = await apiClient.get('/videos/owner/list', {
+      params: { page, limit },
+    });
+    return response.data;
+  } catch (error) {
+    // If not authenticated, we need a public endpoint
+    // TODO: Add GET /api/videos/public/list endpoint to backend
+    console.warn('Public video list endpoint needed');
+    return { videos: [], pagination: { page, limit, total: 0, totalPages: 0 } };
+  }
+};
+
+/**
  * 動画詳細取得
  */
 export const getVideoById = async (id: string) => {

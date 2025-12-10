@@ -1,6 +1,8 @@
 "use client";
 import React, { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { initiateSignup } from "@/app/lib/api";
 
 const SignupPage = () => {
     const [name, setName] = useState("");
@@ -8,19 +10,32 @@ const SignupPage = () => {
     const [marketingConsent, setMarketingConsent] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
+    const router = useRouter();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError("");
         setIsLoading(true);
 
-        // TODO: Implement actual signup logic here
-        // For now, just simulate a signup
-        setTimeout(() => {
+        try {
+            const response = await initiateSignup(email, name);
+            
+            // Signup initiation successful, redirect to verify email page
+            if (response.message) {
+                // Pass email as query parameter
+                router.push(`/verify-email?email=${encodeURIComponent(email)}`);
+            }
+        } catch (err: any) {
             setIsLoading(false);
-            // Redirect or handle successful signup
-            console.log("Signup attempt:", { name, email, marketingConsent });
-        }, 1000);
+            // Set error message
+            if (err.response?.data?.message) {
+                setError(err.response.data.message);
+            } else if (err.message) {
+                setError(err.message);
+            } else {
+                setError('サインアップに失敗しました。メールアドレスを確認してください。');
+            }
+        }
     };
 
     return (
@@ -115,6 +130,7 @@ const SignupPage = () => {
                         {/* Google Login */}
                         <button
                             type="button"
+                            onClick={() => window.location.href = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api'}/auth/google`}
                             className="w-14 h-14 flex items-center justify-center border border-gray-300 rounded-lg bg-white hover:bg-gray-50 transition-colors shadow-sm"
                             aria-label="Googleで登録"
                         >
@@ -129,6 +145,7 @@ const SignupPage = () => {
                         {/* Apple Login */}
                         <button
                             type="button"
+                            onClick={() => window.location.href = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api'}/auth/apple`}
                             className="w-14 h-14 flex items-center justify-center border border-gray-300 rounded-lg bg-white hover:bg-gray-50 transition-colors shadow-sm"
                             aria-label="Appleで登録"
                         >
@@ -140,6 +157,7 @@ const SignupPage = () => {
                         {/* Facebook Login */}
                         <button
                             type="button"
+                            onClick={() => window.location.href = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api'}/auth/facebook`}
                             className="w-14 h-14 flex items-center justify-center border border-gray-300 rounded-lg bg-white hover:bg-gray-50 transition-colors shadow-sm"
                             aria-label="Facebookで登録"
                         >
