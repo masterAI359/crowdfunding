@@ -1,15 +1,43 @@
 "use client";
-import React, { useState } from "react";
-import { projects } from "@/app/data/projects";
+import React, { useState, useEffect } from "react";
+import { searchProjects } from "@/app/lib/api";
+import { transformProject } from "@/app/lib/utils";
 import ProjectCard from "@/app/components/project-card";
 
 const SearchPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState("人気順");
   const [searchKeyword, setSearchKeyword] = useState("映画");
-  const [showAdvanced, setShowAdvanced] = useState(false); // 👈 toggle state
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [projects, setProjects] = useState<any[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const sortTabs = ["人気順", "新着順", "終了日が近い順", "支援総額順"];
-  const totalCount = 1944;
+
+  useEffect(() => {
+    const fetchSearchResults = async () => {
+      if (!searchKeyword.trim()) return;
+      
+      try {
+        setIsLoading(true);
+        const sortBy = activeTab === "人気順" ? "popular" : 
+                      activeTab === "新着順" ? undefined :
+                      activeTab === "終了日が近い順" ? "ending" : undefined;
+        
+        const results = await searchProjects(searchKeyword, currentPage, 12);
+        const transformed = results.projects.map(transformProject);
+        setProjects(transformed);
+        setTotalCount(results.pagination?.total || 0);
+      } catch (error) {
+        console.error('Failed to search projects:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchSearchResults();
+  }, [searchKeyword, activeTab, currentPage]);
 
   return (
     <div className="min-h-screen bg-white text-black pt-20 pb-5">
@@ -75,8 +103,15 @@ const SearchPage: React.FC = () => {
             className="flex-grow border border-[#d5d5d5] bg-white rounded-l-md p-2 text-sm"
             placeholder="キーワード検索"
             />
-            <button className="bg-gray-700 text-white px-4 rounded-r-md text-sm">
-            検索
+            <button 
+              type="button"
+              onClick={() => {
+                setCurrentPage(1);
+                // useEffect will trigger the search
+              }}
+              className="bg-gray-700 text-white px-4 rounded-r-md text-sm hover:bg-gray-800"
+            >
+              検索
             </button>
         </div>
 
@@ -290,11 +325,21 @@ const SearchPage: React.FC = () => {
         </h2>
 
         {/* === Project Grid === */}
-        <div className="grid grid-cols-2 lg:grid-cols-3 sm:max-w-5xl max-w-md mx-auto gap-4 md:gap-y-8 mb-12 px-4">
-          {projects.map((project) => (
-            <ProjectCard key={project.id} project={project} />
-          ))}
-        </div>
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <p>読み込み中...</p>
+          </div>
+        ) : projects.length > 0 ? (
+          <div className="grid grid-cols-2 lg:grid-cols-3 sm:max-w-5xl max-w-md mx-auto gap-4 md:gap-y-8 mb-12 px-4">
+            {projects.map((project) => (
+              <ProjectCard key={project.id} project={project} />
+            ))}
+          </div>
+        ) : (
+          <div className="flex items-center justify-center py-12">
+            <p>プロジェクトが見つかりませんでした</p>
+          </div>
+        )}
       </main>
     </div>
   );

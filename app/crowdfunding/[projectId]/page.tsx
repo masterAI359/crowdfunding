@@ -1,17 +1,54 @@
 "use client";
-import React, { useState, use, useRef } from 'react';
+import React, { useState, use, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import ProjectCard from '@/app/components/project-card';
 import ImageGallery from '@/app/components/image-gallery';
-import { projects } from "@/app/data/projects";
+import { getProjectById, getRecommendedProjects, toggleFavorite } from '@/app/lib/api';
+import { transformProject, formatCurrency } from '@/app/lib/utils';
 import Link from 'next/link';
 import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
 
 const ProjectDetailPage = ({ params: paramsPromise }: { params: Promise<{ projectId: string }> }) => {
   const params = use(paramsPromise);
+  const [project, setProject] = useState<any>(null);
+  const [recommendedProjects, setRecommendedProjects] = useState<any[]>([]);
   const [isFavorited, setIsFavorited] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const fetchProject = async () => {
+      try {
+        setIsLoading(true);
+        const projectData = await getProjectById(params.projectId);
+        const transformed = transformProject(projectData);
+        setProject(transformed);
+        setIsFavorited(projectData.isFavorite || false);
+
+        // Fetch recommended projects
+        const recommended = await getRecommendedProjects(params.projectId, 10);
+        const transformedRecommended = recommended.map(transformProject);
+        setRecommendedProjects(transformedRecommended);
+      } catch (err: any) {
+        setError(err.response?.data?.message || 'プロジェクトの読み込みに失敗しました');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProject();
+  }, [params.projectId]);
+
+  const handleFavoriteToggle = async () => {
+    try {
+      await toggleFavorite(params.projectId);
+      setIsFavorited(!isFavorited);
+    } catch (err) {
+      console.error('Failed to toggle favorite:', err);
+    }
+  };
 
   const scrollLeft = () => {
     if (scrollRef.current) {
@@ -25,40 +62,26 @@ const ProjectDetailPage = ({ params: paramsPromise }: { params: Promise<{ projec
     }
   };
 
-  //  Find the project by ID from your projects array
-  const project = projects.find(
-    (p) => p.id.toString() === params.projectId
-  );
-
-  if (!project) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center text-gray-700">
-        <p>プロジェクトが見つかりませんでした。</p>
+        <p>読み込み中...</p>
       </div>
     );
   }
 
-  const dummyImages = [
-    '/assets/crowdfunding/cf-4.png', '/assets/crowdfunding/cf-3.png', '/assets/crowdfunding/cf-2.png'
-  ]
+  if (error || !project) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-gray-700">
+        <p>{error || 'プロジェクトが見つかりませんでした。'}</p>
+      </div>
+    );
+  }
 
-  const returns = [
-    {
-      title: 'エンドロールお名前掲載',
-      price: '5,000円',
-      description: '・同窓会実行委員より５年間のメッセージ\n・活動報告「印象式レベル」開催\n・運営・井上記二本書Ｐ３６\n・フェブムページト掲示ツグ\n・ココオ協議作タマロロ'
-    },
-    {
-      title: 'エンドロールお名前掲載',
-      price: '5,000円',
-      description: '・同窓会実行委員より５年間のメッセージ\n・活動報告「印象式レベル」開催\n・運営・井上記二本書Ｐ３６\n・フェブムページト掲示ツグ\n・ココオ協議作タマロロ'
-    },
-    {
-      title: 'エンドロールお名前掲載',
-      price: '5,000円',
-      description: '・同窓会実行委員より５年間のメッセージ\n・活動報告「印象式レベル」開催\n・運営・井上記二本書Ｐ３６\n・フェブムページト掲示ツグ\n・ココオ協議作タマロロ'
-    }
-  ];
+  // Get images from project medias
+  const projectImages = project._original?.medias?.map((m: any) => m.url) || [project.image];
+  const projectReturns = project._original?.returns || [];
+
 
   const creators = [
     { id: 1, title: "", image: "/assets/crowdfunding/creator-1.png", text: "このプロジェクトでは、SHOGOのグラミー賞受賞への道のりをドキュメンタリー映像として記録し、多くの人々に感動と勇気を与えたいと考えています。彼の音楽活動の舞台裏や、日々の努力、そして挑戦の軌跡を映像化このプロジェクトでは、" },
@@ -133,7 +156,7 @@ const ProjectDetailPage = ({ params: paramsPromise }: { params: Promise<{ projec
         {/* Section 2: Media Gallery & Project Information */}
         <section className="hidden md:block max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-12">
-            <ImageGallery images={dummyImages} />
+            <ImageGallery images={projectImages.length > 0 ? projectImages : [project.image]} />
 
             <div className="space-y-6 lg:ml-4">
               <div>
@@ -178,7 +201,7 @@ const ProjectDetailPage = ({ params: paramsPromise }: { params: Promise<{ projec
                   プロジェクトを支援する
                 </Link>
                 <button
-                  onClick={() => setIsFavorited(!isFavorited)}
+                  onClick={handleFavoriteToggle}
                   className="w-12 h-12 cursor-pointer flex items-center justify-center  rounded-3xl hover:bg-gray-50/60 transition-colors"
                   aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
                 >
@@ -210,13 +233,13 @@ const ProjectDetailPage = ({ params: paramsPromise }: { params: Promise<{ projec
                 className="flex space-x-6 overflow-x-auto pb-4 hide-scrollbar"
               >
                 {/* Repeat projects multiple times to simulate infinity */}
-                {Array.from({ length: 20 }).map((_, loopIndex) =>
-                  projects.map((project) => (
+                {Array.from({ length: Math.ceil(20 / recommendedProjects.length) || 1 }).map((_, loopIndex) =>
+                  recommendedProjects.map((recProject) => (
                     <div
-                      key={`${project.id}-${loopIndex}`}
+                      key={`${recProject.id}-${loopIndex}`}
                       className="flex-shrink-0 w-75"
                     >
-                      <ProjectCard project={project} />
+                      <ProjectCard project={recProject} />
                     </div>
                   ))
                 )}
@@ -277,21 +300,31 @@ const ProjectDetailPage = ({ params: paramsPromise }: { params: Promise<{ projec
               <div className="space-y-6 lg:col-span-2">
 
                 {/* Reward Card  */}
-                {returns.map((reward, index) => (
-                  <div key={index} className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+                {projectReturns.length > 0 ? projectReturns.map((returnItem: any, index: number) => (
+                  <div key={returnItem.id || index} className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
                     <div className="relative h-52 w-full rounded-md mb-4 overflow-hidden">
-                      <Image src={`/assets/crowdfunding/rewards-${index + 1}.png`} alt={reward.title} fill className="object-cover" />
+                      <Image 
+                        src={returnItem.imageUrl || `/assets/crowdfunding/rewards-${(index % 3) + 1}.png`} 
+                        alt={returnItem.title || 'リターン'} 
+                        fill 
+                        className="object-cover" 
+                      />
                     </div>
                     <div className="p-6 pt-0">
-                      <h3 className="text-xl font-bold text-black mb-2">{reward.title}</h3>
-                      <p className="text-3xl font-bold text-black mb-4">{reward.price}</p>
-                      <p className="text-sm text-black whitespace-pre-line mb-6">{reward.description}</p>
-                      <button className="w-full bg-[#FF0066] hover:bg-[#FF0066]/80 text-white font-bold py-3 px-6 rounded-3xl transition-colors">
+                      <h3 className="text-xl font-bold text-black mb-2">{returnItem.title || 'リターン'}</h3>
+                      <p className="text-3xl font-bold text-black mb-4">{formatCurrency(returnItem.amount)}</p>
+                      <p className="text-sm text-black whitespace-pre-line mb-6">{returnItem.description || ''}</p>
+                      <Link
+                        href={`/crowdfunding/${project.id}/support?returnId=${returnItem.id}`}
+                        className="block w-full bg-[#FF0066] hover:bg-[#FF0066]/80 text-white font-bold py-3 px-6 rounded-3xl transition-colors text-center"
+                      >
                         このリターンを選択する
-                      </button>
+                      </Link>
                     </div>
                   </div>
-                ))}
+                )) : (
+                  <p className="text-gray-500">リターンが設定されていません</p>
+                )}
               </div>
             </div>
           </div>
@@ -304,8 +337,8 @@ const ProjectDetailPage = ({ params: paramsPromise }: { params: Promise<{ projec
             「映画」で検索した結果1944件のプロジェクトが見つかりました。
           </h2>
           <div className="grid grid-cols-2 lg:grid-cols-3 sm:max-w-5xl max-w-lg mx-auto gap-4 md:gap-y-8 mb-12  px-4  ">
-            {projects.map(project => (
-              <ProjectCard key={project.id} project={project} />
+            {recommendedProjects.map(recProject => (
+              <ProjectCard key={recProject.id} project={recProject} />
             ))}
           </div>
         </section>

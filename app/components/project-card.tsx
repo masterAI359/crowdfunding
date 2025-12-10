@@ -3,7 +3,7 @@ import React from "react";
 import Link from "next/link";
 
 interface Project {
-  id: number;
+  id: number | string;
   title: string;
   amount: string;
   supporters: string;

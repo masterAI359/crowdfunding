@@ -1,8 +1,9 @@
 "use client";
-import React, { use, useState } from "react";
+import React, { use, useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { projects } from "@/app/data/projects"; // import your projects list
+import { getProjectById, getProjectReturns } from "@/app/lib/api";
+import { transformProject, formatCurrency } from "@/app/lib/utils";
 
 const SupportPage = ({
   params: paramsPromise,
@@ -11,14 +12,41 @@ const SupportPage = ({
 }) => {
   const params = use(paramsPromise);
   const router = useRouter();
-  const [selectedRewards, setSelectedRewards] = useState<number[]>([]);
-  const [quantities, setQuantities] = useState<{ [key: number]: number }>({});
+  const [project, setProject] = useState<any>(null);
+  const [returns, setReturns] = useState<any[]>([]);
+  const [selectedRewards, setSelectedRewards] = useState<string[]>([]);
+  const [quantities, setQuantities] = useState<{ [key: string]: number }>({});
   const [email, setEmail] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
   const isLoggedIn = false;
-  // const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  // ✅ Find project by ID
-  const project = projects.find((p) => p.id === Number(params.projectId));
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        const projectData = await getProjectById(params.projectId);
+        const transformed = transformProject(projectData);
+        setProject(transformed);
+
+        const returnsData = await getProjectReturns(params.projectId);
+        setReturns(returnsData);
+      } catch (error) {
+        console.error('Failed to fetch project:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [params.projectId]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-lg text-gray-600">読み込み中...</p>
+      </div>
+    );
+  }
 
   if (!project) {
     return (
@@ -28,55 +56,14 @@ const SupportPage = ({
     );
   }
 
-  // Rewards (example static rewards — you can extend this later)
-  const rewards = [
-    {
-      id: 1,
-      title: "【お礼のメッセージ動画】",
-      price: "995,000",
-      description: [
-        "『太秦ライムライト』のプロデューサーと監督より、感謝の気持ちを込めて、お礼のメッセージをお送りします。",
-        "・支援者様との連絡方法：詳細はメールで連絡します。",
-        "『太秦ライムライト』のプロデューサーと監督より、感謝の気持ちを込めて、お礼のメッセージをお送りします。",
-      ],
-      image: "/assets/crowdfunding/cf-3.png",
-    },
-    {
-      id: 2,
-      title: "【お礼のメッセージ動画】",
-      price: "995,000",
-      description: [
-        "『太秦ライムライト』のプロデューサーと監督より、感謝の気持ちを込めて、お礼のメッセージをお送りします。",
-        "・支援者様との連絡方法：詳細はメールで連絡します。",
-        "『太秦ライムライト』のプロデューサーと監督より、感謝の気持ちを込めて、お礼のメッセージをお送りします。",
-      ],
-      image: "/assets/crowdfunding/cf-3.png",
-    },
-    {
-      id: 3,
-      title: "【お礼のメッセージ動画】",
-      price: "995,000",
-      description: [
-        "『太秦ライムライト』のプロデューサーと監督より、感謝の気持ちを込めて、お礼のメッセージをお送りします。",
-        "・支援者様との連絡方法：詳細はメールで連絡します。",
-        "『太秦ライムライト』のプロデューサーと監督より、感謝の気持ちを込めて、お礼のメッセージをお送りします。",
-      ],
-      image: "/assets/crowdfunding/cf-3.png",
-    },
-
-    {
-      id: 4,
-      title: "【お礼のメッセージ動画】",
-      price: "995,000",
-      description: [
-        "『太秦ライムライト』のプロデューサーと監督より、感謝の気持ちを込めて、お礼のメッセージをお送りします。",
-        "・支援者様との連絡方法：詳細はメールで連絡します。",
-        "『太秦ライムライト』のプロデューサーと監督より、感謝の気持ちを込めて、お礼のメッセージをお送りします。",
-      ],
-      image: "/assets/crowdfunding/cf-3.png",
-    },
-
-  ];
+  // Use returns from API
+  const rewards = returns.map((returnItem: any) => ({
+    id: returnItem.id,
+    title: returnItem.title || 'リターン',
+    price: formatCurrency(returnItem.amount),
+    description: returnItem.description ? (typeof returnItem.description === 'string' ? [returnItem.description] : returnItem.description) : [''],
+    image: returnItem.imageUrl || project.image,
+  }));
 
   // Select reward
   const handleRewardSelection = (rewardId: number) => {
@@ -95,7 +82,7 @@ const SupportPage = ({
   };
 
   // Change qty
-  const handleQuantityChange = (rewardId: number, quantity: number) => {
+  const handleQuantityChange = (rewardId: string, quantity: number) => {
     setQuantities((prev) => ({
       ...prev,
       [rewardId]: quantity,
@@ -106,10 +93,10 @@ const SupportPage = ({
   const handlePurchase = () => {
     const selectedRewardIds = selectedRewards
       .map((id) => {
-        const reward = rewards.find((r) => r.id === id);
+        const reward = rewards.find((r: any) => r.id === id);
         return reward ? { id: reward.id, quantity: quantities[id] || 1 } : null;
       })
-      .filter((item): item is { id: number; quantity: number } => item !== null);
+      .filter((item): item is { id: string; quantity: number } => item !== null);
 
     // Pass only IDs in the URL
     const rewardIds = selectedRewardIds.map((r) => r.id).join(',');

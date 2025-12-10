@@ -1,25 +1,41 @@
 "use client";
 import React, { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { login } from "@/app/lib/api";
 
 const LoginPage = () => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
+    const router = useRouter();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError("");
         setIsLoading(true);
 
-        // TODO: Implement actual login logic here
-        // For now, just simulate a login
-        setTimeout(() => {
+        try {
+            const response = await login(email, password);
+            
+            // ログイン成功
+            if (response.accessToken) {
+                // トークンとユーザー情報はAPIクライアントで自動的に保存される
+                // ホームページまたはクラウドファンディングページにリダイレクト
+                router.push('/crowdfunding');
+            }
+        } catch (err: any) {
             setIsLoading(false);
-            // Redirect or handle successful login
-            console.log("Login attempt:", { email, password });
-        }, 1000);
+            // エラーメッセージを設定
+            if (err.response?.data?.message) {
+                setError(err.response.data.message);
+            } else if (err.message) {
+                setError(err.message);
+            } else {
+                setError('ログインに失敗しました。メールアドレスとパスワードを確認してください。');
+            }
+        }
     };
 
     return (
@@ -99,6 +115,7 @@ const LoginPage = () => {
                         {/* Google Login */}
                         <button
                             type="button"
+                            onClick={() => window.location.href = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api'}/auth/google`}
                             className="w-14 h-14 flex items-center justify-center border border-gray-300 rounded-lg bg-white hover:bg-gray-50 transition-colors shadow-sm"
                             aria-label="Googleでログイン"
                         >
@@ -113,6 +130,7 @@ const LoginPage = () => {
                         {/* Apple Login */}
                         <button
                             type="button"
+                            onClick={() => window.location.href = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api'}/auth/apple`}
                             className="w-14 h-14 flex items-center justify-center border border-gray-300 rounded-lg bg-white hover:bg-gray-50 transition-colors shadow-sm"
                             aria-label="Appleでログイン"
                         >
@@ -124,6 +142,7 @@ const LoginPage = () => {
                         {/* Facebook Login */}
                         <button
                             type="button"
+                            onClick={() => window.location.href = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api'}/auth/facebook`}
                             className="w-14 h-14 flex items-center justify-center border border-gray-300 rounded-lg bg-white hover:bg-gray-50 transition-colors shadow-sm"
                             aria-label="Facebookでログイン"
                         >
