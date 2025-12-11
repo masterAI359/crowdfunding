@@ -19,6 +19,11 @@ interface Project {
   media?: Array<{ url: string; type: string }>;
   returns?: Array<{ id: string; title: string; price: number; description: string }>;
   isFavorited?: boolean;
+  owner?: {
+    id: string;
+    name?: string;
+    email?: string;
+  };
 }
 
 const ProjectDetailPage = ({ params: paramsPromise }: { params: Promise<{ projectId: string }> }) => {
@@ -36,8 +41,28 @@ const ProjectDetailPage = ({ params: paramsPromise }: { params: Promise<{ projec
       try {
         setLoading(true);
         const data = await getProjectById(params.projectId);
-        setProject(data);
-        setIsFavorited(data.isFavorited || false);
+        // データを変換してフロントエンドの形式に合わせる
+        const transformedProject: Project = {
+          id: data.id,
+          title: data.title,
+          description: data.description,
+          amount: `¥${(data.totalAmount || 0).toLocaleString()}`,
+          supporters: (data.supporterCount || 0).toLocaleString(),
+          daysLeft: `${data.remainingDays || 0}日`,
+          achievementRate: data.achievementRate || 0,
+          image: data.image || '/assets/crowdfunding/cf-1.png',
+          media: data.medias || [],
+          returns: (data.returns || []).map((ret: any) => ({
+            id: ret.id,
+            title: ret.title,
+            price: ret.amount || 0, // バックエンドのamountをpriceに変換
+            description: ret.description || '',
+          })),
+          isFavorited: data.isFavorite || false,
+          owner: data.owner, // Add owner information
+        };
+        setProject(transformedProject);
+        setIsFavorited(data.isFavorite || false);
       } catch (error) {
         console.error("プロジェクトの取得に失敗しました:", error);
       } finally {
@@ -53,7 +78,18 @@ const ProjectDetailPage = ({ params: paramsPromise }: { params: Promise<{ projec
     const fetchRecommended = async () => {
       try {
         const recommended = await getRecommendedProjects(params.projectId, 20);
-        setRecommendedProjects(recommended || []);
+        // データを変換してフロントエンドの形式に合わせる
+        const transformedProjects = (recommended || []).map((project: any) => ({
+          id: project.id,
+          title: project.title,
+          description: project.description,
+          amount: `¥${(project.totalAmount || 0).toLocaleString()}`,
+          supporters: (project.supporterCount || 0).toLocaleString(),
+          daysLeft: `${project.remainingDays || 0}日`,
+          achievementRate: project.achievementRate || 0,
+          image: project.image || '/assets/crowdfunding/cf-1.png',
+        }));
+        setRecommendedProjects(transformedProjects);
       } catch (error) {
         console.error("レコメンドプロジェクトの取得に失敗しました:", error);
       }
@@ -118,33 +154,15 @@ const ProjectDetailPage = ({ params: paramsPromise }: { params: Promise<{ projec
     },
   ];
 
-  const dummyImages = [
-    '/assets/crowdfunding/cf-4.png', '/assets/crowdfunding/cf-3.png', '/assets/crowdfunding/cf-2.png'
-  ]
-
-  const returns = [
-    {
-      title: 'エンドロールお名前掲載',
-      price: '5,000円',
-      description: '・同窓会実行委員より５年間のメッセージ\n・活動報告「印象式レベル」開催\n・運営・井上記二本書Ｐ３６\n・フェブムページト掲示ツグ\n・ココオ協議作タマロロ'
+  // Creator information from project owner
+  const creators = project.owner ? [
+    { 
+      id: 1, 
+      title: "", 
+      image: "/assets/crowdfunding/creator-1.png", 
+      text: project.description || "このプロジェクトでは、多くの人々に感動と勇気を与えたいと考えています。" 
     },
-    {
-      title: 'エンドロールお名前掲載',
-      price: '5,000円',
-      description: '・同窓会実行委員より５年間のメッセージ\n・活動報告「印象式レベル」開催\n・運営・井上記二本書Ｐ３６\n・フェブムページト掲示ツグ\n・ココオ協議作タマロロ'
-    },
-    {
-      title: 'エンドロールお名前掲載',
-      price: '5,000円',
-      description: '・同窓会実行委員より５年間のメッセージ\n・活動報告「印象式レベル」開催\n・運営・井上記二本書Ｐ３６\n・フェブムページト掲示ツグ\n・ココオ協議作タマロロ'
-    }
-  ];
-
-  const creators = [
-    { id: 1, title: "", image: "/assets/crowdfunding/creator-1.png", text: "このプロジェクトでは、SHOGOのグラミー賞受賞への道のりをドキュメンタリー映像として記録し、多くの人々に感動と勇気を与えたいと考えています。彼の音楽活動の舞台裏や、日々の努力、そして挑戦の軌跡を映像化このプロジェクトでは、" },
-    { id: 2, title: "", image: "/assets/crowdfunding/creator-2.png", text: "SHOGOは、幼い頃からバイオリンの美しい旋律に魅了され、幾多の困難を乗り越えながら演奏家としての道を歩んできました。時に厳しい練習に涙し、挫折に打ちひしがれそうになりながらも、彼を突き動かしたのは、音楽を通じて人々の心に寄り添いたいという純粋な願いでした。彼の夢であるグラミー賞受賞は、貧しさや逆境の中で希望を見出そうと懸命に生きる人々に勇気を与えるシンボルとなる" },
-    { id: 3, title: "", image: "/assets/crowdfunding/creator-3.png", text: "クラウドファンディングならではの リターンをご用意しています！ ぜひ皆様のご無理のない範囲で 応援お願い致します。" },
-  ];
+  ] : [];
 
   return (
     <div className="min-h-screen  bg-white text-gray-700 mx-auto md:pt-20 pt-25 ">
@@ -361,7 +379,7 @@ const ProjectDetailPage = ({ params: paramsPromise }: { params: Promise<{ projec
                     </div>
                     <div className="p-6 pt-0">
                       <h3 className="text-xl font-bold text-black mb-2">{reward.title}</h3>
-                      <p className="text-3xl font-bold text-black mb-4">¥{reward.price.toLocaleString()}</p>
+                      <p className="text-3xl font-bold text-black mb-4">¥{(reward.price || 0).toLocaleString()}</p>
                       <p className="text-sm text-black whitespace-pre-line mb-6">{reward.description}</p>
                       <Link
                         href={`/crowdfunding/${project.id}/support?returnId=${reward.id}`}

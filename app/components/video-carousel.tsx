@@ -1,7 +1,6 @@
 "use client";
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
-import { BannerVideo } from '@/app/data/projects';
 
 type CategoryType =
   | "バラエティー"
@@ -16,8 +15,18 @@ const categoryStyles: Record<CategoryType, string> = {
   ドキュメンタリー: "bg-[#A442F4] text-white",
 };
 
+interface Video {
+  id: string | number;
+  title: string;
+  image: string;
+  categoryLabel: string;
+  userLabel?: string;
+  viewCount?: string;
+  viewDate?: number;
+}
+
 interface VideoCarouselProps {
-  videos: BannerVideo[];
+  videos: Video[];
 }
 
 const VideoCarousel: React.FC<VideoCarouselProps> = ({ videos }) => {

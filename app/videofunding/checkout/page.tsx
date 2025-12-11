@@ -1,8 +1,8 @@
 "use client";
-import React, { use, useState } from "react";
+import React, { use, useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { videos } from "@/app/data/projects";
+import { getVideoById } from "@/app/lib/api";
 
 interface Project {
   id: string;
@@ -15,7 +15,7 @@ interface Project {
 }
 
 interface Reward {
-  id: number;
+  id: string;
   title: string;
   price: string;
   description: string;
@@ -29,90 +29,59 @@ const CheckoutPage = ({
   searchParams: Promise<{ projectId?: string; rewardIds?: string; quantities?: string }>;
 }) => {
   const searchParams = use(searchParamsPromise);
+  const [project, setProject] = useState<Project | null>(null);
+  const [rewards, setRewards] = useState<Reward[]>([]);
+  const [loading, setLoading] = useState(true);
   const isLoggedIn = false;
-  // const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [email, setEmail] = useState("");
 
-  // Fetch project and rewards based on IDs
-  let project: Project | null = null;
-  let rewards: Reward[] = [];
+  // Fetch video data
+  useEffect(() => {
+    const fetchVideo = async () => {
+      if (!searchParams?.projectId) return;
 
-  if (searchParams?.projectId) {
-    const foundVideo = videos.find((v) => v.id.toString() === searchParams.projectId);
+      try {
+        setLoading(true);
+        const video = await getVideoById(searchParams.projectId);
 
-    if (foundVideo) {
-      // Map video to project format
-      project = {
-        id: foundVideo.id.toString(),
-        title: foundVideo.title,
-        description: "『太秦ライムライト』のプロデューサーと監督より、感謝の気持ちを込めて、お礼のメッセージをお送りします。・支援者様との連絡方法：詳細はメールで連絡します。『太秦ライムライト』のプロデューサー",
-        image: foundVideo.image,
-        amount: "¥2,000,000",
-        supporters: "22人",
-        daysLeft: "11日",
-      };
+        // Map video to project format
+        setProject({
+          id: video.id,
+          title: video.title,
+          description: video.description || "動画の説明がありません。",
+          image: video.thumbnailUrl || video.url || "/assets/videofunding/video-1.png",
+          amount: "¥45,000", // This should come from backend pricing
+          supporters: video.viewCount?.toLocaleString() || "0",
+          daysLeft: "無期限",
+        });
 
-      // Parse reward IDs and quantities
-      if (searchParams.rewardIds && searchParams.quantities) {
-        const rewardIds = searchParams.rewardIds.split(',').map(Number);
-        const quantities = searchParams.quantities.split(',').map(Number);
+        // Parse reward IDs and quantities
+        if (searchParams.rewardIds && searchParams.quantities) {
+          const rewardIds = searchParams.rewardIds.split(',');
+          const quantities = searchParams.quantities.split(',').map(Number);
 
-        // Static rewards data (same as in support page)
-        const allRewards = [
-          {
-            id: 1,
-            title: "伝説のバンド・ピンクサワファイヤーが復活 １日だけの復活ライブ vol.01",
-            price: "995,000",
-            description: "『太秦ライムライト』のプロデューサーと監督より、感謝の気持ちを込めて、お礼のメッセージをお送りします。・支援者様との連絡方法：詳細はメールで連絡します。『太秦ライムライト』のプロデューサーと監督より、感謝の気持ちを込めて、お礼のメッセージをお送りします。",
-            image: "/assets/crowdfunding/cf-3.png",
-          },
-          {
-            id: 2,
-            title: "伝説のバンド・ピンクサワファイヤーが復活 １日だけの復活ライブ vol.02",
-            price: "995,000",
-            description: "『太秦ライムライト』のプロデューサーと監督より、感謝の気持ちを込めて、お礼のメッセージをお送りします。・支援者様との連絡方法：詳細はメールで連絡します。『太秦ライムライト』のプロデューサーと監督より、感謝の気持ちを込めて、お礼のメッセージをお送りします。",
-            image: "/assets/crowdfunding/cf-3.png",
-          },
-          {
-            id: 3,
-            title: "伝説のバンド・ピンクサワファイヤーが復活 １日だけの復活ライブ vol.03",
-            price: "995,000",
-            description: "『太秦ライムライト』のプロデューサーと監督より、感謝の気持ちを込めて、お礼のメッセージをお送りします。・支援者様との連絡方法：詳細はメールで連絡します。『太秦ライムライト』のプロデューサーと監督より、感謝の気持ちを込めて、お礼のメッセージをお送りします。",
-            image: "/assets/crowdfunding/cf-3.png",
-          },
-          {
-            id: 4,
-            title: "伝説のバンド・ピンクサワファイヤーが復活 １日だけの復活ライブ vol.04",
-            price: "995,000",
-            description: "『太秦ライムライト』のプロデューサーと監督より、感謝の気持ちを込めて、お礼のメッセージをお送りします。・支援者様との連絡方法：詳細はメールで連絡します。『太秦ライムライト』のプロデューサーと監督より、感謝の気持ちを込めて、お礼のメッセージをお送りします。",
-            image: "/assets/crowdfunding/cf-3.png",
-          },
-          {
-            id: 5,
-            title: "伝説のバンド・ピンクサワファイヤーが復活 １日だけの復活ライブ vol.05",
-            price: "995,000",
-            description: "『太秦ライムライト』のプロデューサーと監督より、感謝の気持ちを込めて、お礼のメッセージをお送りします。・支援者様との連絡方法：詳細はメールで連絡します。『太秦ライムライト』のプロデューサーと監督より、感謝の気持ちを込めて、お礼のメッセージをお送りします。",
-            image: "/assets/crowdfunding/cf-3.png",
-          },
-        ];
+          // For now, use the video itself as a reward
+          // In a real implementation, you might fetch video series or episodes
+          const videoReward: Reward = {
+            id: video.id,
+            title: video.title,
+            price: "45,000",
+            description: video.description || "動画の説明がありません。",
+            image: video.thumbnailUrl || video.url || "/assets/crowdfunding/cf-3.png",
+            quantity: quantities[0] || 1,
+          };
 
-        rewards = rewardIds.map((id, index) => {
-          const reward = allRewards.find((r) => r.id === id);
-          if (reward) {
-            return {
-              id: reward.id,
-              title: reward.title,
-              price: reward.price,
-              description: reward.description,
-              image: reward.image,
-              quantity: quantities[index] || 1,
-            };
-          }
-          return null;
-        }).filter((r): r is Reward => r !== null);
+          setRewards([videoReward]);
+        }
+      } catch (error) {
+        console.error("動画の取得に失敗しました:", error);
+      } finally {
+        setLoading(false);
       }
-    }
-  }
+    };
+
+    fetchVideo();
+  }, [searchParams]);
 
   const handlePurchase = () => {
     console.log("Confirming checkout for project:", project);
@@ -123,6 +92,14 @@ const CheckoutPage = ({
   const handleContinueSupport = () => {
     console.log("Email:", email);
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-lg text-gray-600">読み込み中...</p>
+      </div>
+    );
+  }
 
   if (!project) {
     return (

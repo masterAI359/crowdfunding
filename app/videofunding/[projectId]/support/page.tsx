@@ -1,8 +1,28 @@
 "use client";
-import React, { use, useState } from "react";
+import React, { use, useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { projects } from "@/app/data/projects"; // import your projects list
+import { getVideoById } from "@/app/lib/api";
+
+interface Video {
+  id: string;
+  title: string;
+  description?: string;
+  thumbnailUrl?: string;
+  url?: string;
+  viewCount: number;
+  owner?: {
+    name?: string;
+  };
+}
+
+interface Reward {
+  id: string;
+  title: string;
+  price: string;
+  description: string[];
+  image: string;
+}
 
 const SupportPage = ({
   params: paramsPromise,
@@ -11,85 +31,61 @@ const SupportPage = ({
 }) => {
   const params = use(paramsPromise);
   const router = useRouter();
-  const [selectedRewards, setSelectedRewards] = useState<number[]>([1, 2, 3, 4, 5]);
-  const [quantities, setQuantities] = useState<{ [key: number]: number }>({});
+  const [video, setVideo] = useState<Video | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [selectedRewards, setSelectedRewards] = useState<string[]>([]);
+  const [quantities, setQuantities] = useState<{ [key: string]: number }>({});
   const [email, setEmail] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isVideoPurchase, setIsVideoPurchase] = useState(true);
 
-  // ✅ Find project by ID
-  const project = projects.find((p) => p.id === Number(params.projectId));
+  // Fetch video data
+  useEffect(() => {
+    const fetchVideo = async () => {
+      try {
+        setLoading(true);
+        const data = await getVideoById(params.projectId);
+        setVideo(data);
+      } catch (error) {
+        console.error("動画の取得に失敗しました:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  if (!project) {
+    fetchVideo();
+  }, [params.projectId]);
+
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-lg text-gray-600">プロジェクトが見つかりません。</p>
+        <p className="text-lg text-gray-600">読み込み中...</p>
       </div>
     );
   }
 
-  // Rewards (example static rewards — you can extend this later)
-  const rewards = [
-    {
-      id: 1,
-      title: "伝説のバンド・ピンクサワファイヤーが復活 １日だけの復活ライブ vol.01",
-      price: "995,000",
-      description: [
-        "『太秦ライムライト』のプロデューサーと監督より、感謝の気持ちを込めて、お礼のメッセージをお送りします。",
-        "・支援者様との連絡方法：詳細はメールで連絡します。",
-        "『太秦ライムライト』のプロデューサーと監督より、感謝の気持ちを込めて、お礼のメッセージをお送りします。",
-      ],
-      image: "/assets/crowdfunding/cf-3.png",
-    },
-    {
-      id: 2,
-      title: "伝説のバンド・ピンクサワファイヤーが復活 １日だけの復活ライブ vol.02",
-      price: "995,000",
-      description: [
-        "『太秦ライムライト』のプロデューサーと監督より、感謝の気持ちを込めて、お礼のメッセージをお送りします。",
-        "・支援者様との連絡方法：詳細はメールで連絡します。",
-        "『太秦ライムライト』のプロデューサーと監督より、感謝の気持ちを込めて、お礼のメッセージをお送りします。",
-      ],
-      image: "/assets/crowdfunding/cf-3.png",
-    },
-    {
-      id: 3,
-      title: "伝説のバンド・ピンクサワファイヤーが復活 １日だけの復活ライブ vol.03",
-      price: "995,000",
-      description: [
-        "『太秦ライムライト』のプロデューサーと監督より、感謝の気持ちを込めて、お礼のメッセージをお送りします。",
-        "・支援者様との連絡方法：詳細はメールで連絡します。",
-        "『太秦ライムライト』のプロデューサーと監督より、感謝の気持ちを込めて、お礼のメッセージをお送りします。",
-      ],
-      image: "/assets/crowdfunding/cf-3.png",
-    },
+  if (!video) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-lg text-gray-600">動画が見つかりません。</p>
+      </div>
+    );
+  }
 
+  // For video purchases, we'll use the video itself as a reward
+  // In a real implementation, you might have separate video series or episodes
+  const rewards: Reward[] = [
     {
-      id: 4,
-      title: "伝説のバンド・ピンクサワファイヤーが復活 １日だけの復活ライブ vol.04",
-      price: "995,000",
-      description: [
-        "『太秦ライムライト』のプロデューサーと監督より、感謝の気持ちを込めて、お礼のメッセージをお送りします。",
-        "・支援者様との連絡方法：詳細はメールで連絡します。",
-        "『太秦ライムライト』のプロデューサーと監督より、感謝の気持ちを込めて、お礼のメッセージをお送りします。",
-      ],
-      image: "/assets/crowdfunding/cf-3.png",
-    },
-    {
-      id: 5,
-      title: "伝説のバンド・ピンクサワファイヤーが復活 １日だけの復活ライブ vol.05",
-      price: "995,000",
-      description: [
-        "『太秦ライムライト』のプロデューサーと監督より、感謝の気持ちを込めて、お礼のメッセージをお送りします。",
-        "・支援者様との連絡方法：詳細はメールで連絡します。",
-        "『太秦ライムライト』のプロデューサーと監督より、感謝の気持ちを込めて、お礼のメッセージをお送りします。",
-      ],
-      image: "/assets/crowdfunding/cf-3.png",
+      id: video.id,
+      title: video.title,
+      price: "45,000", // This should come from backend pricing data
+      description: video.description ? [video.description] : ["動画の説明がありません。"],
+      image: video.thumbnailUrl || video.url || "/assets/crowdfunding/cf-3.png",
     },
   ];
 
   // Select reward
-  const handleRewardSelection = (rewardId: number) => {
+  const handleRewardSelection = (rewardId: string) => {
     setSelectedRewards((prev) =>
       prev.includes(rewardId)
         ? prev.filter((id) => id !== rewardId)
@@ -108,10 +104,10 @@ const SupportPage = ({
   const handlePurchase = () => {
     const selectedRewardIds = selectedRewards
       .map((id) => {
-        const reward = rewards.find((r) => r.id === id);
-        return reward ? { id: reward.id, quantity: quantities[id] || 1 } : null;
+        const foundReward = rewards.find((r) => r.id === id);
+        return foundReward ? { id: foundReward.id, quantity: quantities[id] || 1 } : null;
       })
-      .filter((item): item is { id: number; quantity: number } => item !== null);
+      .filter((item): item is { id: string; quantity: number } => item !== null);
 
     // Pass only IDs in the URL
     const rewardIds = selectedRewardIds.map((r) => r.id).join(',');
@@ -166,8 +162,8 @@ const SupportPage = ({
             {/* Left Image */}
             <div className="w-full md:w-1/3 relative h-[200px] sm:h-[230px] md:h-auto">
               <Image
-                src={project.image}
-                alt={project.title}
+                src={video.thumbnailUrl || video.url || '/assets/videofunding/video-1.png'}
+                alt={video.title}
                 fill
                 className="object-cover h-full w-full rounded-bl-lg"
               />
@@ -178,7 +174,7 @@ const SupportPage = ({
               {/* Title + Progress + Stats */}
               <div className="md:w-2/3 flex flex-col justify-between p-3 sm:p-4">
                 <h2 className="text-lg sm:text-xl font-bold tracking-tight mb-2">
-                  {project.title}
+                  {video.title}
                 </h2>
 
                 {/* Progress Bar */}
@@ -196,23 +192,15 @@ const SupportPage = ({
                       調達金額
                     </p>
                     <p className="text-lg sm:text-xl font-bold">
-                      {project.amount}
+                      {video.viewCount.toLocaleString()}回
                     </p>
                   </div>
                   <div>
                     <p className="text-xs sm:text-sm text-black text-center">
-                      参加人数
+                      作成者
                     </p>
                     <p className="text-lg sm:text-xl font-bold">
-                      {project.supporters}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs sm:text-sm text-black text-center">
-                      残り日数
-                    </p>
-                    <p className="text-lg sm:text-xl font-bold">
-                      {project.daysLeft}
+                      {video.owner?.name || '匿名ユーザー'}
                     </p>
                   </div>
                 </div>
@@ -221,7 +209,7 @@ const SupportPage = ({
               {/* Description */}
               <div className="md:w-1/2 px-3 sm:px-4 text-left my-auto py-2">
                 <p className="text-md  text-black">
-                  {project.description}
+                  {video.description || '動画の説明がありません。'}
                 </p>
               </div>
             </div>

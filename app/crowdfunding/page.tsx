@@ -28,7 +28,18 @@ const CrowdfundingPage = () => {
       try {
         setLoading(true);
         const response = await getProjects(currentPage, 12);
-        setProjects(response.projects || []);
+        // データを変換してフロントエンドの形式に合わせる
+        const transformedProjects = (response.projects || []).map((project: any) => ({
+          id: project.id,
+          title: project.title,
+          description: project.description,
+          amount: `¥${(project.totalAmount || 0).toLocaleString()}`,
+          supporters: (project.supporterCount || 0).toLocaleString(),
+          daysLeft: `${project.remainingDays || 0}日`,
+          achievementRate: project.achievementRate || 0,
+          image: project.image || '/assets/crowdfunding/cf-1.png',
+        }));
+        setProjects(transformedProjects);
         setTotalPages(response.pagination?.totalPages || 1);
       } catch (error) {
         console.error("プロジェクトの取得に失敗しました:", error);
@@ -45,7 +56,18 @@ const CrowdfundingPage = () => {
     const fetchBannerProjects = async () => {
       try {
         const recommended = await getRecommendedProjects(undefined, 5);
-        setBannerProjects(recommended || []);
+        // データを変換してフロントエンドの形式に合わせる
+        const transformedProjects = (recommended || []).map((project: any) => ({
+          id: project.id,
+          title: project.title,
+          description: project.description,
+          amount: `¥${(project.totalAmount || 0).toLocaleString()}`,
+          supporters: (project.supporterCount || 0).toLocaleString(),
+          daysLeft: `${project.remainingDays || 0}日`,
+          achievementRate: project.achievementRate || 0,
+          image: project.image || '/assets/crowdfunding/cf-1.png',
+        }));
+        setBannerProjects(transformedProjects);
       } catch (error) {
         console.error("レコメンドプロジェクトの取得に失敗しました:", error);
       }

@@ -216,6 +216,16 @@ export const confirmPayment = async (paymentIntentId: string) => {
 // ==================== 動画関連API ====================
 
 /**
+ * 動画一覧取得（公開動画）
+ */
+export const getVideos = async (page: number = 1, limit: number = 12) => {
+  const response = await apiClient.get('/videos/list', {
+    params: { page, limit },
+  });
+  return response.data;
+};
+
+/**
  * 動画一覧取得（出品者用）
  */
 export const getVideosByOwner = async (page: number = 1, limit: number = 20) => {

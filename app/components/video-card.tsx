@@ -5,7 +5,7 @@ import Image from "next/image";
 
 
 interface Video {
-  id: number;
+  id: string | number;
   title: string;
   image: string;
   categoryLabel: string;

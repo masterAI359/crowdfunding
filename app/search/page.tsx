@@ -1,15 +1,82 @@
 "use client";
-import React, { useState } from "react";
-import { projects } from "@/app/data/projects";
+import React, { useState, useEffect } from "react";
+import { searchProjects, getProjects } from "@/app/lib/api";
 import ProjectCard from "@/app/components/project-card";
+
+interface Project {
+  id: string;
+  title: string;
+  description?: string;
+  amount: string;
+  supporters: string;
+  daysLeft: string;
+  achievementRate: number;
+  image: string;
+}
 
 const SearchPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState("人気順");
   const [searchKeyword, setSearchKeyword] = useState("映画");
-  const [showAdvanced, setShowAdvanced] = useState(false); // 👈 toggle state
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const sortTabs = ["人気順", "新着順", "終了日が近い順", "支援総額順"];
-  const totalCount = 1944;
+
+  // Map sort tab to backend sortBy parameter
+  const getSortBy = (tab: string) => {
+    switch (tab) {
+      case "人気順":
+        return "popular";
+      case "新着順":
+        return undefined; // default is newest
+      case "終了日が近い順":
+        return "ending";
+      case "支援総額順":
+        return "amount";
+      default:
+        return undefined;
+    }
+  };
+
+  // Fetch projects based on search
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        setLoading(true);
+        const sortBy = getSortBy(activeTab);
+        let response;
+        
+        if (searchKeyword && searchKeyword.trim()) {
+          response = await searchProjects(searchKeyword, currentPage, 12);
+        } else {
+          response = await getProjects(currentPage, 12, sortBy);
+        }
+
+        const transformedProjects = (response.projects || []).map((project: any) => ({
+          id: project.id,
+          title: project.title,
+          description: project.description,
+          amount: `¥${(project.totalAmount || 0).toLocaleString()}`,
+          supporters: (project.supporterCount || 0).toLocaleString(),
+          daysLeft: `${project.remainingDays || 0}日`,
+          achievementRate: project.achievementRate || 0,
+          image: project.image || '/assets/crowdfunding/cf-1.png',
+        }));
+
+        setProjects(transformedProjects);
+        setTotalCount(response.pagination?.total || 0);
+      } catch (error) {
+        console.error("プロジェクトの取得に失敗しました:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProjects();
+  }, [searchKeyword, activeTab, currentPage]);
 
   return (
     <div className="min-h-screen bg-white text-black pt-20 pb-5">
@@ -285,16 +352,31 @@ const SearchPage: React.FC = () => {
 
         {/* === Search Heading === */}
         <h2 className="text-lg md:text-xl font-bold mb-8 max-w-5xl mx-auto mt-10 px-4 md:px-0">
-          「{searchKeyword}」で検索した結果
-          <span className="mx-1">{totalCount}</span>件のプロジェクトが見つかりました。
+          {searchKeyword && searchKeyword.trim() ? (
+            <>
+              「{searchKeyword}」で検索した結果
+              <span className="mx-1">{totalCount}</span>件のプロジェクトが見つかりました。
+            </>
+          ) : (
+            <>
+              プロジェクト一覧
+              <span className="mx-1">{totalCount}</span>件のプロジェクトが見つかりました。
+            </>
+          )}
         </h2>
 
         {/* === Project Grid === */}
-        <div className="grid grid-cols-2 lg:grid-cols-3 sm:max-w-5xl max-w-md mx-auto gap-4 md:gap-y-8 mb-12 px-4">
-          {projects.map((project) => (
-            <ProjectCard key={project.id} project={project} />
-          ))}
-        </div>
+        {loading ? (
+          <div className="flex justify-center items-center py-20">
+            <p className="text-gray-600">読み込み中...</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 lg:grid-cols-3 sm:max-w-5xl max-w-md mx-auto gap-4 md:gap-y-8 mb-12 px-4">
+            {projects.map((project) => (
+              <ProjectCard key={project.id} project={project} />
+            ))}
+          </div>
+        )}
       </main>
     </div>
   );
