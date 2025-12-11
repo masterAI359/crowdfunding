@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { getProjectById, createPayment } from "@/app/lib/api";
 import { useAuth } from "@/app/hooks/useAuth";
+import LoadingSpinner from "@/app/components/loading-spinner";
 
 interface Project {
   id: string;
@@ -294,9 +295,11 @@ const CheckoutPage = ({
         <div className="text-center max-w-5xl mx-auto mb-8 sm:mb-10">
           <button
             onClick={handlePurchase}
-            className="bg-[#FF0066] text-white cursor-pointer font-bold py-3 sm:py-4 px-12 sm:px-20 rounded-full text-md sm:text-lg hover:bg-[#FF0066]/80 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+            disabled={processing}
+            className="bg-[#FF0066] text-white cursor-pointer font-bold py-3 sm:py-4 px-12 sm:px-20 rounded-full text-md sm:text-lg hover:bg-[#FF0066]/80 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mx-auto"
           >
-            確　認
+            {processing && <LoadingSpinner size="sm" className="text-white" />}
+            {processing ? "処理中..." : "確　認"}
           </button>
         </div>
       </main>
@@ -323,8 +326,10 @@ const CheckoutPage = ({
               />
               <button
                 onClick={handleContinueSupport}
-                className="bg-[#FF0066] cursor-pointer text-white  py-3 px-6  hover:bg-[#FF0066]/80 transition-colors duration-300 text-md w-full sm:w-1/2 "
+                disabled={processing}
+                className="bg-[#FF0066] cursor-pointer text-white py-3 px-6 hover:bg-[#FF0066]/80 transition-colors duration-300 text-md w-full sm:w-1/2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
+                {processing && <LoadingSpinner size="sm" className="text-white" />}
                 支援を続ける
               </button>
             </div>

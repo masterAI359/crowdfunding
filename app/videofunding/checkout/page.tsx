@@ -3,6 +3,7 @@ import React, { use, useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { getVideoById } from "@/app/lib/api";
+import LoadingSpinner from "@/app/components/loading-spinner";
 
 interface Project {
   id: string;
@@ -32,6 +33,7 @@ const CheckoutPage = ({
   const [project, setProject] = useState<Project | null>(null);
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isProcessing, setIsProcessing] = useState(false);
   const isLoggedIn = false;
   const [email, setEmail] = useState("");
 
@@ -84,9 +86,13 @@ const CheckoutPage = ({
   }, [searchParams]);
 
   const handlePurchase = () => {
+    if (isProcessing) return;
+    setIsProcessing(true);
     console.log("Confirming checkout for project:", project);
     console.log("Rewards:", rewards);
     // router.push(`/crowdfunding/checkout/success`);
+    // Note: In a real implementation, this would call an API
+    setTimeout(() => setIsProcessing(false), 1000);
   };
 
   const handleContinueSupport = () => {
@@ -198,9 +204,11 @@ const CheckoutPage = ({
         <div className="text-center max-w-5xl mx-auto mb-8 sm:mb-10">
           <button
             onClick={handlePurchase}
-            className="bg-white text-[#FF0066] border border-[#FF0066] cursor-pointer font-bold py-3 sm:py-4 px-12 sm:px-20 rounded-full text-md sm:text-lg hover:bg-[#FF0066] hover:text-white transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+            disabled={isProcessing}
+            className="bg-white text-[#FF0066] border border-[#FF0066] cursor-pointer font-bold py-3 sm:py-4 px-12 sm:px-20 rounded-full text-md sm:text-lg hover:bg-[#FF0066] hover:text-white transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mx-auto"
           >
-            シリーズで購入する
+            {isProcessing && <LoadingSpinner size="sm" className="text-[#FF0066]" />}
+            {isProcessing ? "処理中..." : "シリーズで購入する"}
           </button>
         </div>
 
@@ -258,9 +266,11 @@ const CheckoutPage = ({
         <div className="text-center max-w-5xl mx-auto mb-8 sm:mb-10">
           <button
             onClick={handlePurchase}
-            className="bg-[#FF0066] text-white cursor-pointer font-bold py-3 sm:py-4 px-12 sm:px-20 rounded-full text-md sm:text-lg hover:bg-[#FF0066]/80 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+            disabled={isProcessing}
+            className="bg-[#FF0066] text-white cursor-pointer font-bold py-3 sm:py-4 px-12 sm:px-20 rounded-full text-md sm:text-lg hover:bg-[#FF0066]/80 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mx-auto"
           >
-            購入する
+            {isProcessing && <LoadingSpinner size="sm" className="text-white" />}
+            {isProcessing ? "処理中..." : "購入する"}
           </button>
         </div>
       </main>
@@ -287,8 +297,10 @@ const CheckoutPage = ({
               />
               <button
                 onClick={handleContinueSupport}
-                className="bg-[#FF0066] cursor-pointer text-white  py-3 px-6  hover:bg-[#FF0066]/80 transition-colors duration-300 text-md w-full sm:w-1/2 "
+                disabled={isProcessing}
+                className="bg-[#FF0066] cursor-pointer text-white py-3 px-6 hover:bg-[#FF0066]/80 transition-colors duration-300 text-md w-full sm:w-1/2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
+                {isProcessing && <LoadingSpinner size="sm" className="text-white" />}
                 支援を続ける
               </button>
             </div>

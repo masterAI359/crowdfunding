@@ -6,6 +6,7 @@ import ImageGallery from '@/app/components/image-gallery';
 import Link from 'next/link';
 import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
 import { getProjectById, toggleFavorite, getRecommendedProjects } from '@/app/lib/api';
+import LoadingSpinner from '@/app/components/loading-spinner';
 
 interface Project {
   id: string;
@@ -32,6 +33,7 @@ const ProjectDetailPage = ({ params: paramsPromise }: { params: Promise<{ projec
   const [recommendedProjects, setRecommendedProjects] = useState<Project[]>([]);
   const [isFavorited, setIsFavorited] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -112,12 +114,15 @@ const ProjectDetailPage = ({ params: paramsPromise }: { params: Promise<{ projec
 
   // お気に入り切り替え
   const handleToggleFavorite = async () => {
-    if (!project) return;
+    if (!project || isTogglingFavorite) return;
     try {
+      setIsTogglingFavorite(true);
       await toggleFavorite(project.id);
       setIsFavorited(!isFavorited);
     } catch (error) {
       console.error("お気に入りの更新に失敗しました:", error);
+    } finally {
+      setIsTogglingFavorite(false);
     }
   };
 
@@ -277,18 +282,23 @@ const ProjectDetailPage = ({ params: paramsPromise }: { params: Promise<{ projec
                 </Link>
                 <button
                   onClick={handleToggleFavorite}
-                  className="w-12 h-12 cursor-pointer flex items-center justify-center  rounded-3xl hover:bg-gray-50/60 transition-colors"
+                  disabled={isTogglingFavorite}
+                  className="w-12 h-12 cursor-pointer flex items-center justify-center rounded-3xl hover:bg-gray-50/60 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className={`h-25 w-25 ${isFavorited ? 'text-[#FF0066] fill-current' : 'text-gray-400'}`}
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                  </svg>
+                  {isTogglingFavorite ? (
+                    <LoadingSpinner size="sm" className="text-[#FF0066]" />
+                  ) : (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className={`h-25 w-25 ${isFavorited ? 'text-[#FF0066] fill-current' : 'text-gray-400'}`}
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                    </svg>
+                  )}
                 </button>
               </div>
             </div>

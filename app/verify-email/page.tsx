@@ -3,6 +3,7 @@ import React, { useState, useEffect, Suspense } from "react";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { verifySignupCode, initiateSignup } from "@/app/lib/api";
+import LoadingSpinner from "@/app/components/loading-spinner";
 
 const VerifyEmailForm = () => {
     const router = useRouter();
@@ -51,14 +52,19 @@ const VerifyEmailForm = () => {
         }
     };
 
+    const [isResending, setIsResending] = useState(false);
+
     const handleResendCode = async () => {
-        if (resendCountdown > 0 || !email) return;
+        if (resendCountdown > 0 || !email || isResending) return;
 
         try {
+            setIsResending(true);
             await initiateSignup(email);
             setResendCountdown(60); // 60秒のカウントダウン
         } catch (err: any) {
             setError(err.response?.data?.message || "コードの再送信に失敗しました");
+        } finally {
+            setIsResending(false);
         }
     };
 
@@ -124,8 +130,9 @@ const VerifyEmailForm = () => {
                         <button
                             type="submit"
                             disabled={isLoading || code.length !== 6}
-                            className="group relative w-full flex justify-center py-3 px-4 border-2 border-transparent hover:border-[#FF0066] text-lg font-bold rounded-full text-white hover:text-[#FF0066] bg-[#FF0066] hover:bg-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FF0066] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="group relative w-full flex justify-center items-center gap-2 py-3 px-4 border-2 border-transparent hover:border-[#FF0066] text-lg font-bold rounded-full text-white hover:text-[#FF0066] bg-[#FF0066] hover:bg-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FF0066] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
+                            {isLoading && <LoadingSpinner size="sm" className="text-white" />}
                             {isLoading ? "確認中..." : "新規登録"}
                         </button>
                     </div>
@@ -143,8 +150,10 @@ const VerifyEmailForm = () => {
                             <button
                                 type="button"
                                 onClick={handleResendCode}
-                                className="text-[#FF0066] hover:text-red-600 font-medium transition-colors underline"
+                                disabled={isResending}
+                                className="text-[#FF0066] hover:text-red-600 font-medium transition-colors underline disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
                             >
+                                {isResending && <LoadingSpinner size="sm" className="text-[#FF0066]" />}
                                 コードを再送信
                             </button>
                         )}

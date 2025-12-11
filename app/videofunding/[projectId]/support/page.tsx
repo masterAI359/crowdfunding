@@ -3,6 +3,7 @@ import React, { use, useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { getVideoById } from "@/app/lib/api";
+import LoadingSpinner from "@/app/components/loading-spinner";
 
 interface Video {
   id: string;
@@ -38,6 +39,7 @@ const SupportPage = ({
   const [email, setEmail] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isVideoPurchase, setIsVideoPurchase] = useState(true);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   // Fetch video data
   useEffect(() => {
@@ -102,6 +104,8 @@ const SupportPage = ({
 
   // Go to checkout
   const handlePurchase = () => {
+    if (isProcessing) return;
+    
     const selectedRewardIds = selectedRewards
       .map((id) => {
         const foundReward = rewards.find((r) => r.id === id);
@@ -109,6 +113,7 @@ const SupportPage = ({
       })
       .filter((item): item is { id: string; quantity: number } => item !== null);
 
+    setIsProcessing(true);
     // Pass only IDs in the URL
     const rewardIds = selectedRewardIds.map((r) => r.id).join(',');
     const quantitiesStr = selectedRewardIds.map((r) => r.quantity).join(',');
@@ -277,9 +282,11 @@ const SupportPage = ({
           <div className="text-center max-w-5xl mx-auto mb-8 sm:mb-10">
             <button
               onClick={handlePurchase}
-              className="bg-[#FF0066] text-white cursor-pointer font-bold py-3 sm:py-4 px-12 sm:px-20 rounded-full text-md sm:text-lg hover:bg-[#FF0066]/80 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+              disabled={isProcessing}
+              className="bg-[#FF0066] text-white cursor-pointer font-bold py-3 sm:py-4 px-12 sm:px-20 rounded-full text-md sm:text-lg hover:bg-[#FF0066]/80 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mx-auto"
             >
-              購入する
+              {isProcessing && <LoadingSpinner size="sm" className="text-white" />}
+              {isProcessing ? "処理中..." : "購入する"}
             </button>
           </div>
         )}
@@ -307,8 +314,10 @@ const SupportPage = ({
               />
               <button
                 onClick={handleContinueSupport}
-                className="bg-[#FF0066] cursor-pointer text-white  py-3 px-6  hover:bg-[#FF0066]/80 transition-colors duration-300 text-md w-full sm:w-1/2 "
+                disabled={isProcessing}
+                className="bg-[#FF0066] cursor-pointer text-white py-3 px-6 hover:bg-[#FF0066]/80 transition-colors duration-300 text-md w-full sm:w-1/2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
+                {isProcessing && <LoadingSpinner size="sm" className="text-white" />}
                 支援を続ける
               </button>
             </div>
