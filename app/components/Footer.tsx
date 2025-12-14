@@ -29,37 +29,37 @@ const Footer = () => {
           <div className="flex flex-row px-4 gap-6 sm:px-7 sm:gap-20 md:gap-12">
             {/* Main Content Navigation */}
             <div className="flex flex-col space-y-3">
-              <a href="/about" className="text-sm sm:text-xl font-bold hover:text-white">
+              <Link href="/about" className="text-sm sm:text-xl font-bold hover:text-white">
                 つくるテレビとは
-              </a>
+              </Link>
               <Link href="/crowdfunding" className="text-sm sm:text-xl font-bold hover:text-white">
                 プロジェクト
               </Link>
               <Link href="/videofunding" className="text-sm sm:text-xl font-bold hover:text-white">
                 動画一覧
               </Link>
-              <a href="/faq" className="text-sm sm:text-xl font-bold hover:text-white">
+              <Link href="/faq" className="text-sm sm:text-xl font-bold hover:text-white">
                 よくある質問
-              </a>
-              <a href="/user-settings" className="text-sm sm:text-xl font-bold hover:text-white">
+              </Link>
+              <Link href="/user-settings" className="text-sm sm:text-xl font-bold hover:text-white">
                 ユーザー設定
-              </a>
+              </Link>
             </div>
 
             {/* Legal / Informational Links */}
             <div className="flex flex-col space-y-3">
-              <a href="#" className="text-sm sm:text-xl font-bold hover:text-white">
+              <Link href="/terms-of-service" className="text-sm sm:text-xl font-bold hover:text-white">
                 利用規約
-              </a>
-              <a href="#" className="text-sm sm:text-xl font-bold hover:text-white">
+              </Link>
+              <Link href="/privacy-policy" className="text-sm sm:text-xl font-bold hover:text-white">
                 プライバシーポリシー
-              </a>
-              <a href="#" className="text-sm sm:text-xl font-bold hover:text-white">
+              </Link>
+              <Link href="/commercial-tran" className="text-sm sm:text-xl font-bold hover:text-white">
                 特定商取引法に基づく表記
-              </a>
-              <a href="#" className="text-sm sm:text-xl font-bold hover:text-white">
+              </Link>
+              <Link href="/contact" className="text-sm sm:text-xl font-bold hover:text-white">
                 運営会社
-              </a>
+              </Link>
             </div>
           </div>
         </div>
@@ -97,21 +97,21 @@ const Footer = () => {
 
             {/* Legal / Informational Links */}
             <div className="flex flex-col space-y-3">
-              <a href="/faq" className="text-sm font-bold hover:text-white">
+              <Link href="/faq" className="text-sm font-bold hover:text-white">
                 よくある質問
-              </a>
-              <a href="/terms-of-service" className="text-sm font-bold hover:text-white">
+              </Link>
+              <Link href="/terms-of-service" className="text-sm font-bold hover:text-white">
                 利用規約
-              </a>
-              <a href="/privacy-policy" className="text-sm font-bold hover:text-white">
+              </Link>
+              <Link href="/privacy-policy" className="text-sm font-bold hover:text-white">
                 プライバシーポリシー
-              </a>
-              <a href="/terms-of-service" className="text-sm font-bold hover:text-white">
+              </Link>
+              <Link href="/commercial-tran" className="text-sm font-bold hover:text-white">
                 特定商取引法に基づく表記
-              </a>
-              <a href="/contact" className="text-sm font-bold hover:text-white">
+              </Link>
+              <Link href="/contact" className="text-sm font-bold hover:text-white">
                 運営会社
-              </a>
+              </Link>
             </div>
           </div>
         </div>
