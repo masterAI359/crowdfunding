@@ -183,7 +183,10 @@ const ProjectDetailPage = ({
                     >
                       この動画を購入
                     </a>
-                    <a className="w-full text-center rounded-full text-white font-bold sm:py-4 py-2 bg-[#FF0066]">
+                    <a
+                      href={`/videofunding/checkout?projectId=${video.id}&series=true`}
+                      className="w-full text-center rounded-full text-white font-bold sm:py-4 py-2 bg-[#FF0066]"
+                    >
                       このシリーズを購入
                     </a>
                   </div>

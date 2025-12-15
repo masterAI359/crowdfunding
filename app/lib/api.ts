@@ -213,6 +213,27 @@ export const confirmPayment = async (paymentIntentId: string) => {
   return response.data;
 };
 
+/**
+ * 動画決済インテント作成（動画購入用）
+ */
+export const createVideoPayment = async (
+  videoId: string, 
+  seriesIds: string[], 
+  quantities: Record<string, number>,
+  customAmount?: number
+) => {
+  // For now, we'll use the existing payment API structure
+  // In a real implementation, you might have a separate video payment endpoint
+  // For series purchase, we'll treat each series as a "return" item
+  const response = await apiClient.post('/payment/create', {
+    projectId: videoId, // Using videoId as projectId for compatibility
+    returnIds: seriesIds,
+    quantities,
+    customAmount, // Optional custom amount for funding
+  });
+  return response.data;
+};
+
 // ==================== 動画関連API ====================
 
 /**
