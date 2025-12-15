@@ -51,8 +51,8 @@ apiClient.interceptors.response.use(
 /**
  * サインアップ開始（メール認証コード送信）
  */
-export const initiateSignup = async (email: string, name?: string) => {
-  const response = await apiClient.post('/auth/signup/initiate', { email, name });
+export const initiateSignup = async (email: string, name?: string, isSeller?: boolean, isPurchaser?: boolean) => {
+  const response = await apiClient.post('/auth/signup/initiate', { email, name, isSeller, isPurchaser });
   return response.data;
 };
 
@@ -90,6 +90,60 @@ export const login = async (email: string, password: string) => {
  */
 export const getCurrentUser = async () => {
   const response = await apiClient.get('/auth/me');
+  return response.data;
+};
+
+/**
+ * ユーザープロフィール更新
+ */
+export const updateUserProfile = async (data: {
+  name?: string;
+  phone?: string;
+  dateOfBirth?: string;
+  gender?: string;
+  address?: string;
+}) => {
+  const response = await apiClient.put('/users/profile', data);
+  return response.data;
+};
+
+/**
+ * パスワード変更
+ */
+export const changePassword = async (oldPassword: string, newPassword: string) => {
+  const response = await apiClient.post('/users/password/change', { oldPassword, newPassword });
+  return response.data;
+};
+
+/**
+ * 購入したリターン一覧取得
+ */
+export const getPurchasedReturns = async () => {
+  const response = await apiClient.get('/users/purchases/returns');
+  return response.data;
+};
+
+/**
+ * 購入した動画一覧取得
+ */
+export const getPurchasedVideos = async () => {
+  const response = await apiClient.get('/users/purchases/videos');
+  return response.data;
+};
+
+/**
+ * 購入履歴取得
+ */
+export const getPurchaseHistory = async () => {
+  const response = await apiClient.get('/users/purchases/history');
+  return response.data;
+};
+
+/**
+ * アカウント削除
+ */
+export const deleteAccount = async (password: string) => {
+  const response = await apiClient.delete('/users/account', { data: { password } });
   return response.data;
 };
 

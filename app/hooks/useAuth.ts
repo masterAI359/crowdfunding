@@ -10,6 +10,9 @@ interface User {
   id: string;
   email: string;
   name?: string;
+  isSeller?: boolean;
+  isPurchaser?: boolean;
+  isAdministrator?: boolean;
 }
 
 export const useAuth = () => {

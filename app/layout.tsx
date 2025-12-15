@@ -29,10 +29,12 @@ export const metadata: Metadata = {
   keywords: 'クリエイター, ファン, ビデオ, クラウドファンディング, プラットフォーム',
   icons: {
     icon: [
-      { url: '/assets/common/favicon.png', type: 'image/png' },
+      { url: '/favicon.png', type: 'image/png', sizes: 'any' },
+      { url: '/favicon.png', type: 'image/png', sizes: '32x32' },
+      { url: '/favicon.png', type: 'image/png', sizes: '16x16' },
     ],
-    shortcut: '/assets/common/favicon.png',
-    apple: '/assets/common/favicon.png',
+    shortcut: { url: '/favicon.png', type: 'image/png' },
+    apple: { url: '/favicon.png', type: 'image/png' },
   },
 };
 

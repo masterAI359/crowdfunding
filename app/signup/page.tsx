@@ -9,6 +9,7 @@ const SignupPage = () => {
     const router = useRouter();
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
+    const [userRole, setUserRole] = useState<"seller" | "purchaser">("purchaser");
     const [marketingConsent, setMarketingConsent] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
@@ -19,8 +20,10 @@ const SignupPage = () => {
         setIsLoading(true);
 
         try {
-            // メール認証コードを送信
-            await initiateSignup(email, name);
+            // メール認証コードを送信（ロール情報も送信）
+            const isSeller = userRole === "seller";
+            const isPurchaser = userRole === "purchaser";
+            await initiateSignup(email, name, isSeller, isPurchaser);
             // メール認証ページへ遷移（emailをクエリパラメータで渡す）
             window.location.href = `/verify-email?email=${encodeURIComponent(email)}`;
             return;
@@ -71,6 +74,45 @@ const SignupPage = () => {
                                 className="appearance-none relative block w-full px-4 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF0066] focus:border-transparent transition-colors"
                                 placeholder="メールアドレス"
                             />
+                        </div>
+
+                        {/* User Role Selection */}
+                        <div className="space-y-3">
+                            <label className="block text-sm font-semibold text-gray-700">
+                                登録タイプを選択
+                            </label>
+                            <div className="flex gap-4">
+                                <label className="flex-1 flex items-center justify-center p-4 border-2 rounded-lg cursor-pointer transition-colors"
+                                    style={{
+                                        borderColor: userRole === "purchaser" ? "#FF0066" : "#E5E7EB",
+                                        backgroundColor: userRole === "purchaser" ? "#FFF0F5" : "white"
+                                    }}>
+                                    <input
+                                        type="radio"
+                                        name="userRole"
+                                        value="purchaser"
+                                        checked={userRole === "purchaser"}
+                                        onChange={(e) => setUserRole(e.target.value as "seller" | "purchaser")}
+                                        className="sr-only"
+                                    />
+                                    <span className="text-sm font-medium">購入者</span>
+                                </label>
+                                <label className="flex-1 flex items-center justify-center p-4 border-2 rounded-lg cursor-pointer transition-colors"
+                                    style={{
+                                        borderColor: userRole === "seller" ? "#FF0066" : "#E5E7EB",
+                                        backgroundColor: userRole === "seller" ? "#FFF0F5" : "white"
+                                    }}>
+                                    <input
+                                        type="radio"
+                                        name="userRole"
+                                        value="seller"
+                                        checked={userRole === "seller"}
+                                        onChange={(e) => setUserRole(e.target.value as "seller" | "purchaser")}
+                                        className="sr-only"
+                                    />
+                                    <span className="text-sm font-medium">販売者</span>
+                                </label>
+                            </div>
                         </div>
                     </div>
 
