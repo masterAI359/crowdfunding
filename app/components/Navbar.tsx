@@ -479,67 +479,7 @@ const Navbar: React.FC<NavbarProps> = ({
           >
             動画一覧
           </Link>
-          {isAuthenticated ? (
-            <div className="pt-3 border-t border-gray-200 mt-3">
-              <div className="bg-[#F5E6D3] rounded-lg py-2">
-                <Link
-                  href="/user-settings/movies"
-                  className={`block px-4 py-3 text-sm transition-colors ${
-                    pathname === "/user-settings/movies" || pathname.startsWith("/user-settings/movies")
-                      ? "bg-[#FF0066] text-white"
-                      : "text-gray-700 hover:bg-[#E8D5C0]"
-                  }`}
-                  onClick={() => setIsOpen(false)}
-                >
-                  マイムービー
-                </Link>
-                <Link
-                  href="/user-settings"
-                  className={`block px-4 py-3 text-sm transition-colors ${
-                    pathname === "/user-settings" && !pathname.includes("/movies") && !pathname.includes("/security") && !pathname.includes("/privacy") && !pathname.includes("/delete")
-                      ? "bg-[#FF0066] text-white"
-                      : "text-gray-700 hover:bg-[#E8D5C0]"
-                  }`}
-                  onClick={() => setIsOpen(false)}
-                >
-                  アカウント情報
-                </Link>
-                <Link
-                  href="/user-settings/security"
-                  className={`block px-4 py-3 text-sm transition-colors ${
-                    pathname === "/user-settings/security"
-                      ? "bg-[#FF0066] text-white"
-                      : "text-gray-700 hover:bg-[#E8D5C0]"
-                  }`}
-                  onClick={() => setIsOpen(false)}
-                >
-                  アカウントセキュリティ
-                </Link>
-                <Link
-                  href="/user-settings/privacy"
-                  className={`block px-4 py-3 text-sm transition-colors ${
-                    pathname === "/user-settings/privacy"
-                      ? "bg-[#FF0066] text-white"
-                      : "text-gray-700 hover:bg-[#E8D5C0]"
-                  }`}
-                  onClick={() => setIsOpen(false)}
-                >
-                  プライベート設定
-                </Link>
-                <Link
-                  href="/user-settings/delete"
-                  className={`block px-4 py-3 text-sm transition-colors ${
-                    pathname === "/user-settings/delete"
-                      ? "bg-[#FF0066] text-white"
-                      : "text-gray-700 hover:bg-[#E8D5C0]"
-                  }`}
-                  onClick={() => setIsOpen(false)}
-                >
-                  アカウントを閉鎖
-                </Link>
-              </div>
-            </div>
-          ) : (
+          {!isAuthenticated && (
             <div className="flex flex-col space-y-2 pt-3">
               <button
                 onClick={() => {

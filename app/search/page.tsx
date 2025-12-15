@@ -79,7 +79,7 @@ const SearchPage: React.FC = () => {
   }, [searchKeyword, activeTab, currentPage]);
 
   return (
-    <div className="min-h-screen bg-white text-black pt-20 pb-5">
+    <div className="min-h-screen bg-white text-black pb-5">
       <main className="mx-auto">
 
          {/* === Mobile Filters (Dropdown + Search Bar) === */}
