@@ -9,7 +9,11 @@ const SignupPage = () => {
     const router = useRouter();
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
-    const [userRole, setUserRole] = useState<"seller" | "purchaser">("purchaser");
+    // NOTE: User role selection is commented out for initial release.
+    // For the first ~2 years, only the site owner will be selling.
+    // After ~2 years, seller registration flow will be added.
+    // Default role is set to 'purchaser' for all new registrations.
+    // const [userRole, setUserRole] = useState<"seller" | "purchaser">("purchaser");
     const [marketingConsent, setMarketingConsent] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
@@ -21,8 +25,10 @@ const SignupPage = () => {
 
         try {
             // メール認証コードを送信（ロール情報も送信）
-            const isSeller = userRole === "seller";
-            const isPurchaser = userRole === "purchaser";
+            // NOTE: All new registrations default to 'purchaser' role.
+            // Seller registration will be enabled after ~2 years.
+            const isSeller = false; // userRole === "seller";
+            const isPurchaser = true; // userRole === "purchaser";
             await initiateSignup(email, name, isSeller, isPurchaser);
             // メール認証ページへ遷移（emailをクエリパラメータで渡す）
             window.location.href = `/verify-email?email=${encodeURIComponent(email)}`;
@@ -76,7 +82,13 @@ const SignupPage = () => {
                             />
                         </div>
 
-                        {/* User Role Selection */}
+                        {/* User Role Selection - COMMENTED OUT FOR INITIAL RELEASE */}
+                        {/* 
+                        NOTE: User role selection is disabled for initial release.
+                        For the first ~2 years after launch, only the site owner will be selling.
+                        All new user registrations default to 'purchaser' role.
+                        After ~2 years, seller registration flow will be added.
+                        
                         <div className="space-y-3">
                             <label className="block text-sm font-semibold text-gray-700">
                                 登録タイプを選択
@@ -114,6 +126,7 @@ const SignupPage = () => {
                                 </label>
                             </div>
                         </div>
+                        */}
                     </div>
 
                     {/* Marketing Consent Checkbox */}

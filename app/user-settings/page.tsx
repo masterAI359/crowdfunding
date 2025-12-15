@@ -68,6 +68,11 @@ const UserSettingsPage = () => {
         { id: "delete-account", label: "アカウントを閉鎖", href: "/user-settings/delete" },
     ];
 
+    // Add seller dashboard link if user is a seller
+    if (user?.isSeller || user?.isAdministrator) {
+        menuItems.unshift({ id: "seller", label: "出品者管理ページ", href: "/user-settings/seller" });
+    }
+
     return (
         <div className="min-h-screen bg-white">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

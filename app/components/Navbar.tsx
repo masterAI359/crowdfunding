@@ -332,6 +332,16 @@ const Navbar: React.FC<NavbarProps> = ({
                     >
                       アカウントを閉鎖
                     </Link>
+                    <div className="border-t border-gray-200 my-1"></div>
+                    <button
+                      onClick={() => {
+                        setShowUserMenu(false);
+                        logout();
+                      }}
+                      className="w-full text-left block px-4 py-3 text-sm transition-colors text-gray-700 hover:bg-[#E8D5C0]"
+                    >
+                      ログアウト
+                    </button>
                   </div>
                 )}
               </div>
@@ -433,6 +443,16 @@ const Navbar: React.FC<NavbarProps> = ({
                     >
                       アカウントを閉鎖
                     </Link>
+                    <div className="border-t border-gray-200 my-1"></div>
+                    <button
+                      onClick={() => {
+                        setShowUserMenu(false);
+                        logout();
+                      }}
+                      className="w-full text-left block px-4 py-3 text-sm transition-colors text-gray-700 hover:bg-[#E8D5C0]"
+                    >
+                      ログアウト
+                    </button>
                   </div>
                 )}
               </div>

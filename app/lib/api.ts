@@ -23,6 +23,10 @@ apiClient.interceptors.request.use(
         config.headers.Authorization = `Bearer ${token}`;
       }
     }
+    // FormDataの場合はContent-Typeを自動設定させる（boundaryを設定するため）
+    if (config.data instanceof FormData && config.headers) {
+      delete config.headers['Content-Type'];
+    }
     return config;
   },
   (error) => {
@@ -319,6 +323,23 @@ export const getVideoById = async (id: string) => {
 };
 
 /**
+ * ファイルアップロード（動画・サムネイル）
+ */
+export const uploadFiles = async (files: File[]) => {
+  const formData = new FormData();
+  files.forEach((file) => {
+    formData.append('files', file);
+  });
+
+  const response = await apiClient.post('/videos/upload', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  return response.data;
+};
+
+/**
  * 動画作成
  */
 export const createVideo = async (data: {
@@ -374,6 +395,40 @@ export const getVideoStats = async (id: string) => {
  */
 export const getDashboardStats = async () => {
   const response = await apiClient.get('/videos/dashboard/stats');
+  return response.data;
+};
+
+/**
+ * 動画コメント一覧取得
+ */
+export const getVideoComments = async (videoId: string) => {
+  const response = await apiClient.get(`/videos/${videoId}/comments`);
+  return response.data;
+};
+
+/**
+ * コメント非表示（管理者用）
+ */
+export const hideVideoComment = async (commentId: string) => {
+  const response = await apiClient.post(`/videos/comments/${commentId}/hide`);
+  return response.data;
+};
+
+/**
+ * コメント表示（管理者用）
+ */
+export const showVideoComment = async (commentId: string) => {
+  const response = await apiClient.post(`/videos/comments/${commentId}/show`);
+  return response.data;
+};
+
+/**
+ * ユーザーログ取得（管理者用）
+ */
+export const getUserLogs = async (userId?: string, action?: string, page: number = 1, limit: number = 50) => {
+  const response = await apiClient.get('/admin/logs', {
+    params: { userId, action, page, limit },
+  });
   return response.data;
 };
 
