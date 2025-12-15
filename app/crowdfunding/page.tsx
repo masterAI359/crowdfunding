@@ -79,7 +79,7 @@ const CrowdfundingPage = () => {
   return (
     <div className="min-h-screen bg-white text-gray-700">
 
-      <main className="xl:max-w-[1440px] mx-auto md:py-20 px-0 py-25">
+      <main className="xl:max-w-[1440px] mx-auto md:pb-20 px-0 pb-25">
         {bannerProjects.length > 0 && <ProjectCarousel projects={bannerProjects} />}
 
         {loading ? (

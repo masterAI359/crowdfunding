@@ -5,10 +5,10 @@ import Image from "next/image";
 
 const LandingPage = () => {
   return (
-    <div className="relative bg-[url('/assets/mainPage/main-page-bg.png')] bg-cover bg-center h-auto bg-black">
+    <div className="relative bg-[url('/assets/mainPage/main-page-bg.png')] bg-cover bg-center h-auto bg-black -mt-25 md:-mt-20">
       <div className="absolute inset-0 bg-[#24293b]/30 "></div>
 
-      <main className="pt-16">
+      <div className="pt-25 md:pt-20">
         {/* Hero Section */}
         <section className="relative flex mt-12 md:mt-[126px] justify-center overflow-hidden">
           {/* Hero Content */}
@@ -63,7 +63,7 @@ const LandingPage = () => {
             </div>
           </div>
         </section>
-      </main>
+      </div>
     </div>
   );
 };

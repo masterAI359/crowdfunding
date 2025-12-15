@@ -23,6 +23,10 @@ apiClient.interceptors.request.use(
         config.headers.Authorization = `Bearer ${token}`;
       }
     }
+    // FormDataの場合はContent-Typeを自動設定させる（boundaryを設定するため）
+    if (config.data instanceof FormData && config.headers) {
+      delete config.headers['Content-Type'];
+    }
     return config;
   },
   (error) => {
@@ -51,8 +55,8 @@ apiClient.interceptors.response.use(
 /**
  * サインアップ開始（メール認証コード送信）
  */
-export const initiateSignup = async (email: string, name?: string) => {
-  const response = await apiClient.post('/auth/signup/initiate', { email, name });
+export const initiateSignup = async (email: string, name?: string, isSeller?: boolean, isPurchaser?: boolean) => {
+  const response = await apiClient.post('/auth/signup/initiate', { email, name, isSeller, isPurchaser });
   return response.data;
 };
 
@@ -90,6 +94,60 @@ export const login = async (email: string, password: string) => {
  */
 export const getCurrentUser = async () => {
   const response = await apiClient.get('/auth/me');
+  return response.data;
+};
+
+/**
+ * ユーザープロフィール更新
+ */
+export const updateUserProfile = async (data: {
+  name?: string;
+  phone?: string;
+  dateOfBirth?: string;
+  gender?: string;
+  address?: string;
+}) => {
+  const response = await apiClient.put('/users/profile', data);
+  return response.data;
+};
+
+/**
+ * パスワード変更
+ */
+export const changePassword = async (oldPassword: string, newPassword: string) => {
+  const response = await apiClient.post('/users/password/change', { oldPassword, newPassword });
+  return response.data;
+};
+
+/**
+ * 購入したリターン一覧取得
+ */
+export const getPurchasedReturns = async () => {
+  const response = await apiClient.get('/users/purchases/returns');
+  return response.data;
+};
+
+/**
+ * 購入した動画一覧取得
+ */
+export const getPurchasedVideos = async () => {
+  const response = await apiClient.get('/users/purchases/videos');
+  return response.data;
+};
+
+/**
+ * 購入履歴取得
+ */
+export const getPurchaseHistory = async () => {
+  const response = await apiClient.get('/users/purchases/history');
+  return response.data;
+};
+
+/**
+ * アカウント削除
+ */
+export const deleteAccount = async (password: string) => {
+  const response = await apiClient.delete('/users/account', { data: { password } });
   return response.data;
 };
 
@@ -213,6 +271,27 @@ export const confirmPayment = async (paymentIntentId: string) => {
   return response.data;
 };
 
+/**
+ * 動画決済インテント作成（動画購入用）
+ */
+export const createVideoPayment = async (
+  videoId: string, 
+  seriesIds: string[], 
+  quantities: Record<string, number>,
+  customAmount?: number
+) => {
+  // For now, we'll use the existing payment API structure
+  // In a real implementation, you might have a separate video payment endpoint
+  // For series purchase, we'll treat each series as a "return" item
+  const response = await apiClient.post('/payment/create', {
+    projectId: videoId, // Using videoId as projectId for compatibility
+    returnIds: seriesIds,
+    quantities,
+    customAmount, // Optional custom amount for funding
+  });
+  return response.data;
+};
+
 // ==================== 動画関連API ====================
 
 /**
@@ -240,6 +319,23 @@ export const getVideosByOwner = async (page: number = 1, limit: number = 20) => 
  */
 export const getVideoById = async (id: string) => {
   const response = await apiClient.get(`/videos/${id}`);
+  return response.data;
+};
+
+/**
+ * ファイルアップロード（動画・サムネイル）
+ */
+export const uploadFiles = async (files: File[]) => {
+  const formData = new FormData();
+  files.forEach((file) => {
+    formData.append('files', file);
+  });
+
+  const response = await apiClient.post('/videos/upload', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
   return response.data;
 };
 
@@ -299,6 +395,40 @@ export const getVideoStats = async (id: string) => {
  */
 export const getDashboardStats = async () => {
   const response = await apiClient.get('/videos/dashboard/stats');
+  return response.data;
+};
+
+/**
+ * 動画コメント一覧取得
+ */
+export const getVideoComments = async (videoId: string) => {
+  const response = await apiClient.get(`/videos/${videoId}/comments`);
+  return response.data;
+};
+
+/**
+ * コメント非表示（管理者用）
+ */
+export const hideVideoComment = async (commentId: string) => {
+  const response = await apiClient.post(`/videos/comments/${commentId}/hide`);
+  return response.data;
+};
+
+/**
+ * コメント表示（管理者用）
+ */
+export const showVideoComment = async (commentId: string) => {
+  const response = await apiClient.post(`/videos/comments/${commentId}/show`);
+  return response.data;
+};
+
+/**
+ * ユーザーログ取得（管理者用）
+ */
+export const getUserLogs = async (userId?: string, action?: string, page: number = 1, limit: number = 50) => {
+  const response = await apiClient.get('/admin/logs', {
+    params: { userId, action, page, limit },
+  });
   return response.data;
 };
 

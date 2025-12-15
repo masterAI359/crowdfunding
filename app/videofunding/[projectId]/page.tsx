@@ -96,7 +96,7 @@ const ProjectDetailPage = ({
   }));
 
   return (
-    <div className="min-h-screen bg-white text-gray-700 mx-auto pt-21">
+    <div className="min-h-screen bg-white text-gray-700 mx-auto">
       <main className="max-w-[1440px] mx-auto">
         {/* Section 2: Media Gallery & Project Information */}
         <section className="px-6 md:px-16 xl:px-[100px] py-8">
@@ -183,7 +183,10 @@ const ProjectDetailPage = ({
                     >
                       この動画を購入
                     </a>
-                    <a className="w-full text-center rounded-full text-white font-bold sm:py-4 py-2 bg-[#FF0066]">
+                    <a
+                      href={`/videofunding/checkout?projectId=${video.id}&series=true`}
+                      className="w-full text-center rounded-full text-white font-bold sm:py-4 py-2 bg-[#FF0066]"
+                    >
                       このシリーズを購入
                     </a>
                   </div>

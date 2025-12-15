@@ -170,7 +170,7 @@ const ProjectDetailPage = ({ params: paramsPromise }: { params: Promise<{ projec
   ] : [];
 
   return (
-    <div className="min-h-screen  bg-white text-gray-700 mx-auto md:pt-20 pt-25 ">
+    <div className="min-h-screen  bg-white text-gray-700 mx-auto">
 
       <main className='max-w-[1440px] mx-auto'>
         {/* Section 1: Hero Banner */}

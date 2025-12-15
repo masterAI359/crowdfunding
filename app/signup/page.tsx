@@ -9,6 +9,11 @@ const SignupPage = () => {
     const router = useRouter();
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
+    // NOTE: User role selection is commented out for initial release.
+    // For the first ~2 years, only the site owner will be selling.
+    // After ~2 years, seller registration flow will be added.
+    // Default role is set to 'purchaser' for all new registrations.
+    // const [userRole, setUserRole] = useState<"seller" | "purchaser">("purchaser");
     const [marketingConsent, setMarketingConsent] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
@@ -19,8 +24,12 @@ const SignupPage = () => {
         setIsLoading(true);
 
         try {
-            // メール認証コードを送信
-            await initiateSignup(email, name);
+            // メール認証コードを送信（ロール情報も送信）
+            // NOTE: All new registrations default to 'purchaser' role.
+            // Seller registration will be enabled after ~2 years.
+            const isSeller = false; // userRole === "seller";
+            const isPurchaser = true; // userRole === "purchaser";
+            await initiateSignup(email, name, isSeller, isPurchaser);
             // メール認証ページへ遷移（emailをクエリパラメータで渡す）
             window.location.href = `/verify-email?email=${encodeURIComponent(email)}`;
             return;
@@ -72,6 +81,52 @@ const SignupPage = () => {
                                 placeholder="メールアドレス"
                             />
                         </div>
+
+                        {/* User Role Selection - COMMENTED OUT FOR INITIAL RELEASE */}
+                        {/* 
+                        NOTE: User role selection is disabled for initial release.
+                        For the first ~2 years after launch, only the site owner will be selling.
+                        All new user registrations default to 'purchaser' role.
+                        After ~2 years, seller registration flow will be added.
+                        
+                        <div className="space-y-3">
+                            <label className="block text-sm font-semibold text-gray-700">
+                                登録タイプを選択
+                            </label>
+                            <div className="flex gap-4">
+                                <label className="flex-1 flex items-center justify-center p-4 border-2 rounded-lg cursor-pointer transition-colors"
+                                    style={{
+                                        borderColor: userRole === "purchaser" ? "#FF0066" : "#E5E7EB",
+                                        backgroundColor: userRole === "purchaser" ? "#FFF0F5" : "white"
+                                    }}>
+                                    <input
+                                        type="radio"
+                                        name="userRole"
+                                        value="purchaser"
+                                        checked={userRole === "purchaser"}
+                                        onChange={(e) => setUserRole(e.target.value as "seller" | "purchaser")}
+                                        className="sr-only"
+                                    />
+                                    <span className="text-sm font-medium">購入者</span>
+                                </label>
+                                <label className="flex-1 flex items-center justify-center p-4 border-2 rounded-lg cursor-pointer transition-colors"
+                                    style={{
+                                        borderColor: userRole === "seller" ? "#FF0066" : "#E5E7EB",
+                                        backgroundColor: userRole === "seller" ? "#FFF0F5" : "white"
+                                    }}>
+                                    <input
+                                        type="radio"
+                                        name="userRole"
+                                        value="seller"
+                                        checked={userRole === "seller"}
+                                        onChange={(e) => setUserRole(e.target.value as "seller" | "purchaser")}
+                                        className="sr-only"
+                                    />
+                                    <span className="text-sm font-medium">販売者</span>
+                                </label>
+                            </div>
+                        </div>
+                        */}
                     </div>
 
                     {/* Marketing Consent Checkbox */}

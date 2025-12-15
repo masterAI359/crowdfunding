@@ -73,7 +73,7 @@ const VideofundingPage = () => {
 
   return (
     <div className="min-h-screen bg-white text-gray-700">
-      <main className="xl:max-w-[1440px] mx-auto px-0  py-16 pt-18">
+      <main className="xl:max-w-[1440px] mx-auto px-0 pb-16">
         {bannerVideos.length > 0 && <VideoCarousel videos={bannerVideos} />}
 
         {loading ? (

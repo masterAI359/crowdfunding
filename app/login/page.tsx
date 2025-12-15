@@ -21,8 +21,15 @@ const LoginPage = () => {
         try {
             const result = await login(email, password);
             if (result.success) {
-                // ログイン成功後、トップページまたは元のページへリダイレクト
-                window.location.href = "/crowdfunding";
+                // ログイン成功後、ユーザーの権限に応じて適切なページへリダイレクト
+                const user = result.data?.user;
+                if (user?.isAdministrator) {
+                    window.location.href = "/admin";
+                } else if (user?.isSeller) {
+                    window.location.href = "/user-settings";
+                } else {
+                    window.location.href = "/user-settings";
+                }
                 return;
             } else {
                 setError(result.error || "ログインに失敗しました");

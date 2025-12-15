@@ -2,7 +2,7 @@
 import React, { use, useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { getVideoById } from "@/app/lib/api";
+import { getVideoById, createVideoPayment } from "@/app/lib/api";
 import LoadingSpinner from "@/app/components/loading-spinner";
 
 interface Project {
@@ -24,18 +24,40 @@ interface Reward {
   quantity: number;
 }
 
+interface SeriesOption {
+  id: string;
+  vol: string;
+  title: string;
+  price: number;
+  checked: boolean;
+}
+
 const CheckoutPage = ({
   searchParams: searchParamsPromise,
 }: {
-  searchParams: Promise<{ projectId?: string; rewardIds?: string; quantities?: string }>;
+  searchParams: Promise<{ projectId?: string; rewardIds?: string; quantities?: string; series?: string | boolean }>;
 }) => {
   const searchParams = use(searchParamsPromise);
+  const router = useRouter();
   const [project, setProject] = useState<Project | null>(null);
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [loading, setLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
-  const isLoggedIn = false;
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [email, setEmail] = useState("");
+  const [seriesOptions, setSeriesOptions] = useState<SeriesOption[]>([]);
+  const [totalPrice, setTotalPrice] = useState(45000);
+  const [customAmount, setCustomAmount] = useState<number | null>(null);
+  const [useCustomAmount, setUseCustomAmount] = useState(false);
+  const [projectTotalAmount, setProjectTotalAmount] = useState(2000000); // Total project funding goal
+
+  // Check if user is logged in
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('accessToken');
+      setIsLoggedIn(!!token);
+    }
+  }, []);
 
   // Fetch video data
   useEffect(() => {
@@ -47,33 +69,48 @@ const CheckoutPage = ({
         const video = await getVideoById(searchParams.projectId);
 
         // Map video to project format
+        const projectTitle = video.title || "伝説のバンド・ピンクサワファイヤーが復活 1日だけの復活ライブ";
         setProject({
           id: video.id,
-          title: video.title,
-          description: video.description || "動画の説明がありません。",
+          title: projectTitle,
+          description: video.description || "「Uzumasa Limelight」のプロデューサー・監督からの感謝メッセージと、支援者への連絡方法についての詳細が含まれています。",
           image: video.thumbnailUrl || video.url || "/assets/videofunding/video-1.png",
-          amount: "¥45,000", // This should come from backend pricing
-          supporters: video.viewCount?.toLocaleString() || "0",
-          daysLeft: "無期限",
+          amount: "¥2,000,000", // Fundraising amount
+          supporters: "22人", // Participants
+          daysLeft: "11日",
         });
 
-        // Parse reward IDs and quantities
-        if (searchParams.rewardIds && searchParams.quantities) {
-          const rewardIds = searchParams.rewardIds.split(',');
-          const quantities = searchParams.quantities.split(',').map(Number);
+        // Check if this is a series purchase
+        const isSeriesPurchase = searchParams.series === 'true' || searchParams.series === true;
 
-          // For now, use the video itself as a reward
-          // In a real implementation, you might fetch video series or episodes
-          const videoReward: Reward = {
-            id: video.id,
-            title: video.title,
-            price: "45,000",
-            description: video.description || "動画の説明がありません。",
-            image: video.thumbnailUrl || video.url || "/assets/crowdfunding/cf-3.png",
-            quantity: quantities[0] || 1,
-          };
+        if (isSeriesPurchase) {
+          // Create series options (vol.01 through vol.05)
+          const series: SeriesOption[] = Array.from({ length: 5 }, (_, i) => ({
+            id: `${video.id}-vol-${String(i + 1).padStart(2, '0')}`,
+            vol: `vol.${String(i + 1).padStart(2, '0')}`,
+            title: `${projectTitle} vol.${String(i + 1).padStart(2, '0')}`,
+            price: 9000, // 9,000円 per volume
+            checked: true, // All checked by default for series purchase
+          }));
+          setSeriesOptions(series);
+          setTotalPrice(series.length * 9000); // 45,000円 total
+        } else {
+          // Single video purchase - parse reward IDs and quantities if provided
+          if (searchParams.rewardIds && searchParams.quantities) {
+            const rewardIds = searchParams.rewardIds.split(',');
+            const quantities = searchParams.quantities.split(',').map(Number);
 
-          setRewards([videoReward]);
+            const videoReward: Reward = {
+              id: video.id,
+              title: video.title,
+              price: "45,000",
+              description: video.description || "動画の説明がありません。",
+              image: video.thumbnailUrl || video.url || "/assets/videofunding/video-1.png",
+              quantity: quantities[0] || 1,
+            };
+
+            setRewards([videoReward]);
+          }
         }
       } catch (error) {
         console.error("動画の取得に失敗しました:", error);
@@ -85,14 +122,95 @@ const CheckoutPage = ({
     fetchVideo();
   }, [searchParams]);
 
-  const handlePurchase = () => {
-    if (isProcessing) return;
-    setIsProcessing(true);
-    console.log("Confirming checkout for project:", project);
-    console.log("Rewards:", rewards);
-    // router.push(`/crowdfunding/checkout/success`);
-    // Note: In a real implementation, this would call an API
-    setTimeout(() => setIsProcessing(false), 1000);
+  const handlePurchase = async () => {
+    if (isProcessing || !project) return;
+
+    // Check if user is logged in or has email
+    if (!isLoggedIn && !email) {
+      alert("メールアドレスを入力してください");
+      return;
+    }
+
+    try {
+      setIsProcessing(true);
+
+      // Determine payment amount
+      let paymentAmount = 0;
+      let itemIds: string[] = [];
+      let quantities: Record<string, number> = {};
+
+      // Handle custom amount payment
+      if (useCustomAmount && customAmount && customAmount > 0) {
+        paymentAmount = customAmount;
+        // For custom amount, we'll use the project ID as the item
+        itemIds = [project.id];
+        quantities = { [project.id]: 1 };
+      }
+      // Handle series purchase
+      else if (seriesOptions.length > 0) {
+        const selectedSeries = seriesOptions.filter(s => s.checked);
+        if (selectedSeries.length === 0) {
+          alert("購入する動画を選択してください");
+          setIsProcessing(false);
+          return;
+        }
+        itemIds = selectedSeries.map(s => s.id);
+        quantities = selectedSeries.reduce((acc, s) => ({ ...acc, [s.id]: 1 }), {});
+        paymentAmount = selectedSeries.reduce((sum, s) => sum + s.price, 0);
+      } 
+      // Handle single video purchase
+      else if (rewards.length > 0) {
+        itemIds = rewards.map(r => r.id);
+        quantities = rewards.reduce((acc, r) => ({ ...acc, [r.id]: r.quantity }), {});
+        paymentAmount = rewards.reduce((sum, r) => sum + (parseInt(r.price.replace(/[^0-9]/g, '')) || 0) * r.quantity, 0);
+      } else {
+        alert("購入する動画を選択してください");
+        setIsProcessing(false);
+        return;
+      }
+
+      if (paymentAmount <= 0) {
+        alert("有効な金額を入力してください");
+        setIsProcessing(false);
+        return;
+      }
+
+      // Create payment intent
+      const payment = await createVideoPayment(project.id, itemIds, quantities, paymentAmount);
+
+      // Redirect to Stripe Checkout Session (hosted payment page)
+      if (payment.checkoutUrl) {
+        window.location.href = payment.checkoutUrl;
+      } else if (payment.clientSecret) {
+        // Fallback to Payment Intent (if Checkout Session is not available)
+        // This would require a custom payment page with Stripe Elements
+        alert("決済画面へのリダイレクトに失敗しました。もう一度お試しください。");
+        setIsProcessing(false);
+      } else {
+        throw new Error("決済情報の取得に失敗しました");
+      }
+    } catch (error: any) {
+      console.error("決済処理に失敗しました:", error);
+      alert(error.response?.data?.message || "決済処理に失敗しました");
+      setIsProcessing(false);
+    }
+  };
+
+  const handleSeriesToggle = (seriesId: string) => {
+    // Disable custom amount when selecting series
+    if (useCustomAmount) {
+      setUseCustomAmount(false);
+      setCustomAmount(null);
+    }
+    
+    setSeriesOptions(prev => {
+      const updated = prev.map(s => 
+        s.id === seriesId ? { ...s, checked: !s.checked } : s
+      );
+      const newTotal = updated.filter(s => s.checked).reduce((sum, s) => sum + s.price, 0);
+      setTotalPrice(newTotal);
+      return updated;
+    });
   };
 
   const handleContinueSupport = () => {
@@ -118,7 +236,7 @@ const CheckoutPage = ({
   }
 
   return (
-    <div className="min-h-screen bg-white pt-16 sm:pt-24 lg:pt-28 text-black">
+    <div className="min-h-screen bg-white text-black">
       <main className="mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 pb-0">
         {/* Progress Bar */}
         <div className="max-w-5xl mx-auto w-full my-6 sm:my-8">
@@ -132,8 +250,65 @@ const CheckoutPage = ({
         </div>
 
         <h1 className="text-xl sm:text-2xl max-w-5xl mx-auto font-bold text-center my-6 sm:my-8">
-          リターンを確認してください
+          購入する動画を確認してください
         </h1>
+
+        {/* Total Price Checkbox with Custom Amount Option */}
+        <div className="max-w-5xl mx-auto mb-6 sm:mb-8">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <input
+              type="checkbox"
+              checked={(seriesOptions.every(s => s.checked) && seriesOptions.length > 0) || useCustomAmount}
+              readOnly
+              className="h-6 w-6 sm:h-8 sm:w-8 text-[#FF0066] rounded border-2 border-[#FF0066]"
+            />
+            <label className="text-2xl sm:text-3xl font-bold flex items-center gap-2">
+              {(useCustomAmount && customAmount ? customAmount : totalPrice).toLocaleString()}
+              <span className="text-lg sm:text-xl font-bold">円</span>
+            </label>
+          </div>
+          
+          {/* Custom Amount Input */}
+          <div className="flex flex-col items-center gap-3 mt-4">
+            <label className="text-sm sm:text-base text-gray-700 font-medium">
+              カスタム金額で支援する
+            </label>
+            <div className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                checked={useCustomAmount}
+                onChange={(e) => {
+                  setUseCustomAmount(e.target.checked);
+                  if (!e.target.checked) {
+                    setCustomAmount(null);
+                  } else {
+                    // Uncheck all series when using custom amount
+                    setSeriesOptions(prev => prev.map(s => ({ ...s, checked: false })));
+                  }
+                }}
+                className="h-5 w-5 text-[#FF0066] rounded"
+              />
+              <input
+                type="number"
+                value={customAmount || ''}
+                onChange={(e) => {
+                  const value = parseInt(e.target.value) || 0;
+                  setCustomAmount(value > 0 ? value : null);
+                }}
+                placeholder="金額を入力"
+                min="1"
+                disabled={!useCustomAmount}
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF0066] disabled:bg-gray-100 disabled:cursor-not-allowed text-lg"
+              />
+              <span className="text-lg font-medium">円</span>
+            </div>
+            {useCustomAmount && customAmount && (
+              <p className="text-sm text-gray-600">
+                プロジェクト目標金額: {projectTotalAmount.toLocaleString()}円
+              </p>
+            )}
+          </div>
+        </div>
 
         {/* Project Info */}
         <div className="bg-[#ECEBD9] max-w-5xl mx-auto rounded-lg mb-6 sm:mb-8 flex flex-col md:flex-row overflow-hidden">
@@ -170,7 +345,7 @@ const CheckoutPage = ({
                     調達金額
                   </p>
                   <p className="text-lg sm:text-xl font-bold">
-                    {project.amount}
+                    ¥{projectTotalAmount.toLocaleString()}
                   </p>
                 </div>
                 <div>
@@ -201,66 +376,99 @@ const CheckoutPage = ({
           </div>
         </div>
 
-        <div className="text-center max-w-5xl mx-auto mb-8 sm:mb-10">
-          <button
-            onClick={handlePurchase}
-            disabled={isProcessing}
-            className="bg-white text-[#FF0066] border border-[#FF0066] cursor-pointer font-bold py-3 sm:py-4 px-12 sm:px-20 rounded-full text-md sm:text-lg hover:bg-[#FF0066] hover:text-white transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mx-auto"
-          >
-            {isProcessing && <LoadingSpinner size="sm" className="text-[#FF0066]" />}
-            {isProcessing ? "処理中..." : "シリーズで購入する"}
-          </button>
-        </div>
-
-        {/* Rewards Section */}
-        <div className="max-w-5xl mx-auto space-y-6 mb-6 sm:mb-8">
-          {rewards.map((reward, i) => i === 0 && (
-            <div
-              key={reward.id}
-              className="bg-white border border-[#E9E9E9] rounded-lg"
-            >
-              <div className="bg-[#ECEBD9] px-3 sm:px-16 py-4 rounded-t-lg border-b border-gray-300 flex justify-between items-center">
-                <h3 className="font-bold text-md sm:text-xl text-black">
-                  {reward.title}
-                </h3>
-              </div>
-
-              <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 items-start">
-                {/* Left: Price + Quantity */}
-                <div className="flex flex-col space-y-3 sm:space-y-4 md:col-span-2">
-                  <div className="flex items-center gap-3 sm:gap-4 md:ml-10">
-                    <input
-                      type="checkbox"
-                      id={`reward-checkbox-${reward.id}`}
-                      checked
-                      readOnly
-                      className="h-5 w-5 sm:h-6 sm:w-6 text-red-600 rounded opacity-80 ml-4"
-                    />
-                    <label htmlFor={`reward-checkbox-${reward.id}`} className="text-2xl sm:text-3xl font-bold flex items-center gap-1">
-                      {reward.price}
-                      <span className="text-sm sm:text-base font-bold">円</span>
+        {/* Series Purchase Options - Only show if series purchase */}
+        {seriesOptions.length > 0 && !useCustomAmount && (
+          <div className="max-w-5xl mx-auto space-y-4 mb-6 sm:mb-8">
+            {seriesOptions.map((series) => (
+              <div
+                key={series.id}
+                className="bg-white border border-[#E9E9E9] rounded-lg p-4 sm:p-6"
+              >
+                <div className="flex flex-col md:flex-row gap-4 items-start">
+                  {/* Left: Checkbox + Title + Description */}
+                  <div className="flex-1 flex flex-col gap-3">
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="checkbox"
+                        id={`series-${series.id}`}
+                        checked={series.checked}
+                        onChange={() => handleSeriesToggle(series.id)}
+                        disabled={useCustomAmount}
+                        className="h-5 w-5 sm:h-6 sm:w-6 text-[#FF0066] rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                      />
+                    <label
+                      htmlFor={`series-${series.id}`}
+                      className="text-lg sm:text-xl font-bold text-black cursor-pointer"
+                    >
+                      {series.title}
                     </label>
                   </div>
-
-                  {/* Description */}
-                  <p className="text-sm sm:text-lg text-black leading-relaxed text-left md:mx-10">
-                    {reward.description}
+                  <p className="text-sm sm:text-base text-gray-700 ml-8">
+                    「Uzumasa Limelight」のプロデューサー・監督からの感謝メッセージと、支援者への連絡方法についての詳細が含まれています。
                   </p>
                 </div>
 
-                {/* Right: Reward Image */}
-                <div className="relative bg-gray-200 w-full h-40 sm:h-50 overflow-hidden rounded-md">
+                {/* Right: Video Thumbnail */}
+                <div className="relative w-full md:w-48 h-32 sm:h-40 overflow-hidden rounded-md">
                   <Image
-                    src={reward.image}
-                    alt={reward.title}
+                    src={project.image}
+                    alt={series.title}
                     fill
                     className="object-cover"
                   />
                 </div>
               </div>
             </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
+
+        {/* Single Video Purchase - Show if not series purchase */}
+        {seriesOptions.length === 0 && rewards.length > 0 && (
+          <div className="max-w-5xl mx-auto space-y-6 mb-6 sm:mb-8">
+            {rewards.map((reward) => (
+              <div
+                key={reward.id}
+                className="bg-white border border-[#E9E9E9] rounded-lg"
+              >
+                <div className="bg-[#ECEBD9] px-3 sm:px-16 py-4 rounded-t-lg border-b border-gray-300 flex justify-between items-center">
+                  <h3 className="font-bold text-md sm:text-xl text-black">
+                    {reward.title}
+                  </h3>
+                </div>
+
+                <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 items-start">
+                  <div className="flex flex-col space-y-3 sm:space-y-4 md:col-span-2">
+                    <div className="flex items-center gap-3 sm:gap-4 md:ml-10">
+                      <input
+                        type="checkbox"
+                        id={`reward-checkbox-${reward.id}`}
+                        checked
+                        readOnly
+                        className="h-5 w-5 sm:h-6 sm:w-6 text-red-600 rounded opacity-80 ml-4"
+                      />
+                      <label htmlFor={`reward-checkbox-${reward.id}`} className="text-2xl sm:text-3xl font-bold flex items-center gap-1">
+                        {reward.price}
+                        <span className="text-sm sm:text-base font-bold">円</span>
+                      </label>
+                    </div>
+                    <p className="text-sm sm:text-lg text-black leading-relaxed text-left md:mx-10">
+                      {reward.description}
+                    </p>
+                  </div>
+                  <div className="relative bg-gray-200 w-full h-40 sm:h-50 overflow-hidden rounded-md">
+                    <Image
+                      src={reward.image}
+                      alt={reward.title}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Confirm Button */}
         <div className="text-center max-w-5xl mx-auto mb-8 sm:mb-10">
