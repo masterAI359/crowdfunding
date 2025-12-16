@@ -213,7 +213,7 @@ const SellerDashboardPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white text-black">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Left Sidebar Navigation */}
@@ -299,7 +299,7 @@ const SellerDashboardPage = () => {
                                   className={`w-full text-left px-4 py-2 rounded-lg text-sm transition-colors ${
                                     isActive
                                       ? "bg-[#FF0066] text-white"
-                                      : "text-gray-600 hover:bg-gray-100"
+                                      : "text-gray-800 hover:bg-gray-100"
                                   }`}
                                 >
                                   {child.label}
@@ -734,9 +734,9 @@ const DashboardTab = ({ stats, videos }: { stats: any; videos: any[] }) => {
   return (
     <div className="space-y-8">
       {/* Net Revenue - All-time High Card */}
-      <div className="bg-white border border-gray-200 rounded-lg p-6">
-        <div className="text-sm text-gray-600 mb-2">純収益 - 過去最高</div>
-        <div className="text-4xl font-bold text-gray-900">
+      <div className="bg-white border border-gray-200 rounded-lg p-6 p-auto">
+        <div className="text-sm text-gray-800 mb-2">純収益 - 過去最高</div>
+        <div className="text-4xl font-bold text-gray-900 text-center">
           {formatCurrency(netRevenue)}
         </div>
       </div>
@@ -749,7 +749,7 @@ const DashboardTab = ({ stats, videos }: { stats: any; videos: any[] }) => {
             <select
               value={dateRange}
               onChange={(e) => setDateRange(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#FF0066]"
+              className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#FF0066] text-black"
             >
               <option value="7days">過去7日間</option>
               <option value="30days">過去30日間</option>
@@ -758,7 +758,7 @@ const DashboardTab = ({ stats, videos }: { stats: any; videos: any[] }) => {
             <select
               value={currency}
               onChange={(e) => setCurrency(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#FF0066]"
+              className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#FF0066] text-black"
             >
               <option value="USD">米ドル</option>
               <option value="JPY">日本円</option>
@@ -781,13 +781,13 @@ const DashboardTab = ({ stats, videos }: { stats: any; videos: any[] }) => {
         {/* Four Key Metric Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <div className="bg-white border border-gray-200 rounded-lg p-4 relative">
-            <button className="absolute top-2 right-2 text-gray-400 hover:text-gray-600">
+            <button className="absolute top-2 right-2 text-gray-400 hover:text-gray-800">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
               </svg>
             </button>
-            <div className="text-sm text-gray-600 mb-1">総収益</div>
+            <div className="text-sm text-gray-800 mb-1">総収益</div>
             <div className="text-2xl font-bold text-gray-900 mb-2">
               {formatCurrency(totalRevenue)}
             </div>
@@ -815,24 +815,24 @@ const DashboardTab = ({ stats, videos }: { stats: any; videos: any[] }) => {
             })()}
           </div>
           <div className="bg-white border border-gray-200 rounded-lg p-4 relative">
-            <button className="absolute top-2 right-2 text-gray-400 hover:text-gray-600">
+            <button className="absolute top-2 right-2 text-gray-400 hover:text-gray-800">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
               </svg>
             </button>
-            <div className="text-sm text-gray-600 mb-1">サブスクリプション収益</div>
+            <div className="text-sm text-gray-800 mb-1">サブスクリプション収益</div>
             <div className="text-2xl font-bold text-gray-900 mb-2">
               {formatCurrency(subscriptionRevenue)}
             </div>
             {/* No trend data available for subscription revenue */}
           </div>
           <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <div className="text-sm text-gray-600 mb-1">オプトイン</div>
+            <div className="text-sm text-gray-800 mb-1">オプトイン</div>
             <div className="text-2xl font-bold text-gray-900">{optIns}</div>
           </div>
           <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <div className="text-sm text-gray-600 mb-1">販売済みオファー</div>
+            <div className="text-sm text-gray-800 mb-1">販売済みオファー</div>
             <div className="text-2xl font-bold text-gray-900 mb-2">{offersSold}</div>
             {/* Trend indicator - can be calculated if previous period purchase data is available */}
             {purchaseData.length > 0 && (() => {
@@ -888,7 +888,7 @@ const DashboardTab = ({ stats, videos }: { stats: any; videos: any[] }) => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Purchases - Last 30 Days */}
         <div className="bg-white border border-gray-200 rounded-lg p-6 relative">
-          <div className="text-sm text-gray-600 mb-2">購入 - 過去30日間</div>
+          <div className="text-sm text-gray-800 mb-2">購入 - 過去30日間</div>
           <div className="text-3xl font-bold text-gray-900 mb-4">{totalPurchases.toLocaleString()}</div>
           {isMounted && (
             <Chart
@@ -902,7 +902,7 @@ const DashboardTab = ({ stats, videos }: { stats: any; videos: any[] }) => {
 
         {/* Total Revenue - Last 30 Days */}
         <div className="bg-white border border-gray-200 rounded-lg p-6 relative">
-          <div className="text-sm text-gray-600 mb-2">総収益 - 過去30日間</div>
+          <div className="text-sm text-gray-800 mb-2">総収益 - 過去30日間</div>
           <div className="text-3xl font-bold text-gray-900 mb-4">
             {formatCurrency(totalSalesLast30Days)}
           </div>
@@ -918,8 +918,8 @@ const DashboardTab = ({ stats, videos }: { stats: any; videos: any[] }) => {
 
         {/* Net Revenue - All-time High */}
         <div className="bg-white border border-gray-200 rounded-lg p-6">
-          <div className="text-sm text-gray-600 mb-2">純収益 - 過去最高</div>
-          <div className="text-3xl font-bold text-gray-900">
+          <div className="text-sm text-gray-800 mb-2">純収益 - 過去最高</div>
+          <div className="w-full h-full flex items-center justify-center text-3xl font-bold text-gray-900">
             {formatCurrency(netRevenue)}
           </div>
         </div>
@@ -1202,7 +1202,7 @@ const VideosTab = ({ videos, onRefresh, isAdmin }: { videos: any[]; onRefresh: (
                 ) : (
                   <>
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">{video.title}</h3>
-                    <p className="text-sm text-gray-600 mb-4">{video.description || "説明なし"}</p>
+                    <p className="text-sm text-gray-800 mb-4">{video.description || "説明なし"}</p>
                     
                     {/* Statistics */}
                     <div className="grid grid-cols-4 gap-4 mb-4">
@@ -1315,7 +1315,7 @@ const VideosTab = ({ videos, onRefresh, isAdmin }: { videos: any[]; onRefresh: (
                     </div>
                   )}
                   {selectedVideoFile && (
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-gray-800">
                       選択中: {selectedVideoFile.name} ({(selectedVideoFile.size / 1024 / 1024).toFixed(2)} MB)
                     </p>
                   )}
@@ -1352,7 +1352,7 @@ const VideosTab = ({ videos, onRefresh, isAdmin }: { videos: any[]; onRefresh: (
                     </div>
                   )}
                   {selectedThumbnailFile && (
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-gray-800">
                       選択中: {selectedThumbnailFile.name} ({(selectedThumbnailFile.size / 1024).toFixed(2)} KB)
                     </p>
                   )}
