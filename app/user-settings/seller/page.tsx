@@ -19,6 +19,9 @@ import {
 } from "@/app/lib/api";
 import LoadingSpinner from "@/app/components/loading-spinner";
 import Image from "next/image";
+import dynamic from "next/dynamic";
+
+const Chart = dynamic(() => import("react-apexcharts"), { ssr: false });
 
 const SellerDashboardPage = () => {
   const router = useRouter();
@@ -201,14 +204,26 @@ const SellerDashboardPage = () => {
 
 // Dashboard Tab Component
 const DashboardTab = ({ stats, videos }: { stats: any; videos: any[] }) => {
+  const [dateRange, setDateRange] = useState("7days");
   const [purchaseData, setPurchaseData] = useState<any[]>([]);
   const [salesData, setSalesData] = useState<any[]>([]);
+  const [revenueData, setRevenueData] = useState<any>(null);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
     // Use real data from stats if available
+    let currentPurchaseData: any[] = [];
+    let currentSalesData: any[] = [];
+    
     if (stats?.purchaseData && stats?.salesData) {
-      setPurchaseData(stats.purchaseData);
-      setSalesData(stats.salesData);
+      currentPurchaseData = stats.purchaseData;
+      currentSalesData = stats.salesData;
+      setPurchaseData(currentPurchaseData);
+      setSalesData(currentSalesData);
     } else {
       // Fallback: Generate empty data for last 30 days if no data available
       const days = 30;
@@ -230,97 +245,409 @@ const DashboardTab = ({ stats, videos }: { stats: any; videos: any[] }) => {
         });
       }
       
+      currentPurchaseData = purchases;
+      currentSalesData = sales;
       setPurchaseData(purchases);
       setSalesData(sales);
     }
+
+    // Generate revenue trend data for the main chart using actual backend data
+    const generateRevenueData = (salesDataToUse: any[]) => {
+      const now = new Date();
+      const currentPeriod: any[] = [];
+      const previousPeriod: any[] = [];
+      
+      // Current period: Last 7 days (today - 6 days ago to today)
+      const currentPeriodData: { [key: string]: number } = {};
+      salesDataToUse.forEach((sale) => {
+        const saleDate = new Date(sale.date);
+        const daysDiff = Math.floor((now.getTime() - saleDate.getTime()) / (1000 * 60 * 60 * 24));
+        if (daysDiff >= 0 && daysDiff < 7) {
+          const dateKey = saleDate.toISOString().split('T')[0];
+          currentPeriodData[dateKey] = (currentPeriodData[dateKey] || 0) + sale.amount;
+        }
+      });
+
+      // Previous period: 7 days before current period (7-13 days ago)
+      const previousPeriodData: { [key: string]: number } = {};
+      salesDataToUse.forEach((sale) => {
+        const saleDate = new Date(sale.date);
+        const daysDiff = Math.floor((now.getTime() - saleDate.getTime()) / (1000 * 60 * 60 * 24));
+        if (daysDiff >= 7 && daysDiff < 14) {
+          const dateKey = saleDate.toISOString().split('T')[0];
+          previousPeriodData[dateKey] = (previousPeriodData[dateKey] || 0) + sale.amount;
+        }
+      });
+
+      // Generate current period dates (last 7 days)
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date(now);
+        date.setDate(date.getDate() - i);
+        const dateKey = date.toISOString().split('T')[0];
+        const dateLabel = date.toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' });
+        currentPeriod.push({
+          x: dateLabel,
+          y: currentPeriodData[dateKey] || 0
+        });
+      }
+
+      // Generate previous period dates - use same x-axis labels as current period but data from 7 days earlier
+      for (let i = 6; i >= 0; i--) {
+        const currentDate = new Date(now);
+        currentDate.setDate(currentDate.getDate() - i);
+        const dateLabel = currentDate.toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' });
+        
+        // Get data from 7 days before this date
+        const previousDate = new Date(currentDate);
+        previousDate.setDate(previousDate.getDate() - 7);
+        const previousDateKey = previousDate.toISOString().split('T')[0];
+        
+        previousPeriod.push({
+          x: dateLabel, // Same label as current period for alignment
+          y: previousPeriodData[previousDateKey] || 0
+        });
+      }
+
+      // Format period labels for legend
+      const currentStart = new Date(now);
+      currentStart.setDate(currentStart.getDate() - 6);
+      const currentEnd = new Date(now);
+      const previousStart = new Date(now);
+      previousStart.setDate(previousStart.getDate() - 13);
+      const previousEnd = new Date(now);
+      previousEnd.setDate(previousEnd.getDate() - 7);
+
+      setRevenueData({
+        current: currentPeriod,
+        previous: previousPeriod,
+        currentLabel: `${currentStart.getMonth() + 1}月${currentStart.getDate()}日~${currentEnd.getMonth() + 1}月${currentEnd.getDate()}日`,
+        previousLabel: `${previousStart.getMonth() + 1}月${previousStart.getDate()}日~${previousEnd.getMonth() + 1}月${previousEnd.getDate()}日`
+      });
+    };
+
+    generateRevenueData(currentSalesData);
   }, [stats]);
 
+  // Calculate totals from actual backend data
   const totalPurchases = purchaseData.reduce((sum, d) => sum + d.count, 0);
-  const totalSales = salesData.reduce((sum, d) => sum + d.amount, 0);
-  const totalPurchasesAmount = purchaseData.reduce((sum, d) => sum + d.amount, 0);
+  const totalSalesLast30Days = salesData.reduce((sum, d) => sum + d.amount, 0);
+  const netRevenue = stats?.totalSales || 0; // All-time high net revenue from backend
 
-  const maxPurchaseCount = Math.max(...purchaseData.map(d => d.count), 1);
-  const maxSalesAmount = Math.max(...salesData.map(d => d.amount), 1);
+  // Calculate metrics with trend indicators (JPY only)
+  const totalRevenue = totalSalesLast30Days;
+  const subscriptionRevenue = 0; // Placeholder - can be calculated from backend if available
+  const optIns = 1;
+  const offersSold = totalPurchases;
+
+  // Main revenue chart configuration
+  const mainChartOptions: any = {
+    chart: {
+      type: 'area',
+      height: 350,
+      toolbar: { show: false },
+      zoom: { enabled: false }
+    },
+    dataLabels: { enabled: false },
+    stroke: {
+      curve: 'smooth',
+      width: 3
+    },
+    colors: ['#9333EA', '#FF6B35'],
+    plotOptions: {
+      area: {
+        fillTo: 'end'
+      }
+    },
+    fill: {
+      type: 'gradient',
+      gradient: {
+        shadeIntensity: 1,
+        opacityFrom: 0.7,
+        opacityTo: 0.3,
+        stops: [0, 100]
+      }
+    },
+    xaxis: {
+      categories: revenueData?.current.map((d: any) => d.x) || [],
+      labels: {
+        style: {
+          colors: '#6B7280',
+          fontSize: '12px'
+        }
+      }
+    },
+    yaxis: {
+      labels: {
+        style: {
+          colors: '#6B7280',
+          fontSize: '12px'
+        },
+        formatter: (val: number) => {
+          if (val >= 1000000) {
+            return `¥${Math.round(val / 1000000)}m`;
+          } else if (val >= 1000) {
+            return `¥${Math.round(val / 1000)}k`;
+          }
+          return `¥${Math.round(val)}`;
+        }
+      }
+    },
+    legend: {
+      show: true,
+      position: 'top',
+      horizontalAlign: 'right',
+      markers: {
+        width: 8,
+        height: 8,
+        radius: 4
+      }
+    },
+    grid: {
+      borderColor: '#E5E7EB',
+      strokeDashArray: 3
+    },
+    tooltip: {
+      y: {
+        formatter: (val: number) => {
+          return `¥${val.toLocaleString()}`;
+        }
+      }
+    }
+  };
+
+  const mainChartSeries = revenueData ? [
+    {
+      name: revenueData.previousLabel || '前週',
+      data: revenueData.previous.map((d: any) => d.y),
+      stroke: {
+        width: 2,
+        dashArray: 5
+      }
+    },
+    {
+      name: revenueData.currentLabel || '今週',
+      data: revenueData.current.map((d: any) => d.y),
+      stroke: {
+        width: 3
+      }
+    }
+  ] : [];
+
+  // Mini chart for purchases (last 30 days) - using actual backend data
+  const purchaseChartOptions: any = {
+    chart: {
+      type: 'area',
+      height: 100,
+      toolbar: { show: false },
+      sparkline: { enabled: true }
+    },
+    stroke: {
+      curve: 'smooth',
+      width: 2,
+      colors: ['#9333EA']
+    },
+    fill: {
+      type: 'gradient',
+      gradient: {
+        shadeIntensity: 1,
+        opacityFrom: 0.7,
+        opacityTo: 0.1,
+        stops: [0, 100]
+      }
+    },
+    xaxis: {
+      labels: { show: false },
+      categories: purchaseData.map(d => {
+        const date = new Date(d.date);
+        return date.toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' });
+      })
+    },
+    yaxis: {
+      labels: { show: false }
+    },
+    grid: { show: false },
+    tooltip: {
+      enabled: true,
+      y: {
+        formatter: (val: number) => val.toLocaleString()
+      }
+    }
+  };
+
+  const purchaseChartSeries = [{
+    name: '購入',
+    data: purchaseData.map(d => d.count)
+  }];
+
+  // Mini chart for total revenue (last 30 days) - using actual backend data
+  const revenueChartOptions: any = {
+    chart: {
+      type: 'area',
+      height: 100,
+      toolbar: { show: false },
+      sparkline: { enabled: true }
+    },
+    stroke: {
+      curve: 'smooth',
+      width: 2,
+      colors: ['#9333EA']
+    },
+    fill: {
+      type: 'gradient',
+      gradient: {
+        shadeIntensity: 1,
+        opacityFrom: 0.7,
+        opacityTo: 0.1,
+        stops: [0, 100]
+      }
+    },
+    xaxis: {
+      labels: { show: false },
+      categories: salesData.map(d => {
+        const date = new Date(d.date);
+        return date.toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' });
+      })
+    },
+    yaxis: {
+      labels: { show: false }
+    },
+    grid: { show: false },
+    tooltip: {
+      enabled: true,
+      y: {
+        formatter: (val: number) => {
+          return `¥${val.toLocaleString()}`;
+        }
+      }
+    }
+  };
+
+  const revenueChartSeries = [{
+    name: '総収益',
+    data: salesData.map(d => d.amount)
+  }];
 
   return (
     <div className="space-y-8">
-      <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-
-      {/* Overall Financials */}
-      <div className="bg-gradient-to-r from-[#FF0066] to-[#FFA101] rounded-lg p-8 text-white">
-        <div className="text-4xl font-bold mb-2">
-          ¥{(stats?.totalSales || totalSales).toLocaleString()}
-        </div>
-        <div className="text-lg opacity-90">総売上</div>
-      </div>
-
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white border border-gray-200 rounded-lg p-6">
-          <div className="text-2xl font-bold text-gray-900">
-            {stats?.totalVideos || 0}
-          </div>
-          <div className="text-sm text-gray-600 mt-1">総動画数</div>
-        </div>
-        <div className="bg-white border border-gray-200 rounded-lg p-6">
-          <div className="text-2xl font-bold text-gray-900">
-            {(stats?.totalViews || 0).toLocaleString()}
-          </div>
-          <div className="text-sm text-gray-600 mt-1">総視聴回数</div>
-        </div>
-        <div className="bg-white border border-gray-200 rounded-lg p-6">
-          <div className="text-2xl font-bold text-gray-900">
-            {(stats?.totalPurchases || 0).toLocaleString()}
-          </div>
-          <div className="text-sm text-gray-600 mt-1">総購入数</div>
-        </div>
-        <div className="bg-white border border-gray-200 rounded-lg p-6">
-          <div className="text-2xl font-bold text-gray-900">
-            {(stats?.totalAccess || 0).toLocaleString()}
-          </div>
-          <div className="text-sm text-gray-600 mt-1">総アクセス数</div>
+      {/* Net Revenue - All-time High Card */}
+      <div className="bg-white border border-gray-200 rounded-lg p-6">
+        <div className="text-sm text-gray-600 mb-2">純収益 - 過去最高</div>
+        <div className="text-4xl font-bold text-gray-900">
+          ¥{netRevenue.toLocaleString()}
         </div>
       </div>
 
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Purchases Chart */}
-        <div className="bg-white border border-gray-200 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            購入、過去30日間 ({totalPurchases})
-          </h3>
-          <div className="h-64 flex items-end justify-between gap-1">
-            {purchaseData.map((data, index) => (
-              <div
-                key={index}
-                className="flex-1 bg-[#FF0066] rounded-t"
-                style={{
-                  height: `${(data.count / maxPurchaseCount) * 100}%`,
-                  minHeight: '4px',
-                }}
-                title={`${data.date}: ${data.count}`}
-              />
-            ))}
+      {/* Controls and Main Metrics Section */}
+      <div className="bg-white border border-gray-200 rounded-lg p-6">
+        {/* Controls */}
+        <div className="flex justify-between items-center mb-6">
+          <div className="flex gap-4 items-center">
+            <select
+              value={dateRange}
+              onChange={(e) => setDateRange(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#FF0066]"
+            >
+              <option value="7days">過去7日間</option>
+              <option value="30days">過去30日間</option>
+              <option value="90days">過去90日間</option>
+            </select>
+          </div>
+          <div className="flex gap-2">
+            <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+            </button>
+            <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+            </button>
           </div>
         </div>
 
-        {/* Sales Chart */}
+        {/* Four Key Metric Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <div className="bg-white border border-gray-200 rounded-lg p-4">
+            <div className="text-sm text-gray-600 mb-1">総収益</div>
+            <div className="text-2xl font-bold text-gray-900 mb-2">
+              ¥{totalRevenue.toLocaleString()}
+            </div>
+          </div>
+          <div className="bg-white border border-gray-200 rounded-lg p-4">
+            <div className="text-sm text-gray-600 mb-1">サブスクリプション収益</div>
+            <div className="text-2xl font-bold text-gray-900 mb-2">
+              ¥{subscriptionRevenue.toLocaleString()}
+            </div>
+          </div>
+          <div className="bg-white border border-gray-200 rounded-lg p-4">
+            <div className="text-sm text-gray-600 mb-1">オプトイン</div>
+            <div className="text-2xl font-bold text-gray-900">{optIns}</div>
+          </div>
+          <div className="bg-white border border-gray-200 rounded-lg p-4">
+            <div className="text-sm text-gray-600 mb-1">販売済みオファー</div>
+            <div className="text-2xl font-bold text-gray-900 mb-2">{offersSold}</div>
+            <div className="flex items-center text-red-600 text-sm">
+              <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M14.707 12.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 14.586V3a1 1 0 012 0v11.586l2.293-2.293a1 1 0 011.414 0z" clipRule="evenodd" />
+              </svg>
+              <span>43%</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Main Revenue Trend Chart */}
         <div className="bg-white border border-gray-200 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            総売上、過去30日間 (¥{totalPurchasesAmount.toLocaleString()})
-          </h3>
-          <div className="h-64 flex items-end justify-between gap-1">
-            {salesData.map((data, index) => (
-              <div
-                key={index}
-                className="flex-1 bg-[#FFA101] rounded-t"
-                style={{
-                  height: `${(data.amount / maxSalesAmount) * 100}%`,
-                  minHeight: '4px',
-                }}
-                title={`${data.date}: ¥${data.amount.toLocaleString()}`}
-              />
-            ))}
+          {isMounted && (
+            <Chart
+              options={mainChartOptions}
+              series={mainChartSeries}
+              type="area"
+              height={350}
+            />
+          )}
+        </div>
+      </div>
+
+      {/* Bottom Three Metric Cards with Mini Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Purchases - Last 30 Days */}
+        <div className="bg-white border border-gray-200 rounded-lg p-6 relative">
+          <div className="absolute top-4 right-4 text-red-500 font-bold text-sm">k</div>
+          <div className="text-sm text-gray-600 mb-2">購入 - 過去30日間</div>
+          <div className="text-3xl font-bold text-gray-900 mb-4">{totalPurchases.toLocaleString()}</div>
+          {isMounted && (
+            <Chart
+              options={purchaseChartOptions}
+              series={purchaseChartSeries}
+              type="area"
+              height={100}
+            />
+          )}
+        </div>
+
+        {/* Total Revenue - Last 30 Days */}
+        <div className="bg-white border border-gray-200 rounded-lg p-6 relative">
+          <div className="absolute top-4 right-4 text-red-500 font-bold text-sm">k</div>
+          <div className="text-sm text-gray-600 mb-2">総収益 - 過去30日間</div>
+          <div className="text-3xl font-bold text-gray-900 mb-4">
+            ¥{totalSalesLast30Days.toLocaleString()}
+          </div>
+          {isMounted && (
+            <Chart
+              options={revenueChartOptions}
+              series={revenueChartSeries}
+              type="area"
+              height={100}
+            />
+          )}
+        </div>
+
+        {/* Net Revenue - All-time High */}
+        <div className="bg-white border border-gray-200 rounded-lg p-6">
+          <div className="text-sm text-gray-600 mb-2">純収益 - 過去最高</div>
+          <div className="text-3xl font-bold text-gray-900">
+            ¥{netRevenue.toLocaleString()}
           </div>
         </div>
       </div>

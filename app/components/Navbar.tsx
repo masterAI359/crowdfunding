@@ -87,13 +87,7 @@ const Navbar: React.FC<NavbarProps> = ({
 
   // Background color for non-landing pages: white when scrolled, transparent at top
   // When user is logged in, always show white background
-  const navBackgroundClass = isLanding
-    ? ""
-    : isAuthenticated
-      ? "bg-white"
-      : isScrolled
-        ? "bg-white"
-        : "bg-transparent";
+  const navBackgroundClass = isLanding ? "" : isAuthenticated ? "bg-white" : isScrolled ? "bg-white" : "bg-white";
 
   return (
     <nav
