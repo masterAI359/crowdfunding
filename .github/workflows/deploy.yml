@@ -20,6 +20,11 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
 
+      - name: Add SSH key to agent
+        run: |
+          eval $(ssh-agent -s)
+          ssh-add ~/.ssh/deploy_key
+
       - name: Verify SSH connection
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
@@ -32,7 +37,23 @@ jobs:
             exit 1
           fi
 
-      - name: Pull latest changes
+      - name: Sync code to VPS
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+        run: |
+          echo "Syncing code to VPS..."
+          rsync -avz --delete \
+            --exclude '.git' \
+            --exclude 'node_modules' \
+            --exclude '.next' \
+            --exclude '.env.local' \
+            --exclude '.env.production' \
+            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
+            ./ $VPS_USER@$VPS_HOST:~/dev/frontend/
+          echo "Code synced successfully"
+          
+      - name: Verify code sync
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
@@ -40,12 +61,12 @@ jobs:
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no $VPS_USER@$VPS_HOST << 'ENDSSH'
             set -e
             cd ~/dev/frontend
-            echo "Pulling latest changes..."
-            git checkout main
-            eval $(ssh-agent -s)
-            ssh-add ~/.ssh/deploy_key
-            git pull
-            echo "Code updated successfully"
+            if [ -f "package.json" ] || [ -f "pnpm-lock.yaml" ]; then
+              echo "Code files verified on VPS"
+            else
+              echo "Code sync verification failed"
+              exit 1
+            fi
           ENDSSH
 
       - name: Build application
