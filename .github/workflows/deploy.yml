@@ -28,23 +28,9 @@ jobs:
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no $VPS_USER@$VPS_HOST << 'ENDSSH'
             cd ~/dev/frontend
             
-            # Ensure we're on main branch and clean up any local changes
-            git checkout main || git checkout -b main
-            git fetch origin main
-            git reset --hard origin/main
-            git clean -fd
-            
-            # Ensure local branch tracks remote
-            git branch --set-upstream-to=origin/main main || true
-            
-            # Check if dependencies need to be installed
-            if [ -f "package-lock.json" ]; then
-              npm ci
-            elif [ -f "pnpm-lock.yaml" ]; then
-              pnpm install --frozen-lockfile
-            else
-              npm install
-            fi
+            # Pull latest changes
+            git checkout main
+            git pull origin main
             
             # Build the Next.js application
             if [ -f "pnpm-lock.yaml" ]; then
