@@ -39,14 +39,6 @@ jobs:
         run: |
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no $VPS_USER@$VPS_HOST << 'ENDSSH'
             set -e
-            # Source profile to get proper PATH
-            [ -f ~/.bashrc ] && source ~/.bashrc || true
-            [ -f ~/.bash_profile ] && source ~/.bash_profile || true
-            [ -f ~/.profile ] && source ~/.profile || true
-            
-            # Add npm global bin to PATH if not already there
-            export PATH="$PATH:$(npm config get prefix)/bin:$HOME/.local/share/pnpm:$HOME/.npm-global/bin"
-            
             cd ~/dev/frontend
             echo "Pulling latest changes..."
             git checkout main
@@ -54,7 +46,27 @@ jobs:
             ssh-add ~/.ssh/admin
             git pull
             echo "Code updated successfully"
+            # Load shell profile to get PATH and environment variables
+            source ~/.bashrc || source ~/.profile || true
+            export PATH="$HOME/.local/bin:$HOME/.local/share/pnpm:$PATH"
+            export PATH="/usr/local/bin:/usr/bin:$PATH"
+            # Load nvm if available (common Node.js version manager)
+            [ -s "$HOME/.nvm/nvm.sh" ] && source "$HOME/.nvm/nvm.sh"
+            [ -s "/usr/local/nvm/nvm.sh" ] && source "/usr/local/nvm/nvm.sh"
             echo "Building application..."
+            # Ensure Node.js/npm is available
+            if ! command -v npm &> /dev/null; then
+              echo "Error: npm not found. Please install Node.js on the server."
+              exit 1
+            fi
+            # Ensure pnpm is available
+            if ! command -v pnpm &> /dev/null; then
+              echo "Installing pnpm globally..."
+              npm install -g pnpm
+            fi
+            # Add pnpm to PATH if installed via npm
+            export PATH="$HOME/.npm-global/bin:$PATH"
+            export PATH="$HOME/.local/share/pnpm:$PATH"
             if [ -f "pnpm-lock.yaml" ]; then
               pnpm build
             else
