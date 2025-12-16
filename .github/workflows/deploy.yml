@@ -53,23 +53,6 @@ jobs:
               npm run build
             fi
             echo "Build completed successfully"
-          ENDSSH
-
-      - name: Build application
-        env:
-          VPS_HOST: ${{ secrets.VPS_HOST }}
-          VPS_USER: ${{ secrets.VPS_USER }}
-        run: |
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no $VPS_USER@$VPS_HOST << 'ENDSSH'
-            set -e
-            cd ~/dev/frontend
-            echo "Building application..."
-            if [ -f "pnpm-lock.yaml" ]; then
-              pnpm build
-            else
-              npm run build
-            fi
-            echo "Build completed successfully"
             echo "Reloading PM2 process..."
             pm2 reload 2
             echo "PM2 process reloaded"
@@ -82,15 +65,4 @@ jobs:
               echo "PM2 process is not running"
               exit 1
             fi
-            
-            # Check if build directory exists
-            cd ~/dev/frontend
-            if [ -d ".next" ]; then
-              echo "Build directory exists"
-            else
-              echo "Build directory not found"
-              exit 1
-            fi
-            
-            echo "Deployment verified successfully!"
           ENDSSH
