@@ -20,27 +20,86 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
 
-      - name: Deploy to VPS
+      - name: Verify SSH connection
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+        run: |
+          if ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -o ConnectTimeout=10 $VPS_USER@$VPS_HOST "echo 'SSH connection successful'"; then
+            echo "SSH connection verified"
+          else
+            echo "SSH connection failed"
+            exit 1
+          fi
+
+      - name: Pull latest changes
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
         run: |
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no $VPS_USER@$VPS_HOST << 'ENDSSH'
+            set -e
             cd ~/dev/frontend
-            
-            # Pull latest changes
+            echo "Pulling latest changes..."
             git checkout main
             git pull
-            
-            # Build the Next.js application
+            echo "Code updated successfully"
+          ENDSSH
+
+      - name: Build application
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no $VPS_USER@$VPS_HOST << 'ENDSSH'
+            set -e
+            cd ~/dev/frontend
+            echo "Building application..."
             if [ -f "pnpm-lock.yaml" ]; then
               pnpm build
             else
               npm run build
             fi
-            
-            # Reload PM2 process
+            echo "Build completed successfully"
+          ENDSSH
+
+      - name: Reload PM2 process
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no $VPS_USER@$VPS_HOST << 'ENDSSH'
+            set -e
+            echo "Reloading PM2 process..."
             pm2 reload 2
+            echo "PM2 process reloaded"
+          ENDSSH
+
+      - name: Verify deployment
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no $VPS_USER@$VPS_HOST << 'ENDSSH'
+            set -e
+            echo "Verifying deployment..."
             
-            echo "Deployment completed successfully!"
+            # Check if PM2 process is running
+            if pm2 describe 2 | grep -q "online"; then
+              echo "PM2 process is running"
+            else
+              echo "PM2 process is not running"
+              exit 1
+            fi
+            
+            # Check if build directory exists
+            cd ~/dev/frontend
+            if [ -d ".next" ]; then
+              echo "Build directory exists"
+            else
+              echo "Build directory not found"
+              exit 1
+            fi
+            
+            echo "Deployment verified successfully!"
           ENDSSH
