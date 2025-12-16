@@ -42,6 +42,8 @@ jobs:
             cd ~/dev/frontend
             echo "Pulling latest changes..."
             git checkout main
+            eval $(ssh-agent -s)
+            ssh-add ~/.ssh/deploy_key
             git pull
             echo "Code updated successfully"
           ENDSSH
