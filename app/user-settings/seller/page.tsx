@@ -205,10 +205,29 @@ const SellerDashboardPage = () => {
 // Dashboard Tab Component
 const DashboardTab = ({ stats, videos }: { stats: any; videos: any[] }) => {
   const [dateRange, setDateRange] = useState("7days");
+  const [currency, setCurrency] = useState("USD");
   const [purchaseData, setPurchaseData] = useState<any[]>([]);
   const [salesData, setSalesData] = useState<any[]>([]);
   const [revenueData, setRevenueData] = useState<any>(null);
   const [isMounted, setIsMounted] = useState(false);
+
+  // USD to JPY conversion rate
+  const USD_TO_JPY = 150;
+
+  // Conversion helper function
+  const convertToCurrency = (jpyValue: number) => {
+    if (currency === "USD") {
+      return Math.round(jpyValue / USD_TO_JPY);
+    }
+    return jpyValue;
+  };
+
+  const formatCurrency = (value: number) => {
+    if (currency === "USD") {
+      return `$${value.toLocaleString()}`;
+    }
+    return `¥${value.toLocaleString()}`;
+  };
 
   useEffect(() => {
     setIsMounted(true);
@@ -328,16 +347,22 @@ const DashboardTab = ({ stats, videos }: { stats: any; videos: any[] }) => {
     generateRevenueData(currentSalesData);
   }, [stats]);
 
-  // Calculate totals from actual backend data
+  // Calculate totals from actual backend data (in JPY)
   const totalPurchases = purchaseData.reduce((sum, d) => sum + d.count, 0);
-  const totalSalesLast30Days = salesData.reduce((sum, d) => sum + d.amount, 0);
-  const netRevenue = stats?.totalSales || 0; // All-time high net revenue from backend
+  const totalSalesLast30DaysJPY = salesData.reduce((sum, d) => sum + d.amount, 0);
+  const netRevenueJPY = stats?.totalSales || 0; // All-time high net revenue from backend (JPY)
 
-  // Calculate metrics with trend indicators (JPY only)
-  const totalRevenue = totalSalesLast30Days;
-  const subscriptionRevenue = 0; // Placeholder - can be calculated from backend if available
-  const optIns = 1;
-  const offersSold = totalPurchases;
+  // Calculate metrics using only real backend data
+  const totalRevenueJPY = totalSalesLast30DaysJPY; // Use actual sales data
+  const subscriptionRevenueJPY = 0; // No subscription data available in backend
+  const optIns = 0; // No opt-in data available in backend
+  const offersSold = totalPurchases; // Use actual purchase count
+
+  // Convert to selected currency
+  const totalRevenue = convertToCurrency(totalRevenueJPY);
+  const subscriptionRevenue = convertToCurrency(subscriptionRevenueJPY);
+  const netRevenue = convertToCurrency(netRevenueJPY);
+  const totalSalesLast30Days = convertToCurrency(totalSalesLast30DaysJPY);
 
   // Main revenue chart configuration
   const mainChartOptions: any = {
@@ -383,19 +408,28 @@ const DashboardTab = ({ stats, videos }: { stats: any; videos: any[] }) => {
           fontSize: '12px'
         },
         formatter: (val: number) => {
-          if (val >= 1000000) {
-            return `¥${Math.round(val / 1000000)}m`;
-          } else if (val >= 1000) {
-            return `¥${Math.round(val / 1000)}k`;
+          // Convert JPY value to display currency
+          const displayVal = currency === "USD" ? val / USD_TO_JPY : val;
+          if (currency === "USD") {
+            if (displayVal >= 1000) {
+              return `$${Math.round(displayVal / 1000)}k`;
+            }
+            return `$${Math.round(displayVal)}`;
+          } else {
+            if (displayVal >= 1000000) {
+              return `¥${Math.round(displayVal / 1000000)}m`;
+            } else if (displayVal >= 1000) {
+              return `¥${Math.round(displayVal / 1000)}k`;
+            }
+            return `¥${Math.round(displayVal)}`;
           }
-          return `¥${Math.round(val)}`;
         }
       }
     },
     legend: {
       show: true,
-      position: 'top',
-      horizontalAlign: 'right',
+      position: 'bottom',
+      horizontalAlign: 'center',
       markers: {
         width: 8,
         height: 8,
@@ -409,7 +443,9 @@ const DashboardTab = ({ stats, videos }: { stats: any; videos: any[] }) => {
     tooltip: {
       y: {
         formatter: (val: number) => {
-          return `¥${val.toLocaleString()}`;
+          // val is in JPY, convert if needed
+          const displayVal = currency === "USD" ? val / USD_TO_JPY : val;
+          return formatCurrency(displayVal);
         }
       }
     }
@@ -418,7 +454,10 @@ const DashboardTab = ({ stats, videos }: { stats: any; videos: any[] }) => {
   const mainChartSeries = revenueData ? [
     {
       name: revenueData.previousLabel || '前週',
-      data: revenueData.previous.map((d: any) => d.y),
+      data: revenueData.previous.map((d: any) => {
+        // Convert JPY to selected currency
+        return currency === "USD" ? d.y / USD_TO_JPY : d.y;
+      }),
       stroke: {
         width: 2,
         dashArray: 5
@@ -426,7 +465,10 @@ const DashboardTab = ({ stats, videos }: { stats: any; videos: any[] }) => {
     },
     {
       name: revenueData.currentLabel || '今週',
-      data: revenueData.current.map((d: any) => d.y),
+      data: revenueData.current.map((d: any) => {
+        // Convert JPY to selected currency
+        return currency === "USD" ? d.y / USD_TO_JPY : d.y;
+      }),
       stroke: {
         width: 3
       }
@@ -516,7 +558,9 @@ const DashboardTab = ({ stats, videos }: { stats: any; videos: any[] }) => {
       enabled: true,
       y: {
         formatter: (val: number) => {
-          return `¥${val.toLocaleString()}`;
+          // val is in JPY, convert if needed
+          const displayVal = currency === "USD" ? val / USD_TO_JPY : val;
+          return formatCurrency(displayVal);
         }
       }
     }
@@ -533,7 +577,7 @@ const DashboardTab = ({ stats, videos }: { stats: any; videos: any[] }) => {
       <div className="bg-white border border-gray-200 rounded-lg p-6">
         <div className="text-sm text-gray-600 mb-2">純収益 - 過去最高</div>
         <div className="text-4xl font-bold text-gray-900">
-          ¥{netRevenue.toLocaleString()}
+          {formatCurrency(netRevenue)}
         </div>
       </div>
 
@@ -550,6 +594,14 @@ const DashboardTab = ({ stats, videos }: { stats: any; videos: any[] }) => {
               <option value="7days">過去7日間</option>
               <option value="30days">過去30日間</option>
               <option value="90days">過去90日間</option>
+            </select>
+            <select
+              value={currency}
+              onChange={(e) => setCurrency(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#FF0066]"
+            >
+              <option value="USD">米ドル</option>
+              <option value="JPY">日本円</option>
             </select>
           </div>
           <div className="flex gap-2">
@@ -568,17 +620,52 @@ const DashboardTab = ({ stats, videos }: { stats: any; videos: any[] }) => {
 
         {/* Four Key Metric Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
+          <div className="bg-white border border-gray-200 rounded-lg p-4 relative">
+            <button className="absolute top-2 right-2 text-gray-400 hover:text-gray-600">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+            </button>
             <div className="text-sm text-gray-600 mb-1">総収益</div>
             <div className="text-2xl font-bold text-gray-900 mb-2">
-              ¥{totalRevenue.toLocaleString()}
+              {formatCurrency(totalRevenue)}
             </div>
+            {/* Trend indicator - calculated from actual data */}
+            {revenueData && revenueData.previous && revenueData.current && (() => {
+              const previousTotal = revenueData.previous.reduce((sum: number, d: any) => sum + d.y, 0);
+              const currentTotal = revenueData.current.reduce((sum: number, d: any) => sum + d.y, 0);
+              if (previousTotal > 0) {
+                const changePercent = ((currentTotal - previousTotal) / previousTotal) * 100;
+                const isPositive = changePercent >= 0;
+                return (
+                  <div className={`flex items-center text-sm ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
+                    <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      {isPositive ? (
+                        <path fillRule="evenodd" d="M5.293 7.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L6.707 7.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                      ) : (
+                        <path fillRule="evenodd" d="M14.707 12.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 14.586V3a1 1 0 012 0v11.586l2.293-2.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      )}
+                    </svg>
+                    <span>{Math.abs(changePercent).toFixed(1)}%</span>
+                  </div>
+                );
+              }
+              return null;
+            })()}
           </div>
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
+          <div className="bg-white border border-gray-200 rounded-lg p-4 relative">
+            <button className="absolute top-2 right-2 text-gray-400 hover:text-gray-600">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+            </button>
             <div className="text-sm text-gray-600 mb-1">サブスクリプション収益</div>
             <div className="text-2xl font-bold text-gray-900 mb-2">
-              ¥{subscriptionRevenue.toLocaleString()}
+              {formatCurrency(subscriptionRevenue)}
             </div>
+            {/* No trend data available for subscription revenue */}
           </div>
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="text-sm text-gray-600 mb-1">オプトイン</div>
@@ -587,12 +674,40 @@ const DashboardTab = ({ stats, videos }: { stats: any; videos: any[] }) => {
           <div className="bg-white border border-gray-200 rounded-lg p-4">
             <div className="text-sm text-gray-600 mb-1">販売済みオファー</div>
             <div className="text-2xl font-bold text-gray-900 mb-2">{offersSold}</div>
-            <div className="flex items-center text-red-600 text-sm">
-              <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M14.707 12.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 14.586V3a1 1 0 012 0v11.586l2.293-2.293a1 1 0 011.414 0z" clipRule="evenodd" />
-              </svg>
-              <span>43%</span>
-            </div>
+            {/* Trend indicator - can be calculated if previous period purchase data is available */}
+            {purchaseData.length > 0 && (() => {
+              // Compare last 7 days vs previous 7 days
+              const now = new Date();
+              const last7Days = purchaseData.filter(d => {
+                const saleDate = new Date(d.date);
+                const daysDiff = Math.floor((now.getTime() - saleDate.getTime()) / (1000 * 60 * 60 * 24));
+                return daysDiff >= 0 && daysDiff < 7;
+              });
+              const prev7Days = purchaseData.filter(d => {
+                const saleDate = new Date(d.date);
+                const daysDiff = Math.floor((now.getTime() - saleDate.getTime()) / (1000 * 60 * 60 * 24));
+                return daysDiff >= 7 && daysDiff < 14;
+              });
+              const last7DaysCount = last7Days.reduce((sum, d) => sum + d.count, 0);
+              const prev7DaysCount = prev7Days.reduce((sum, d) => sum + d.count, 0);
+              if (prev7DaysCount > 0) {
+                const changePercent = ((last7DaysCount - prev7DaysCount) / prev7DaysCount) * 100;
+                const isPositive = changePercent >= 0;
+                return (
+                  <div className={`flex items-center text-sm ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
+                    <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      {isPositive ? (
+                        <path fillRule="evenodd" d="M5.293 7.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L6.707 7.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                      ) : (
+                        <path fillRule="evenodd" d="M14.707 12.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 14.586V3a1 1 0 012 0v11.586l2.293-2.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      )}
+                    </svg>
+                    <span>{Math.abs(changePercent).toFixed(1)}%</span>
+                  </div>
+                );
+              }
+              return null;
+            })()}
           </div>
         </div>
 
@@ -613,7 +728,6 @@ const DashboardTab = ({ stats, videos }: { stats: any; videos: any[] }) => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Purchases - Last 30 Days */}
         <div className="bg-white border border-gray-200 rounded-lg p-6 relative">
-          <div className="absolute top-4 right-4 text-red-500 font-bold text-sm">k</div>
           <div className="text-sm text-gray-600 mb-2">購入 - 過去30日間</div>
           <div className="text-3xl font-bold text-gray-900 mb-4">{totalPurchases.toLocaleString()}</div>
           {isMounted && (
@@ -628,10 +742,9 @@ const DashboardTab = ({ stats, videos }: { stats: any; videos: any[] }) => {
 
         {/* Total Revenue - Last 30 Days */}
         <div className="bg-white border border-gray-200 rounded-lg p-6 relative">
-          <div className="absolute top-4 right-4 text-red-500 font-bold text-sm">k</div>
           <div className="text-sm text-gray-600 mb-2">総収益 - 過去30日間</div>
           <div className="text-3xl font-bold text-gray-900 mb-4">
-            ¥{totalSalesLast30Days.toLocaleString()}
+            {formatCurrency(totalSalesLast30Days)}
           </div>
           {isMounted && (
             <Chart
@@ -647,7 +760,7 @@ const DashboardTab = ({ stats, videos }: { stats: any; videos: any[] }) => {
         <div className="bg-white border border-gray-200 rounded-lg p-6">
           <div className="text-sm text-gray-600 mb-2">純収益 - 過去最高</div>
           <div className="text-3xl font-bold text-gray-900">
-            ¥{netRevenue.toLocaleString()}
+            {formatCurrency(netRevenue)}
           </div>
         </div>
       </div>
