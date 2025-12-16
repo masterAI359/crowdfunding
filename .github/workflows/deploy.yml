@@ -25,40 +25,22 @@ jobs:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
         run: |
-          # Create deployment script
-          cat > deploy.sh << 'DEPLOYSCRIPT'
-          cd ~/dev/frontend
-          
-          # Pull latest changes
-          git fetch origin main
-          git reset --hard origin/main
-          
-          # Check if dependencies need to be installed
-          if [ -f "package-lock.json" ]; then
-            npm ci
-          elif [ -f "pnpm-lock.yaml" ]; then
-            pnpm install --frozen-lockfile
-          else
-            npm install
-          fi
-          
-          # Build the Next.js application
-          if [ -f "pnpm-lock.yaml" ]; then
-            pnpm build
-          else
-            npm run build
-          fi
-          
-          # Reload PM2 process
-          pm2 reload 2
-          
-          echo "Deployment completed successfully!"
-          DEPLOYSCRIPT
-          
-          # Copy script to VPS and execute using SSH key
-          scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no deploy.sh $VPS_USER@$VPS_HOST:~/deploy.sh
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no $VPS_USER@$VPS_HOST 'bash ~/deploy.sh && rm ~/deploy.sh'
-          
-          # Cleanup local script
-          rm deploy.sh
-
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no $VPS_USER@$VPS_HOST << 'ENDSSH'
+            cd ~/dev/frontend
+            
+            # Pull latest changes
+            git checkout main
+            git pull origin main
+            
+            # Build the Next.js application
+            if [ -f "pnpm-lock.yaml" ]; then
+              pnpm build
+            else
+              npm run build
+            fi
+            
+            # Reload PM2 process
+            pm2 reload 2
+            
+            echo "Deployment completed successfully!"
+          ENDSSH
