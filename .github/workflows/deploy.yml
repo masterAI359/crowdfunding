@@ -39,6 +39,14 @@ jobs:
         run: |
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no $VPS_USER@$VPS_HOST << 'ENDSSH'
             set -e
+            # Source profile to get proper PATH
+            [ -f ~/.bashrc ] && source ~/.bashrc || true
+            [ -f ~/.bash_profile ] && source ~/.bash_profile || true
+            [ -f ~/.profile ] && source ~/.profile || true
+            
+            # Add npm global bin to PATH if not already there
+            export PATH="$PATH:$(npm config get prefix)/bin:$HOME/.local/share/pnpm:$HOME/.npm-global/bin"
+            
             cd ~/dev/frontend
             echo "Pulling latest changes..."
             git checkout main
