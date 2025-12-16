@@ -19,6 +19,9 @@ import {
 } from "@/app/lib/api";
 import LoadingSpinner from "@/app/components/loading-spinner";
 import Image from "next/image";
+import dynamic from "next/dynamic";
+
+const Chart = dynamic(() => import("react-apexcharts"), { ssr: false });
 
 const SellerDashboardPage = () => {
   const router = useRouter();
@@ -30,6 +33,11 @@ const SellerDashboardPage = () => {
   const [dashboardStats, setDashboardStats] = useState<any>(null);
   const [isLoadingData, setIsLoadingData] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [expandedSections, setExpandedSections] = useState<{ [key: string]: boolean }>({
+    products: false,
+    sales: false,
+    contacts: false,
+  });
 
   // Get active tab from URL or state - MUST be called before any conditional returns
   useEffect(() => {
@@ -41,6 +49,30 @@ const SellerDashboardPage = () => {
       }
     }
   }, [pathname]);
+
+  // Auto-expand sections if their children are active
+  useEffect(() => {
+    setExpandedSections(prev => {
+      const newExpanded: { [key: string]: boolean } = { ...prev };
+      
+      // Check Products section
+      if (activeTab === "crowdfunding" || activeTab === "videos") {
+        newExpanded.products = true;
+      }
+      
+      // Check Sales section
+      if (activeTab === "payment") {
+        newExpanded.sales = true;
+      }
+      
+      // Check Contacts section
+      if (activeTab === "notifications") {
+        newExpanded.contacts = true;
+      }
+      
+      return newExpanded;
+    });
+  }, [activeTab]);
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
@@ -92,23 +124,96 @@ const SellerDashboardPage = () => {
     return null;
   }
 
-  const menuItems = [
-    { id: "dashboard", label: "Dashboard", href: "/user-settings/seller" },
-    { id: "products", label: "Products", href: "/user-settings/seller?tab=products" },
-    { id: "crowdfunding", label: "クラウドファンディング", href: "/user-settings/seller?tab=crowdfunding" },
-    { id: "videos", label: "動画コンテンツ", href: "/user-settings/seller?tab=videos" },
-    { id: "payment", label: "支払い", href: "/user-settings/seller?tab=payment" },
-    { id: "notifications", label: "全ての通知", href: "/user-settings/seller?tab=notifications" },
-    { id: "customer", label: "カスタマー", href: "/user-settings/seller?tab=customer" },
+  // Menu structure with categories
+  const menuStructure = [
+    {
+      id: "dashboard",
+      label: "Dashboard",
+      href: "/user-settings/seller",
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+        </svg>
+      ),
+      type: "single" as const,
+    },
+    {
+      id: "products",
+      label: "Products",
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+        </svg>
+      ),
+      type: "category" as const,
+      children: [
+        { id: "crowdfunding", label: "クラウドファンディング", href: "/user-settings/seller?tab=crowdfunding" },
+        { id: "videos", label: "動画コンテンツ", href: "/user-settings/seller?tab=videos" },
+      ],
+    },
+    {
+      id: "sales",
+      label: "販売",
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+      ),
+      type: "category" as const,
+      children: [
+        { id: "payment", label: "支払い", href: "/user-settings/seller?tab=payment" },
+      ],
+    },
+    {
+      id: "contacts",
+      label: "連絡先",
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+        </svg>
+      ),
+      type: "category" as const,
+      children: [
+        { id: "notifications", label: "全ての連絡先", href: "/user-settings/seller?tab=notifications" },
+      ],
+    },
+    {
+      id: "customer",
+      label: "カスタマー",
+      href: "/user-settings/seller?tab=customer",
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+      ),
+      type: "single" as const,
+    },
   ];
 
   // Add logs tab for admin
   if (isAdmin) {
-    menuItems.push({ id: "logs", label: "ユーザーログ", href: "/user-settings/seller?tab=logs" });
+    menuStructure.push({
+      id: "logs",
+      label: "ユーザーログ",
+      href: "/user-settings/seller?tab=logs",
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+      ),
+      type: "single" as const,
+    });
   }
 
+  const toggleSection = (sectionId: string) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [sectionId]: !prev[sectionId],
+    }));
+  };
+
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white text-black">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Left Sidebar Navigation */}
@@ -130,25 +235,83 @@ const SellerDashboardPage = () => {
               </div>
 
               {/* Navigation Menu */}
-              <nav className="space-y-2">
-                {menuItems.map((item) => {
-                  const isActive = activeTab === item.id || (item.id === "dashboard" && !activeTab);
-                  return (
-                    <button
-                      key={item.id}
-                      onClick={() => {
-                        setActiveTab(item.id);
-                        router.push(item.href);
-                      }}
-                      className={`w-full text-left px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
-                        isActive
-                          ? "bg-[#FF0066] text-white"
-                          : "text-gray-700 hover:bg-gray-100"
-                      }`}
-                    >
-                      {item.label}
-                    </button>
-                  );
+              <nav className="space-y-1">
+                {menuStructure.map((item) => {
+                  if (item.type === "single") {
+                    const isActive = activeTab === item.id || (item.id === "dashboard" && !activeTab);
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => {
+                          setActiveTab(item.id);
+                          if (item.href) {
+                            router.push(item.href);
+                          }
+                        }}
+                        className={`w-full text-left px-4 py-3 rounded-lg text-sm font-medium transition-colors flex items-center gap-3 ${
+                          isActive
+                            ? "bg-[#FF0066] text-white"
+                            : "text-gray-700 hover:bg-gray-100"
+                        }`}
+                      >
+                        {item.icon}
+                        <span>{item.label}</span>
+                      </button>
+                    );
+                  } else if (item.type === "category" && item.children) {
+                    const isExpanded = expandedSections[item.id] || false;
+                    const hasActiveChild = item.children.some(child => activeTab === child.id);
+
+                    return (
+                      <div key={item.id} className="space-y-1">
+                        <button
+                          onClick={() => toggleSection(item.id)}
+                          className={`w-full text-left px-4 py-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-between ${
+                            hasActiveChild
+                              ? "bg-gray-50 text-gray-900"
+                              : "text-gray-700 hover:bg-gray-100"
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            {item.icon}
+                            <span>{item.label}</span>
+                          </div>
+                          <svg
+                            className={`w-4 h-4 transition-transform ${isExpanded ? "rotate-180" : ""}`}
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </button>
+                        {isExpanded && (
+                          <div className="ml-4 space-y-1 border-l-2 border-gray-200 pl-2">
+                            {item.children.map((child) => {
+                              const isActive = activeTab === child.id;
+                              return (
+                                <button
+                                  key={child.id}
+                                  onClick={() => {
+                                    setActiveTab(child.id);
+                                    router.push(child.href);
+                                  }}
+                                  className={`w-full text-left px-4 py-2 rounded-lg text-sm transition-colors ${
+                                    isActive
+                                      ? "bg-[#FF0066] text-white"
+                                      : "text-gray-800 hover:bg-gray-100"
+                                  }`}
+                                >
+                                  {child.label}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  }
+                  return null;
                 })}
               </nav>
             </div>
@@ -201,14 +364,45 @@ const SellerDashboardPage = () => {
 
 // Dashboard Tab Component
 const DashboardTab = ({ stats, videos }: { stats: any; videos: any[] }) => {
+  const [dateRange, setDateRange] = useState("7days");
+  const [currency, setCurrency] = useState("USD");
   const [purchaseData, setPurchaseData] = useState<any[]>([]);
   const [salesData, setSalesData] = useState<any[]>([]);
+  const [revenueData, setRevenueData] = useState<any>(null);
+  const [isMounted, setIsMounted] = useState(false);
+
+  // USD to JPY conversion rate
+  const USD_TO_JPY = 150;
+
+  // Conversion helper function
+  const convertToCurrency = (jpyValue: number) => {
+    if (currency === "USD") {
+      return Math.round(jpyValue / USD_TO_JPY);
+    }
+    return jpyValue;
+  };
+
+  const formatCurrency = (value: number) => {
+    if (currency === "USD") {
+      return `$${value.toLocaleString()}`;
+    }
+    return `¥${value.toLocaleString()}`;
+  };
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
     // Use real data from stats if available
+    let currentPurchaseData: any[] = [];
+    let currentSalesData: any[] = [];
+    
     if (stats?.purchaseData && stats?.salesData) {
-      setPurchaseData(stats.purchaseData);
-      setSalesData(stats.salesData);
+      currentPurchaseData = stats.purchaseData;
+      currentSalesData = stats.salesData;
+      setPurchaseData(currentPurchaseData);
+      setSalesData(currentSalesData);
     } else {
       // Fallback: Generate empty data for last 30 days if no data available
       const days = 30;
@@ -230,97 +424,503 @@ const DashboardTab = ({ stats, videos }: { stats: any; videos: any[] }) => {
         });
       }
       
+      currentPurchaseData = purchases;
+      currentSalesData = sales;
       setPurchaseData(purchases);
       setSalesData(sales);
     }
+
+    // Generate revenue trend data for the main chart using actual backend data
+    const generateRevenueData = (salesDataToUse: any[]) => {
+      const now = new Date();
+      const currentPeriod: any[] = [];
+      const previousPeriod: any[] = [];
+      
+      // Current period: Last 7 days (today - 6 days ago to today)
+      const currentPeriodData: { [key: string]: number } = {};
+      salesDataToUse.forEach((sale) => {
+        const saleDate = new Date(sale.date);
+        const daysDiff = Math.floor((now.getTime() - saleDate.getTime()) / (1000 * 60 * 60 * 24));
+        if (daysDiff >= 0 && daysDiff < 7) {
+          const dateKey = saleDate.toISOString().split('T')[0];
+          currentPeriodData[dateKey] = (currentPeriodData[dateKey] || 0) + sale.amount;
+        }
+      });
+
+      // Previous period: 7 days before current period (7-13 days ago)
+      const previousPeriodData: { [key: string]: number } = {};
+      salesDataToUse.forEach((sale) => {
+        const saleDate = new Date(sale.date);
+        const daysDiff = Math.floor((now.getTime() - saleDate.getTime()) / (1000 * 60 * 60 * 24));
+        if (daysDiff >= 7 && daysDiff < 14) {
+          const dateKey = saleDate.toISOString().split('T')[0];
+          previousPeriodData[dateKey] = (previousPeriodData[dateKey] || 0) + sale.amount;
+        }
+      });
+
+      // Generate current period dates (last 7 days)
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date(now);
+        date.setDate(date.getDate() - i);
+        const dateKey = date.toISOString().split('T')[0];
+        const dateLabel = date.toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' });
+        currentPeriod.push({
+          x: dateLabel,
+          y: currentPeriodData[dateKey] || 0
+        });
+      }
+
+      // Generate previous period dates - use same x-axis labels as current period but data from 7 days earlier
+      for (let i = 6; i >= 0; i--) {
+        const currentDate = new Date(now);
+        currentDate.setDate(currentDate.getDate() - i);
+        const dateLabel = currentDate.toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' });
+        
+        // Get data from 7 days before this date
+        const previousDate = new Date(currentDate);
+        previousDate.setDate(previousDate.getDate() - 7);
+        const previousDateKey = previousDate.toISOString().split('T')[0];
+        
+        previousPeriod.push({
+          x: dateLabel, // Same label as current period for alignment
+          y: previousPeriodData[previousDateKey] || 0
+        });
+      }
+
+      // Format period labels for legend
+      const currentStart = new Date(now);
+      currentStart.setDate(currentStart.getDate() - 6);
+      const currentEnd = new Date(now);
+      const previousStart = new Date(now);
+      previousStart.setDate(previousStart.getDate() - 13);
+      const previousEnd = new Date(now);
+      previousEnd.setDate(previousEnd.getDate() - 7);
+
+      setRevenueData({
+        current: currentPeriod,
+        previous: previousPeriod,
+        currentLabel: `${currentStart.getMonth() + 1}月${currentStart.getDate()}日~${currentEnd.getMonth() + 1}月${currentEnd.getDate()}日`,
+        previousLabel: `${previousStart.getMonth() + 1}月${previousStart.getDate()}日~${previousEnd.getMonth() + 1}月${previousEnd.getDate()}日`
+      });
+    };
+
+    generateRevenueData(currentSalesData);
   }, [stats]);
 
+  // Calculate totals from actual backend data (in JPY)
   const totalPurchases = purchaseData.reduce((sum, d) => sum + d.count, 0);
-  const totalSales = salesData.reduce((sum, d) => sum + d.amount, 0);
-  const totalPurchasesAmount = purchaseData.reduce((sum, d) => sum + d.amount, 0);
+  const totalSalesLast30DaysJPY = salesData.reduce((sum, d) => sum + d.amount, 0);
+  const netRevenueJPY = stats?.totalSales || 0; // All-time high net revenue from backend (JPY)
 
-  const maxPurchaseCount = Math.max(...purchaseData.map(d => d.count), 1);
-  const maxSalesAmount = Math.max(...salesData.map(d => d.amount), 1);
+  // Calculate metrics using only real backend data
+  const totalRevenueJPY = totalSalesLast30DaysJPY; // Use actual sales data
+  const subscriptionRevenueJPY = 0; // No subscription data available in backend
+  const optIns = 0; // No opt-in data available in backend
+  const offersSold = totalPurchases; // Use actual purchase count
+
+  // Convert to selected currency
+  const totalRevenue = convertToCurrency(totalRevenueJPY);
+  const subscriptionRevenue = convertToCurrency(subscriptionRevenueJPY);
+  const netRevenue = convertToCurrency(netRevenueJPY);
+  const totalSalesLast30Days = convertToCurrency(totalSalesLast30DaysJPY);
+
+  // Main revenue chart configuration
+  const mainChartOptions: any = {
+    chart: {
+      type: 'area',
+      height: 350,
+      toolbar: { show: false },
+      zoom: { enabled: false }
+    },
+    dataLabels: { enabled: false },
+    stroke: {
+      curve: 'smooth',
+      width: 3
+    },
+    colors: ['#9333EA', '#FF6B35'],
+    plotOptions: {
+      area: {
+        fillTo: 'end'
+      }
+    },
+    fill: {
+      type: 'gradient',
+      gradient: {
+        shadeIntensity: 1,
+        opacityFrom: 0.7,
+        opacityTo: 0.3,
+        stops: [0, 100]
+      }
+    },
+    xaxis: {
+      categories: revenueData?.current.map((d: any) => d.x) || [],
+      labels: {
+        style: {
+          colors: '#6B7280',
+          fontSize: '12px'
+        }
+      }
+    },
+    yaxis: {
+      labels: {
+        style: {
+          colors: '#6B7280',
+          fontSize: '12px'
+        },
+        formatter: (val: number) => {
+          // Convert JPY value to display currency
+          const displayVal = currency === "USD" ? val / USD_TO_JPY : val;
+          if (currency === "USD") {
+            if (displayVal >= 1000) {
+              return `$${Math.round(displayVal / 1000)}k`;
+            }
+            return `$${Math.round(displayVal)}`;
+          } else {
+            if (displayVal >= 1000000) {
+              return `¥${Math.round(displayVal / 1000000)}m`;
+            } else if (displayVal >= 1000) {
+              return `¥${Math.round(displayVal / 1000)}k`;
+            }
+            return `¥${Math.round(displayVal)}`;
+          }
+        }
+      }
+    },
+    legend: {
+      show: true,
+      position: 'bottom',
+      horizontalAlign: 'center',
+      markers: {
+        width: 8,
+        height: 8,
+        radius: 4
+      }
+    },
+    grid: {
+      borderColor: '#E5E7EB',
+      strokeDashArray: 3
+    },
+    tooltip: {
+      y: {
+        formatter: (val: number) => {
+          // val is in JPY, convert if needed
+          const displayVal = currency === "USD" ? val / USD_TO_JPY : val;
+          return formatCurrency(displayVal);
+        }
+      }
+    }
+  };
+
+  const mainChartSeries = revenueData ? [
+    {
+      name: revenueData.previousLabel || '前週',
+      data: revenueData.previous.map((d: any) => {
+        // Convert JPY to selected currency
+        return currency === "USD" ? d.y / USD_TO_JPY : d.y;
+      }),
+      stroke: {
+        width: 2,
+        dashArray: 5
+      }
+    },
+    {
+      name: revenueData.currentLabel || '今週',
+      data: revenueData.current.map((d: any) => {
+        // Convert JPY to selected currency
+        return currency === "USD" ? d.y / USD_TO_JPY : d.y;
+      }),
+      stroke: {
+        width: 3
+      }
+    }
+  ] : [];
+
+  // Mini chart for purchases (last 30 days) - using actual backend data
+  const purchaseChartOptions: any = {
+    chart: {
+      type: 'area',
+      height: 100,
+      toolbar: { show: false },
+      sparkline: { enabled: true }
+    },
+    stroke: {
+      curve: 'smooth',
+      width: 2,
+      colors: ['#9333EA']
+    },
+    fill: {
+      type: 'gradient',
+      gradient: {
+        shadeIntensity: 1,
+        opacityFrom: 0.7,
+        opacityTo: 0.1,
+        stops: [0, 100]
+      }
+    },
+    xaxis: {
+      labels: { show: false },
+      categories: purchaseData.map(d => {
+        const date = new Date(d.date);
+        return date.toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' });
+      })
+    },
+    yaxis: {
+      labels: { show: false }
+    },
+    grid: { show: false },
+    tooltip: {
+      enabled: true,
+      y: {
+        formatter: (val: number) => val.toLocaleString()
+      }
+    }
+  };
+
+  const purchaseChartSeries = [{
+    name: '購入',
+    data: purchaseData.map(d => d.count)
+  }];
+
+  // Mini chart for total revenue (last 30 days) - using actual backend data
+  const revenueChartOptions: any = {
+    chart: {
+      type: 'area',
+      height: 100,
+      toolbar: { show: false },
+      sparkline: { enabled: true }
+    },
+    stroke: {
+      curve: 'smooth',
+      width: 2,
+      colors: ['#9333EA']
+    },
+    fill: {
+      type: 'gradient',
+      gradient: {
+        shadeIntensity: 1,
+        opacityFrom: 0.7,
+        opacityTo: 0.1,
+        stops: [0, 100]
+      }
+    },
+    xaxis: {
+      labels: { show: false },
+      categories: salesData.map(d => {
+        const date = new Date(d.date);
+        return date.toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' });
+      })
+    },
+    yaxis: {
+      labels: { show: false }
+    },
+    grid: { show: false },
+    tooltip: {
+      enabled: true,
+      y: {
+        formatter: (val: number) => {
+          // val is in JPY, convert if needed
+          const displayVal = currency === "USD" ? val / USD_TO_JPY : val;
+          return formatCurrency(displayVal);
+        }
+      }
+    }
+  };
+
+  const revenueChartSeries = [{
+    name: '総収益',
+    data: salesData.map(d => d.amount)
+  }];
 
   return (
     <div className="space-y-8">
-      <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-
-      {/* Overall Financials */}
-      <div className="bg-gradient-to-r from-[#FF0066] to-[#FFA101] rounded-lg p-8 text-white">
-        <div className="text-4xl font-bold mb-2">
-          ¥{(stats?.totalSales || totalSales).toLocaleString()}
-        </div>
-        <div className="text-lg opacity-90">総売上</div>
-      </div>
-
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white border border-gray-200 rounded-lg p-6">
-          <div className="text-2xl font-bold text-gray-900">
-            {stats?.totalVideos || 0}
-          </div>
-          <div className="text-sm text-gray-600 mt-1">総動画数</div>
-        </div>
-        <div className="bg-white border border-gray-200 rounded-lg p-6">
-          <div className="text-2xl font-bold text-gray-900">
-            {(stats?.totalViews || 0).toLocaleString()}
-          </div>
-          <div className="text-sm text-gray-600 mt-1">総視聴回数</div>
-        </div>
-        <div className="bg-white border border-gray-200 rounded-lg p-6">
-          <div className="text-2xl font-bold text-gray-900">
-            {(stats?.totalPurchases || 0).toLocaleString()}
-          </div>
-          <div className="text-sm text-gray-600 mt-1">総購入数</div>
-        </div>
-        <div className="bg-white border border-gray-200 rounded-lg p-6">
-          <div className="text-2xl font-bold text-gray-900">
-            {(stats?.totalAccess || 0).toLocaleString()}
-          </div>
-          <div className="text-sm text-gray-600 mt-1">総アクセス数</div>
+      {/* Net Revenue - All-time High Card */}
+      <div className="bg-white border border-gray-200 rounded-lg p-6 p-auto">
+        <div className="text-sm text-gray-800 mb-2">純収益 - 過去最高</div>
+        <div className="text-4xl font-bold text-gray-900 text-center">
+          {formatCurrency(netRevenue)}
         </div>
       </div>
 
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Purchases Chart */}
-        <div className="bg-white border border-gray-200 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            購入、過去30日間 ({totalPurchases})
-          </h3>
-          <div className="h-64 flex items-end justify-between gap-1">
-            {purchaseData.map((data, index) => (
-              <div
-                key={index}
-                className="flex-1 bg-[#FF0066] rounded-t"
-                style={{
-                  height: `${(data.count / maxPurchaseCount) * 100}%`,
-                  minHeight: '4px',
-                }}
-                title={`${data.date}: ${data.count}`}
-              />
-            ))}
+      {/* Controls and Main Metrics Section */}
+      <div className="bg-white border border-gray-200 rounded-lg p-6">
+        {/* Controls */}
+        <div className="flex justify-between items-center mb-6">
+          <div className="flex gap-4 items-center">
+            <select
+              value={dateRange}
+              onChange={(e) => setDateRange(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#FF0066] text-black"
+            >
+              <option value="7days">過去7日間</option>
+              <option value="30days">過去30日間</option>
+              <option value="90days">過去90日間</option>
+            </select>
+            <select
+              value={currency}
+              onChange={(e) => setCurrency(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#FF0066] text-black"
+            >
+              <option value="USD">米ドル</option>
+              <option value="JPY">日本円</option>
+            </select>
+          </div>
+          <div className="flex gap-2">
+            <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+            </button>
+            <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+            </button>
           </div>
         </div>
 
-        {/* Sales Chart */}
+        {/* Four Key Metric Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <div className="bg-white border border-gray-200 rounded-lg p-4 relative">
+            <button className="absolute top-2 right-2 text-gray-400 hover:text-gray-800">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+            </button>
+            <div className="text-sm text-gray-800 mb-1">総収益</div>
+            <div className="text-2xl font-bold text-gray-900 mb-2">
+              {formatCurrency(totalRevenue)}
+            </div>
+            {/* Trend indicator - calculated from actual data */}
+            {revenueData && revenueData.previous && revenueData.current && (() => {
+              const previousTotal = revenueData.previous.reduce((sum: number, d: any) => sum + d.y, 0);
+              const currentTotal = revenueData.current.reduce((sum: number, d: any) => sum + d.y, 0);
+              if (previousTotal > 0) {
+                const changePercent = ((currentTotal - previousTotal) / previousTotal) * 100;
+                const isPositive = changePercent >= 0;
+                return (
+                  <div className={`flex items-center text-sm ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
+                    <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      {isPositive ? (
+                        <path fillRule="evenodd" d="M5.293 7.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L6.707 7.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                      ) : (
+                        <path fillRule="evenodd" d="M14.707 12.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 14.586V3a1 1 0 012 0v11.586l2.293-2.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      )}
+                    </svg>
+                    <span>{Math.abs(changePercent).toFixed(1)}%</span>
+                  </div>
+                );
+              }
+              return null;
+            })()}
+          </div>
+          <div className="bg-white border border-gray-200 rounded-lg p-4 relative">
+            <button className="absolute top-2 right-2 text-gray-400 hover:text-gray-800">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+            </button>
+            <div className="text-sm text-gray-800 mb-1">サブスクリプション収益</div>
+            <div className="text-2xl font-bold text-gray-900 mb-2">
+              {formatCurrency(subscriptionRevenue)}
+            </div>
+            {/* No trend data available for subscription revenue */}
+          </div>
+          <div className="bg-white border border-gray-200 rounded-lg p-4">
+            <div className="text-sm text-gray-800 mb-1">オプトイン</div>
+            <div className="text-2xl font-bold text-gray-900">{optIns}</div>
+          </div>
+          <div className="bg-white border border-gray-200 rounded-lg p-4">
+            <div className="text-sm text-gray-800 mb-1">販売済みオファー</div>
+            <div className="text-2xl font-bold text-gray-900 mb-2">{offersSold}</div>
+            {/* Trend indicator - can be calculated if previous period purchase data is available */}
+            {purchaseData.length > 0 && (() => {
+              // Compare last 7 days vs previous 7 days
+              const now = new Date();
+              const last7Days = purchaseData.filter(d => {
+                const saleDate = new Date(d.date);
+                const daysDiff = Math.floor((now.getTime() - saleDate.getTime()) / (1000 * 60 * 60 * 24));
+                return daysDiff >= 0 && daysDiff < 7;
+              });
+              const prev7Days = purchaseData.filter(d => {
+                const saleDate = new Date(d.date);
+                const daysDiff = Math.floor((now.getTime() - saleDate.getTime()) / (1000 * 60 * 60 * 24));
+                return daysDiff >= 7 && daysDiff < 14;
+              });
+              const last7DaysCount = last7Days.reduce((sum, d) => sum + d.count, 0);
+              const prev7DaysCount = prev7Days.reduce((sum, d) => sum + d.count, 0);
+              if (prev7DaysCount > 0) {
+                const changePercent = ((last7DaysCount - prev7DaysCount) / prev7DaysCount) * 100;
+                const isPositive = changePercent >= 0;
+                return (
+                  <div className={`flex items-center text-sm ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
+                    <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      {isPositive ? (
+                        <path fillRule="evenodd" d="M5.293 7.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L6.707 7.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                      ) : (
+                        <path fillRule="evenodd" d="M14.707 12.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 14.586V3a1 1 0 012 0v11.586l2.293-2.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      )}
+                    </svg>
+                    <span>{Math.abs(changePercent).toFixed(1)}%</span>
+                  </div>
+                );
+              }
+              return null;
+            })()}
+          </div>
+        </div>
+
+        {/* Main Revenue Trend Chart */}
         <div className="bg-white border border-gray-200 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            総売上、過去30日間 (¥{totalPurchasesAmount.toLocaleString()})
-          </h3>
-          <div className="h-64 flex items-end justify-between gap-1">
-            {salesData.map((data, index) => (
-              <div
-                key={index}
-                className="flex-1 bg-[#FFA101] rounded-t"
-                style={{
-                  height: `${(data.amount / maxSalesAmount) * 100}%`,
-                  minHeight: '4px',
-                }}
-                title={`${data.date}: ¥${data.amount.toLocaleString()}`}
-              />
-            ))}
+          {isMounted && (
+            <Chart
+              options={mainChartOptions}
+              series={mainChartSeries}
+              type="area"
+              height={350}
+            />
+          )}
+        </div>
+      </div>
+
+      {/* Bottom Three Metric Cards with Mini Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Purchases - Last 30 Days */}
+        <div className="bg-white border border-gray-200 rounded-lg p-6 relative">
+          <div className="text-sm text-gray-800 mb-2">購入 - 過去30日間</div>
+          <div className="text-3xl font-bold text-gray-900 mb-4">{totalPurchases.toLocaleString()}</div>
+          {isMounted && (
+            <Chart
+              options={purchaseChartOptions}
+              series={purchaseChartSeries}
+              type="area"
+              height={100}
+            />
+          )}
+        </div>
+
+        {/* Total Revenue - Last 30 Days */}
+        <div className="bg-white border border-gray-200 rounded-lg p-6 relative">
+          <div className="text-sm text-gray-800 mb-2">総収益 - 過去30日間</div>
+          <div className="text-3xl font-bold text-gray-900 mb-4">
+            {formatCurrency(totalSalesLast30Days)}
+          </div>
+          {isMounted && (
+            <Chart
+              options={revenueChartOptions}
+              series={revenueChartSeries}
+              type="area"
+              height={100}
+            />
+          )}
+        </div>
+
+        {/* Net Revenue - All-time High */}
+        <div className="bg-white border border-gray-200 rounded-lg p-6">
+          <div className="text-sm text-gray-800 mb-2">純収益 - 過去最高</div>
+          <div className="w-full h-full flex items-center justify-center text-3xl font-bold text-gray-900">
+            {formatCurrency(netRevenue)}
           </div>
         </div>
       </div>
@@ -602,7 +1202,7 @@ const VideosTab = ({ videos, onRefresh, isAdmin }: { videos: any[]; onRefresh: (
                 ) : (
                   <>
                     <h3 className="text-lg font-semibold text-gray-900 mb-2">{video.title}</h3>
-                    <p className="text-sm text-gray-600 mb-4">{video.description || "説明なし"}</p>
+                    <p className="text-sm text-gray-800 mb-4">{video.description || "説明なし"}</p>
                     
                     {/* Statistics */}
                     <div className="grid grid-cols-4 gap-4 mb-4">
@@ -715,7 +1315,7 @@ const VideosTab = ({ videos, onRefresh, isAdmin }: { videos: any[]; onRefresh: (
                     </div>
                   )}
                   {selectedVideoFile && (
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-gray-800">
                       選択中: {selectedVideoFile.name} ({(selectedVideoFile.size / 1024 / 1024).toFixed(2)} MB)
                     </p>
                   )}
@@ -752,7 +1352,7 @@ const VideosTab = ({ videos, onRefresh, isAdmin }: { videos: any[]; onRefresh: (
                     </div>
                   )}
                   {selectedThumbnailFile && (
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-gray-800">
                       選択中: {selectedThumbnailFile.name} ({(selectedThumbnailFile.size / 1024).toFixed(2)} KB)
                     </p>
                   )}

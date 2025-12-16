@@ -4,6 +4,10 @@ const nextConfig: NextConfig = {
   // Allow cross-origin requests from specific IPs during development
   allowedDevOrigins: ['162.43.45.104'],
   
+  // Production optimizations
+  compress: true,
+  poweredByHeader: false,
+  
   images: {
     // This allows you to use SVGs with the next/image component.
     dangerouslyAllowSVG: true, 

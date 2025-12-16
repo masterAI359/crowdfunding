@@ -11,7 +11,7 @@ const CommercialTranPage = () => {
                     <div className="w-full flex flex-col border border-gray-300 mb-16">
                         <div className="w-full flex flex-row text-black border-b border-gray-300">
                             <p className="py-6 px-4 text-lg border-r border-gray-300 bg-[#F5F7F9] w-1/5 font-semibold">事業者</p>
-                            <p className="w-4/5 text-lg text-start px-4 py-6">Asoviva合同会社</p>
+                            <p className="w-4/5 text-lg text-start px-4 py-6">asoviva合同会社</p>
                         </div>
                         <div className="w-full flex flex-row text-black border-b border-gray-300">
                             <p className="py-6 px-4 text-lg border-r border-gray-300 bg-[#F5F7F9] w-1/5 font-semibold">運営責任者</p>
@@ -19,7 +19,7 @@ const CommercialTranPage = () => {
                         </div>
                         <div className="w-full flex flex-row text-black border-b border-gray-300">
                             <p className="py-6 px-4 text-lg border-r border-gray-300 bg-[#F5F7F9] w-1/5 font-semibold">所在地</p>
-                            <p className="w-4/5 text-lg text-start px-4 py-6">宮城県仙台市太白区ひより台26番11号</p>
+                            <p className="w-4/5 text-lg text-start px-4 py-6">東京都渋谷区渋谷区上原1丁目17-14 上原ハウス201</p>
                         </div>
                         <div className="w-full flex flex-row text-black border-b border-gray-300">
                             <p className="py-6 px-4 text-lg border-r border-gray-300 bg-[#F5F7F9] w-1/5 font-semibold">お問い合わせ</p>

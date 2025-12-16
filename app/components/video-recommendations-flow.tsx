@@ -3,7 +3,7 @@ import React, { useRef } from "react";
 import VideoCard from "./video-card";
 
 interface Video {
-    id: number;
+    id: string | number;
     title: string;
     image: string;
     categoryLabel: string;
