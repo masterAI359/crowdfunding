@@ -46,6 +46,13 @@ jobs:
             ssh-add ~/.ssh/admin
             git pull
             echo "Code updated successfully"
+            echo "Building application..."
+            if [ -f "pnpm-lock.yaml" ]; then
+              pnpm build
+            else
+              npm run build
+            fi
+            echo "Build completed successfully"
           ENDSSH
 
       - name: Build application
@@ -63,27 +70,9 @@ jobs:
               npm run build
             fi
             echo "Build completed successfully"
-          ENDSSH
-
-      - name: Reload PM2 process
-        env:
-          VPS_HOST: ${{ secrets.VPS_HOST }}
-          VPS_USER: ${{ secrets.VPS_USER }}
-        run: |
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no $VPS_USER@$VPS_HOST << 'ENDSSH'
-            set -e
             echo "Reloading PM2 process..."
             pm2 reload 2
             echo "PM2 process reloaded"
-          ENDSSH
-
-      - name: Verify deployment
-        env:
-          VPS_HOST: ${{ secrets.VPS_HOST }}
-          VPS_USER: ${{ secrets.VPS_USER }}
-        run: |
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no $VPS_USER@$VPS_HOST << 'ENDSSH'
-            set -e
             echo "Verifying deployment..."
             
             # Check if PM2 process is running
