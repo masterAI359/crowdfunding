@@ -33,6 +33,11 @@ const SellerDashboardPage = () => {
   const [dashboardStats, setDashboardStats] = useState<any>(null);
   const [isLoadingData, setIsLoadingData] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [expandedSections, setExpandedSections] = useState<{ [key: string]: boolean }>({
+    products: false,
+    sales: false,
+    contacts: false,
+  });
 
   // Get active tab from URL or state - MUST be called before any conditional returns
   useEffect(() => {
@@ -44,6 +49,30 @@ const SellerDashboardPage = () => {
       }
     }
   }, [pathname]);
+
+  // Auto-expand sections if their children are active
+  useEffect(() => {
+    setExpandedSections(prev => {
+      const newExpanded: { [key: string]: boolean } = { ...prev };
+      
+      // Check Products section
+      if (activeTab === "crowdfunding" || activeTab === "videos") {
+        newExpanded.products = true;
+      }
+      
+      // Check Sales section
+      if (activeTab === "payment") {
+        newExpanded.sales = true;
+      }
+      
+      // Check Contacts section
+      if (activeTab === "notifications") {
+        newExpanded.contacts = true;
+      }
+      
+      return newExpanded;
+    });
+  }, [activeTab]);
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
@@ -95,20 +124,93 @@ const SellerDashboardPage = () => {
     return null;
   }
 
-  const menuItems = [
-    { id: "dashboard", label: "Dashboard", href: "/user-settings/seller" },
-    { id: "products", label: "Products", href: "/user-settings/seller?tab=products" },
-    { id: "crowdfunding", label: "クラウドファンディング", href: "/user-settings/seller?tab=crowdfunding" },
-    { id: "videos", label: "動画コンテンツ", href: "/user-settings/seller?tab=videos" },
-    { id: "payment", label: "支払い", href: "/user-settings/seller?tab=payment" },
-    { id: "notifications", label: "全ての通知", href: "/user-settings/seller?tab=notifications" },
-    { id: "customer", label: "カスタマー", href: "/user-settings/seller?tab=customer" },
+  // Menu structure with categories
+  const menuStructure = [
+    {
+      id: "dashboard",
+      label: "Dashboard",
+      href: "/user-settings/seller",
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+        </svg>
+      ),
+      type: "single" as const,
+    },
+    {
+      id: "products",
+      label: "Products",
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+        </svg>
+      ),
+      type: "category" as const,
+      children: [
+        { id: "crowdfunding", label: "クラウドファンディング", href: "/user-settings/seller?tab=crowdfunding" },
+        { id: "videos", label: "動画コンテンツ", href: "/user-settings/seller?tab=videos" },
+      ],
+    },
+    {
+      id: "sales",
+      label: "販売",
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+      ),
+      type: "category" as const,
+      children: [
+        { id: "payment", label: "支払い", href: "/user-settings/seller?tab=payment" },
+      ],
+    },
+    {
+      id: "contacts",
+      label: "連絡先",
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+        </svg>
+      ),
+      type: "category" as const,
+      children: [
+        { id: "notifications", label: "全ての連絡先", href: "/user-settings/seller?tab=notifications" },
+      ],
+    },
+    {
+      id: "customer",
+      label: "カスタマー",
+      href: "/user-settings/seller?tab=customer",
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+      ),
+      type: "single" as const,
+    },
   ];
 
   // Add logs tab for admin
   if (isAdmin) {
-    menuItems.push({ id: "logs", label: "ユーザーログ", href: "/user-settings/seller?tab=logs" });
+    menuStructure.push({
+      id: "logs",
+      label: "ユーザーログ",
+      href: "/user-settings/seller?tab=logs",
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+      ),
+      type: "single" as const,
+    });
   }
+
+  const toggleSection = (sectionId: string) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [sectionId]: !prev[sectionId],
+    }));
+  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -133,25 +235,83 @@ const SellerDashboardPage = () => {
               </div>
 
               {/* Navigation Menu */}
-              <nav className="space-y-2">
-                {menuItems.map((item) => {
-                  const isActive = activeTab === item.id || (item.id === "dashboard" && !activeTab);
-                  return (
-                    <button
-                      key={item.id}
-                      onClick={() => {
-                        setActiveTab(item.id);
-                        router.push(item.href);
-                      }}
-                      className={`w-full text-left px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
-                        isActive
-                          ? "bg-[#FF0066] text-white"
-                          : "text-gray-700 hover:bg-gray-100"
-                      }`}
-                    >
-                      {item.label}
-                    </button>
-                  );
+              <nav className="space-y-1">
+                {menuStructure.map((item) => {
+                  if (item.type === "single") {
+                    const isActive = activeTab === item.id || (item.id === "dashboard" && !activeTab);
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => {
+                          setActiveTab(item.id);
+                          if (item.href) {
+                            router.push(item.href);
+                          }
+                        }}
+                        className={`w-full text-left px-4 py-3 rounded-lg text-sm font-medium transition-colors flex items-center gap-3 ${
+                          isActive
+                            ? "bg-[#FF0066] text-white"
+                            : "text-gray-700 hover:bg-gray-100"
+                        }`}
+                      >
+                        {item.icon}
+                        <span>{item.label}</span>
+                      </button>
+                    );
+                  } else if (item.type === "category" && item.children) {
+                    const isExpanded = expandedSections[item.id] || false;
+                    const hasActiveChild = item.children.some(child => activeTab === child.id);
+
+                    return (
+                      <div key={item.id} className="space-y-1">
+                        <button
+                          onClick={() => toggleSection(item.id)}
+                          className={`w-full text-left px-4 py-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-between ${
+                            hasActiveChild
+                              ? "bg-gray-50 text-gray-900"
+                              : "text-gray-700 hover:bg-gray-100"
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            {item.icon}
+                            <span>{item.label}</span>
+                          </div>
+                          <svg
+                            className={`w-4 h-4 transition-transform ${isExpanded ? "rotate-180" : ""}`}
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </button>
+                        {isExpanded && (
+                          <div className="ml-4 space-y-1 border-l-2 border-gray-200 pl-2">
+                            {item.children.map((child) => {
+                              const isActive = activeTab === child.id;
+                              return (
+                                <button
+                                  key={child.id}
+                                  onClick={() => {
+                                    setActiveTab(child.id);
+                                    router.push(child.href);
+                                  }}
+                                  className={`w-full text-left px-4 py-2 rounded-lg text-sm transition-colors ${
+                                    isActive
+                                      ? "bg-[#FF0066] text-white"
+                                      : "text-gray-600 hover:bg-gray-100"
+                                  }`}
+                                >
+                                  {child.label}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  }
+                  return null;
                 })}
               </nav>
             </div>
