@@ -75,14 +75,13 @@ const SupportPage = ({
   }
 
   // For video purchases, we'll use the video itself as a reward
-  // In a real implementation, you might have separate video series or episodes
   const rewards: Reward[] = [
     {
       id: video.id,
       title: video.title,
-      price: "45,000", // This should come from backend pricing data
-      description: video.description ? [video.description] : ["動画の説明がありません。"],
-      image: video.thumbnailUrl || video.url || "/assets/crowdfunding/cf-3.png",
+      price: "", // Price should come from backend pricing data
+      description: video.description ? [video.description] : [],
+      image: video.thumbnailUrl || video.url || "",
     },
   ];
 
@@ -166,12 +165,22 @@ const SupportPage = ({
           <div className="flex flex-col md:flex-row overflow-hidden bg-[#ECEBD9] ">
             {/* Left Image */}
             <div className="w-full md:w-1/3 relative h-[200px] sm:h-[230px] md:h-auto">
-              <Image
-                src={video.thumbnailUrl || video.url || '/assets/videofunding/video-1.png'}
-                alt={video.title}
-                fill
-                className="object-cover h-full w-full rounded-bl-lg"
-              />
+              {(() => {
+                const imageSrc = video.thumbnailUrl || video.url;
+                return imageSrc ? (
+                  <Image
+                    src={imageSrc}
+                    alt={video.title}
+                    fill
+                    sizes="(max-width: 768px) 100vw, 33vw"
+                    className="object-cover h-full w-full rounded-bl-lg"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                    <span className="text-gray-400">画像なし</span>
+                  </div>
+                );
+              })()}
             </div>
 
             {/* Right Content */}

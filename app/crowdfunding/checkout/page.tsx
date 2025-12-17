@@ -59,14 +59,19 @@ const CheckoutPage = ({
           const selectedReturns = returnIds.map((id, index) => {
             const returnItem = projectData.returns?.find((r: any) => r.id === id);
             if (returnItem) {
-              return {
+              const reward: Reward = {
                 id: returnItem.id,
                 title: returnItem.title,
                 amount: returnItem.amount || 0,
-                description: returnItem.description || returnItem.notes,
-                image: projectData.image, // Use project image as fallback
                 quantity: quantities[index] || 1,
               };
+              if (returnItem.description || returnItem.notes) {
+                reward.description = returnItem.description || returnItem.notes;
+              }
+              if (projectData.image) {
+                reward.image = projectData.image;
+              }
+              return reward;
             }
             return null;
           }).filter((r): r is Reward => r !== null);

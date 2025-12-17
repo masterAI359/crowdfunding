@@ -37,7 +37,7 @@ const CrowdfundingPage = () => {
           supporters: (project.supporterCount || 0).toLocaleString(),
           daysLeft: `${project.remainingDays || 0}日`,
           achievementRate: project.achievementRate || 0,
-          image: project.image || '/assets/crowdfunding/cf-1.png',
+          image: project.image || '',
         }));
         setProjects(transformedProjects);
         setTotalPages(response.pagination?.totalPages || 1);
@@ -65,7 +65,7 @@ const CrowdfundingPage = () => {
           supporters: (project.supporterCount || 0).toLocaleString(),
           daysLeft: `${project.remainingDays || 0}日`,
           achievementRate: project.achievementRate || 0,
-          image: project.image || '/assets/crowdfunding/cf-1.png',
+          image: project.image || '',
         }));
         setBannerProjects(transformedProjects);
       } catch (error) {

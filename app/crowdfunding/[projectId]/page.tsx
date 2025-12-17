@@ -52,7 +52,7 @@ const ProjectDetailPage = ({ params: paramsPromise }: { params: Promise<{ projec
           supporters: (data.supporterCount || 0).toLocaleString(),
           daysLeft: `${data.remainingDays || 0}日`,
           achievementRate: data.achievementRate || 0,
-          image: data.image || '/assets/crowdfunding/cf-1.png',
+          image: data.image || '',
           media: data.medias || [],
           returns: (data.returns || []).map((ret: any) => ({
             id: ret.id,
@@ -90,7 +90,7 @@ const ProjectDetailPage = ({ params: paramsPromise }: { params: Promise<{ projec
           supporters: (project.supporterCount || 0).toLocaleString(),
           daysLeft: `${project.remainingDays || 0}日`,
           achievementRate: project.achievementRate || 0,
-          image: project.image || '/assets/crowdfunding/cf-1.png',
+          image: project.image || '',
         }));
         setRecommendedProjects(transformedProjects);
       } catch (error) {
@@ -143,30 +143,19 @@ const ProjectDetailPage = ({ params: paramsPromise }: { params: Promise<{ projec
     );
   }
 
-  // メディア画像を取得（メディアがない場合はデフォルト画像を使用）
-  const dummyImages = project.media?.filter(m => m.type === 'IMAGE').map(m => m.url) || [
-    project.image,
-    '/assets/crowdfunding/cf-4.png',
-    '/assets/crowdfunding/cf-3.png',
-  ];
+  // メディア画像を取得
+  const images = project.media?.filter(m => m.type === 'IMAGE').map(m => m.url) || [project.image].filter(Boolean);
 
-  // リターン情報（APIから取得したデータを使用、なければデフォルト）
-  const returns = project.returns || [
-    {
-      id: '1',
-      title: 'エンドロールお名前掲載',
-      price: 5000,
-      description: '・同窓会実行委員より５年間のメッセージ\n・活動報告「印象式レベル」開催\n・運営・井上記二本書Ｐ３６\n・フェブムページト掲示ツグ\n・ココオ協議作タマロロ'
-    },
-  ];
+  // リターン情報
+  const returns = project.returns || [];
 
   // Creator information from project owner
   const creators = project.owner ? [
     { 
-      id: 1, 
-      title: "", 
-      image: "/assets/crowdfunding/creator-1.png", 
-      text: project.description || "このプロジェクトでは、多くの人々に感動と勇気を与えたいと考えています。" 
+      id: project.owner.id, 
+      title: project.owner.name || "", 
+      image: project.image, 
+      text: project.description || "" 
     },
   ] : [];
 
@@ -237,7 +226,7 @@ const ProjectDetailPage = ({ params: paramsPromise }: { params: Promise<{ projec
         {/* Section 2: Media Gallery & Project Information */}
         <section className="hidden md:block max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="grid grid-cols-1 lg:grid-cols-2 lg:gap-12">
-            <ImageGallery images={dummyImages} />
+            <ImageGallery images={images} />
 
             <div className="space-y-6 lg:ml-4">
               <div>
@@ -385,8 +374,14 @@ const ProjectDetailPage = ({ params: paramsPromise }: { params: Promise<{ projec
                 {/* Reward Card  */}
                 {returns.map((reward, index) => (
                   <div key={index} className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
-                    <div className="relative h-52 w-full rounded-md mb-4 overflow-hidden">
-                      <Image src={`/assets/crowdfunding/rewards-${index + 1}.png`} alt={reward.title} fill className="object-cover" />
+                    <div className="relative h-52 w-full rounded-md mb-4 overflow-hidden bg-gray-200">
+                      {project.image ? (
+                        <Image src={project.image} alt={reward.title} fill className="object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <span className="text-gray-400">画像なし</span>
+                        </div>
+                      )}
                     </div>
                     <div className="p-6 pt-0">
                       <h3 className="text-xl font-bold text-black mb-2">{reward.title}</h3>
