@@ -57,8 +57,9 @@ const ProjectDetailPage = ({ params: paramsPromise }: { params: Promise<{ projec
           returns: (data.returns || []).map((ret: any) => ({
             id: ret.id,
             title: ret.title,
-            price: ret.amount || 0, // バックエンドのamountをpriceに変換
-            description: ret.description || '',
+            amount: ret.amount || 0,
+            description: ret.description || ret.notes || '',
+            notes: ret.notes,
           })),
           isFavorited: data.isFavorite || false,
           owner: data.owner, // Add owner information
