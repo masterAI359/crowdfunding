@@ -26,6 +26,30 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**', // Allows all paths from this domain
       },
+      {
+        protocol: 'https',
+        hostname: 'tsukurutv.com',
+        port: '',
+        pathname: '/api/uploads/**', // Allows uploads from this domain
+      },
+      {
+        protocol: 'http',
+        hostname: 'tsukurutv.com',
+        port: '',
+        pathname: '/api/uploads/**', // Allows http as fallback (should be https in production)
+      },
+      {
+        protocol: 'https',
+        hostname: 'www.tsukurutv.com',
+        port: '',
+        pathname: '/api/uploads/**', // Allows uploads from www subdomain
+      },
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '8080',
+        pathname: '/api/uploads/**', // Allows uploads from localhost for development
+      },
     ],
   },
 };

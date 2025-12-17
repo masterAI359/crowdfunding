@@ -18,7 +18,7 @@ interface Project {
   achievementRate: number;
   image: string;
   media?: Array<{ url: string; type: string }>;
-  returns?: Array<{ id: string; title: string; price: number; description: string }>;
+  returns?: Array<{ id: string; title: string; amount: number; description?: string; notes?: string }>;
   isFavorited?: boolean;
   owner?: {
     id: string;
@@ -389,7 +389,7 @@ const ProjectDetailPage = ({ params: paramsPromise }: { params: Promise<{ projec
                     </div>
                     <div className="p-6 pt-0">
                       <h3 className="text-xl font-bold text-black mb-2">{reward.title}</h3>
-                      <p className="text-3xl font-bold text-black mb-4">¥{(reward.price || 0).toLocaleString()}</p>
+                      <p className="text-3xl font-bold text-black mb-4">¥{(reward.amount || 0).toLocaleString()}</p>
                       <p className="text-sm text-black whitespace-pre-line mb-6">{reward.description}</p>
                       <Link
                         href={`/crowdfunding/${project.id}/support?returnId=${reward.id}`}

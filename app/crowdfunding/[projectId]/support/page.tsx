@@ -20,8 +20,12 @@ interface Project {
 interface Return {
   id: string;
   title: string;
-  price: number;
-  description: string;
+  amount: number;
+  description?: string;
+  notes?: string;
+  stock?: number | null;
+  order: number;
+  isVisible: boolean;
   imageUrl?: string;
 }
 
@@ -242,7 +246,7 @@ const SupportPage = ({
                       htmlFor={`reward-${returnItem.id}`}
                       className="text-2xl sm:text-3xl font-bold flex items-center gap-1"
                     >
-                      ¥{returnItem.price.toLocaleString()}
+                      ¥{returnItem.amount?.toLocaleString() || '0'}
                       <span className="text-sm sm:text-base font-bold">円</span>
                     </label>
 
@@ -276,11 +280,13 @@ const SupportPage = ({
                   </div>
 
                   {/* Description */}
-                  <div className="leading-relaxed">
-                    <p className="text-sm sm:text-lg text-black text-left md:mx-10 whitespace-pre-line">
-                      {returnItem.description}
-                    </p>
-                  </div>
+                  {(returnItem.description || returnItem.notes) && (
+                    <div className="leading-relaxed">
+                      <p className="text-sm sm:text-lg text-black text-left md:mx-10 whitespace-pre-line">
+                        {returnItem.description || returnItem.notes}
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 {/* Right: Reward Image */}
