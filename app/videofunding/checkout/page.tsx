@@ -452,13 +452,13 @@ const CheckoutPage = ({
                   </div>
                   <div className="relative bg-gray-200 w-full h-40 sm:h-50 overflow-hidden rounded-md">
                     {reward.image ? (
-                      <Image
-                        src={reward.image}
-                        alt={reward.title}
-                        fill
+                    <Image
+                      src={reward.image}
+                      alt={reward.title}
+                      fill
                         sizes="(max-width: 768px) 100vw, 33vw"
-                        className="object-cover"
-                      />
+                      className="object-cover"
+                    />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
                         <span className="text-gray-400">画像なし</span>

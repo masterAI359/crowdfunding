@@ -281,11 +281,11 @@ const SupportPage = ({
 
                   {/* Description */}
                   {(returnItem.description || returnItem.notes) && (
-                    <div className="leading-relaxed">
-                      <p className="text-sm sm:text-lg text-black text-left md:mx-10 whitespace-pre-line">
+                  <div className="leading-relaxed">
+                    <p className="text-sm sm:text-lg text-black text-left md:mx-10 whitespace-pre-line">
                         {returnItem.description || returnItem.notes}
-                      </p>
-                    </div>
+                    </p>
+                  </div>
                   )}
                 </div>
 

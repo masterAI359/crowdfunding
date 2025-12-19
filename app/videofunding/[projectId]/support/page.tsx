@@ -168,13 +168,13 @@ const SupportPage = ({
               {(() => {
                 const imageSrc = video.thumbnailUrl || video.url;
                 return imageSrc ? (
-                  <Image
+              <Image
                     src={imageSrc}
-                    alt={video.title}
-                    fill
+                alt={video.title}
+                fill
                     sizes="(max-width: 768px) 100vw, 33vw"
-                    className="object-cover h-full w-full rounded-bl-lg"
-                  />
+                className="object-cover h-full w-full rounded-bl-lg"
+              />
                 ) : (
                   <div className="w-full h-full bg-gray-200 flex items-center justify-center">
                     <span className="text-gray-400">画像なし</span>
