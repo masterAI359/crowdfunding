@@ -1824,12 +1824,21 @@ const CrowdfundingTab = () => {
                       {/* Thumbnail */}
                       <div className="w-48 h-32 bg-gray-200 rounded-lg flex-shrink-0 relative overflow-hidden">
                         {project.image && project.image !== '/assets/crowdfunding/cf-1.png' ? (
-                          <Image
-                            src={project.image}
-                            alt={project.title}
-                            fill
-                            className="object-cover"
-                          />
+                          project.image.startsWith('http://localhost') || project.image.startsWith('https://localhost') ? (
+                            <img
+                              src={project.image}
+                              alt={project.title}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <Image
+                              src={project.image}
+                              alt={project.title}
+                              fill
+                              className="object-cover"
+                              unoptimized={project.image.startsWith('http://localhost') || project.image.startsWith('https://localhost')}
+                            />
+                          )
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-gray-400">
                             <svg className="w-12 h-12" fill="currentColor" viewBox="0 0 20 20">
