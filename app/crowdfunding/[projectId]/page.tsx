@@ -193,7 +193,7 @@ const ProjectDetailPage = ({ params: paramsPromise }: { params: Promise<{ projec
             </div>
 
             {/* Right Image with Gradient Overlay */}
-            <div className="w-[60%] relative">
+            <div className="w-[40%] relative h-full overflow-hidden">
               <SmartImage
                 src={project.image}
                 alt={project.title}
