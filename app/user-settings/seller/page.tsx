@@ -1508,6 +1508,7 @@ const CrowdfundingTab = () => {
     medias: [] as Array<{ url: string; type: 'IMAGE' | 'VIDEO'; order: number }>
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadingMedia, setUploadingMedia] = useState(false);
 
   useEffect(() => {
     loadProjects();
@@ -1618,7 +1619,51 @@ const CrowdfundingTab = () => {
     }
   };
 
-  const addMedia = (formType: 'edit' | 'create', mediaType: 'IMAGE' | 'VIDEO') => {
+  const handleMediaFileSelect = async (formType: 'edit' | 'create', mediaType: 'IMAGE' | 'VIDEO', file: File | null) => {
+    if (!file) return;
+
+    // ファイルタイプの検証
+    if (mediaType === 'IMAGE' && !file.type.startsWith('image/')) {
+      alert('画像ファイルを選択してください');
+      return;
+    }
+    if (mediaType === 'VIDEO' && !file.type.startsWith('video/')) {
+      alert('動画ファイルを選択してください');
+      return;
+    }
+
+    try {
+      setUploadingMedia(true);
+      const uploadResult = await uploadFiles([file]);
+      const uploadedFiles = uploadResult.files || [];
+      
+      if (uploadedFiles.length > 0) {
+        const uploadedFile = uploadedFiles[0];
+        const mediaUrl = uploadedFile.url;
+        
+        if (formType === 'edit') {
+          setEditForm({
+            ...editForm,
+            medias: [...editForm.medias, { url: mediaUrl, type: mediaType, order: editForm.medias.length }]
+          });
+        } else {
+          setCreateForm({
+            ...createForm,
+            medias: [...createForm.medias, { url: mediaUrl, type: mediaType, order: createForm.medias.length }]
+          });
+        }
+      } else {
+        alert('ファイルのアップロードに失敗しました');
+      }
+    } catch (error: any) {
+      console.error("Failed to upload media:", error);
+      alert(error.response?.data?.message || "ファイルのアップロードに失敗しました");
+    } finally {
+      setUploadingMedia(false);
+    }
+  };
+
+  const addMediaByUrl = (formType: 'edit' | 'create', mediaType: 'IMAGE' | 'VIDEO') => {
     const url = prompt(`${mediaType === 'IMAGE' ? '画像' : '動画'}URLを入力してください:`);
     if (url) {
       if (formType === 'edit') {
@@ -1721,27 +1766,67 @@ const CrowdfundingTab = () => {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">メディア</label>
-                      <div className="flex gap-2 mb-2">
-                        <button
-                          onClick={() => addMedia('edit', 'IMAGE')}
-                          className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
-                        >
-                          画像を追加
-                        </button>
-                        <button
-                          onClick={() => addMedia('edit', 'VIDEO')}
-                          className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
-                        >
-                          動画を追加
-                        </button>
+                      <div className="space-y-2 mb-2">
+                        <div className="flex gap-2">
+                          <label className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 cursor-pointer">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0] || null;
+                                if (file) {
+                                  handleMediaFileSelect('edit', 'IMAGE', file);
+                                }
+                                e.target.value = ''; // Reset input
+                              }}
+                              disabled={uploadingMedia}
+                            />
+                            {uploadingMedia ? 'アップロード中...' : '画像をアップロード'}
+                          </label>
+                          <label className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 cursor-pointer">
+                            <input
+                              type="file"
+                              accept="video/*"
+                              className="hidden"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0] || null;
+                                if (file) {
+                                  handleMediaFileSelect('edit', 'VIDEO', file);
+                                }
+                                e.target.value = ''; // Reset input
+                              }}
+                              disabled={uploadingMedia}
+                            />
+                            {uploadingMedia ? 'アップロード中...' : '動画をアップロード'}
+                          </label>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => addMediaByUrl('edit', 'IMAGE')}
+                            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm"
+                            disabled={uploadingMedia}
+                          >
+                            画像URLを追加
+                          </button>
+                          <button
+                            onClick={() => addMediaByUrl('edit', 'VIDEO')}
+                            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm"
+                            disabled={uploadingMedia}
+                          >
+                            動画URLを追加
+                          </button>
+                        </div>
                       </div>
                       <div className="space-y-2">
                         {editForm.medias.map((media, index) => (
                           <div key={index} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
-                            <span className="text-sm text-gray-600">{media.type}: {media.url}</span>
+                            <span className="text-sm text-gray-600 flex-1 truncate">
+                              {media.type}: {media.url.length > 50 ? `${media.url.substring(0, 50)}...` : media.url}
+                            </span>
                             <button
                               onClick={() => removeMedia('edit', index)}
-                              className="ml-auto text-red-600 hover:text-red-800"
+                              className="ml-auto text-red-600 hover:text-red-800 text-sm"
                             >
                               削除
                             </button>
@@ -1904,27 +1989,67 @@ const CrowdfundingTab = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">メディア</label>
-                <div className="flex gap-2 mb-2">
-                  <button
-                    onClick={() => addMedia('create', 'IMAGE')}
-                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
-                  >
-                    画像を追加
-                  </button>
-                  <button
-                    onClick={() => addMedia('create', 'VIDEO')}
-                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
-                  >
-                    動画を追加
-                  </button>
+                <div className="space-y-2 mb-2">
+                  <div className="flex gap-2">
+                    <label className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 cursor-pointer">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0] || null;
+                          if (file) {
+                            handleMediaFileSelect('create', 'IMAGE', file);
+                          }
+                          e.target.value = ''; // Reset input
+                        }}
+                        disabled={uploadingMedia}
+                      />
+                      {uploadingMedia ? 'アップロード中...' : '画像をアップロード'}
+                    </label>
+                    <label className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 cursor-pointer">
+                      <input
+                        type="file"
+                        accept="video/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0] || null;
+                          if (file) {
+                            handleMediaFileSelect('create', 'VIDEO', file);
+                          }
+                          e.target.value = ''; // Reset input
+                        }}
+                        disabled={uploadingMedia}
+                      />
+                      {uploadingMedia ? 'アップロード中...' : '動画をアップロード'}
+                    </label>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => addMediaByUrl('create', 'IMAGE')}
+                      className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm"
+                      disabled={uploadingMedia}
+                    >
+                      画像URLを追加
+                    </button>
+                    <button
+                      onClick={() => addMediaByUrl('create', 'VIDEO')}
+                      className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm"
+                      disabled={uploadingMedia}
+                    >
+                      動画URLを追加
+                    </button>
+                  </div>
                 </div>
                 <div className="space-y-2">
                   {createForm.medias.map((media, index) => (
                     <div key={index} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
-                      <span className="text-sm text-gray-600">{media.type}: {media.url}</span>
+                      <span className="text-sm text-gray-600 flex-1 truncate">
+                        {media.type}: {media.url.length > 50 ? `${media.url.substring(0, 50)}...` : media.url}
+                      </span>
                       <button
                         onClick={() => removeMedia('create', index)}
-                        className="ml-auto text-red-600 hover:text-red-800"
+                        className="ml-auto text-red-600 hover:text-red-800 text-sm"
                       >
                         削除
                       </button>
