@@ -15,14 +15,14 @@ interface Project {
   supporters: string;
   daysLeft: string;
   achievementRate: number;
-  returns?: Array<{ id: string; title: string; price: number; description: string }>;
+  returns?: Array<{ id: string; title: string; amount: number; description?: string; notes?: string }>;
 }
 
 interface Reward {
   id: string;
   title: string;
-  price: number;
-  description: string;
+  amount: number;
+  description?: string;
   image?: string;
   quantity: number;
 }
@@ -59,13 +59,19 @@ const CheckoutPage = ({
           const selectedReturns = returnIds.map((id, index) => {
             const returnItem = projectData.returns?.find((r: any) => r.id === id);
             if (returnItem) {
-              return {
+              const reward: Reward = {
                 id: returnItem.id,
                 title: returnItem.title,
-                price: returnItem.price,
-                description: returnItem.description,
+                amount: returnItem.amount || 0,
                 quantity: quantities[index] || 1,
               };
+              if (returnItem.description || returnItem.notes) {
+                reward.description = returnItem.description || returnItem.notes;
+              }
+              if (projectData.image) {
+                reward.image = projectData.image;
+              }
+              return reward;
             }
             return null;
           }).filter((r): r is Reward => r !== null);
@@ -161,6 +167,7 @@ const CheckoutPage = ({
               src={project.image}
               alt={project.title}
               fill
+              sizes="(max-width: 768px) 100vw, 33vw"
               className="object-cover h-full w-full"
             />
           </div>
@@ -247,7 +254,7 @@ const CheckoutPage = ({
                       className="h-5 w-5 sm:h-6 sm:w-6 text-red-600 rounded opacity-80 ml-4"
                     />
                     <label htmlFor={`reward-checkbox-${reward.id}`} className="text-2xl sm:text-3xl font-bold flex items-center gap-1">
-                      ¥{reward.price.toLocaleString()}
+                      ¥{reward.amount?.toLocaleString() || '0'}
                       <span className="text-sm sm:text-base font-bold">円</span>
                     </label>
 
@@ -279,12 +286,19 @@ const CheckoutPage = ({
 
                 {/* Right: Reward Image */}
                 <div className="relative bg-gray-200 w-full h-40 sm:h-50 overflow-hidden rounded-md">
+                  {reward.image ? (
                   <Image
-                    src={reward.image || ""}
+                      src={reward.image}
                     alt={reward.title}
                     fill
+                      sizes="(max-width: 768px) 100vw, 33vw"
                     className="object-cover"
                   />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-400">
+                      <span className="text-sm">画像なし</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

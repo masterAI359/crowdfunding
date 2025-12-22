@@ -30,9 +30,9 @@ const VideofundingPage = () => {
         const transformedVideos = (response.videos || []).map((video: any) => ({
           id: video.id,
           title: video.title,
-          image: video.thumbnailUrl || video.url || '/assets/videofunding/video-1.png',
-          categoryLabel: 'ドキュメンタリー', // デフォルトカテゴリ（後で実装）
-          userLabel: video.owner?.name || '匿名ユーザー',
+          image: video.thumbnailUrl || video.url || '',
+          categoryLabel: '', // Category should come from backend
+          userLabel: video.owner?.name || '',
           viewCount: video.viewCount?.toLocaleString() || '0',
           viewDate: Math.floor((Date.now() - new Date(video.createdAt).getTime()) / (1000 * 60 * 60 * 24)),
         }));
@@ -56,9 +56,9 @@ const VideofundingPage = () => {
         const transformedVideos = (response.videos || []).map((video: any) => ({
           id: video.id,
           title: video.title,
-          image: video.thumbnailUrl || video.url || '/assets/videofunding/video-1.png',
-          categoryLabel: 'ドキュメンタリー',
-          userLabel: video.owner?.name || '匿名ユーザー',
+          image: video.thumbnailUrl || video.url || '',
+          categoryLabel: '', // Category should come from backend
+          userLabel: video.owner?.name || '',
           viewCount: video.viewCount?.toLocaleString() || '0',
           viewDate: Math.floor((Date.now() - new Date(video.createdAt).getTime()) / (1000 * 60 * 60 * 24)),
         }));

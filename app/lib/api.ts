@@ -69,6 +69,14 @@ export const verifySignupCode = async (email: string, code: string) => {
 };
 
 /**
+ * 認証コード再送信
+ */
+export const resendVerificationCode = async (email: string, name?: string, isSeller?: boolean, isPurchaser?: boolean) => {
+  const response = await apiClient.post('/auth/signup/resend', { email, name, isSeller, isPurchaser });
+  return response.data;
+};
+
+/**
  * パスワード設定
  */
 export const setPassword = async (email: string, password: string) => {

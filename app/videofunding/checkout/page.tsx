@@ -46,10 +46,10 @@ const CheckoutPage = ({
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [email, setEmail] = useState("");
   const [seriesOptions, setSeriesOptions] = useState<SeriesOption[]>([]);
-  const [totalPrice, setTotalPrice] = useState(45000);
+  const [totalPrice, setTotalPrice] = useState(0);
   const [customAmount, setCustomAmount] = useState<number | null>(null);
   const [useCustomAmount, setUseCustomAmount] = useState(false);
-  const [projectTotalAmount, setProjectTotalAmount] = useState(2000000); // Total project funding goal
+  const [projectTotalAmount, setProjectTotalAmount] = useState(0);
 
   // Check if user is logged in
   useEffect(() => {
@@ -69,31 +69,25 @@ const CheckoutPage = ({
         const video = await getVideoById(searchParams.projectId);
 
         // Map video to project format
-        const projectTitle = video.title || "伝説のバンド・ピンクサワファイヤーが復活 1日だけの復活ライブ";
+        const projectTitle = video.title || "";
         setProject({
           id: video.id,
           title: projectTitle,
-          description: video.description || "「Uzumasa Limelight」のプロデューサー・監督からの感謝メッセージと、支援者への連絡方法についての詳細が含まれています。",
-          image: video.thumbnailUrl || video.url || "/assets/videofunding/video-1.png",
-          amount: "¥2,000,000", // Fundraising amount
-          supporters: "22人", // Participants
-          daysLeft: "11日",
+          description: video.description || "",
+          image: video.thumbnailUrl || video.url || "",
+          amount: "", // Should come from backend
+          supporters: "", // Should come from backend
+          daysLeft: "", // Should come from backend
         });
 
         // Check if this is a series purchase
         const isSeriesPurchase = searchParams.series === 'true' || searchParams.series === true;
 
         if (isSeriesPurchase) {
-          // Create series options (vol.01 through vol.05)
-          const series: SeriesOption[] = Array.from({ length: 5 }, (_, i) => ({
-            id: `${video.id}-vol-${String(i + 1).padStart(2, '0')}`,
-            vol: `vol.${String(i + 1).padStart(2, '0')}`,
-            title: `${projectTitle} vol.${String(i + 1).padStart(2, '0')}`,
-            price: 9000, // 9,000円 per volume
-            checked: true, // All checked by default for series purchase
-          }));
-          setSeriesOptions(series);
-          setTotalPrice(series.length * 9000); // 45,000円 total
+          // Series options should come from backend
+          // For now, set empty array - backend should provide series data
+          setSeriesOptions([]);
+          setTotalPrice(0);
         } else {
           // Single video purchase - parse reward IDs and quantities if provided
           if (searchParams.rewardIds && searchParams.quantities) {
@@ -102,10 +96,10 @@ const CheckoutPage = ({
 
             const videoReward: Reward = {
               id: video.id,
-              title: video.title,
-              price: "45,000",
-              description: video.description || "動画の説明がありません。",
-              image: video.thumbnailUrl || video.url || "/assets/videofunding/video-1.png",
+              title: video.title || "",
+              price: "", // Should come from backend pricing data
+              description: video.description || "",
+              image: video.thumbnailUrl || video.url || "",
               quantity: quantities[0] || 1,
             };
 
@@ -457,12 +451,19 @@ const CheckoutPage = ({
                     </p>
                   </div>
                   <div className="relative bg-gray-200 w-full h-40 sm:h-50 overflow-hidden rounded-md">
+                    {reward.image ? (
                     <Image
                       src={reward.image}
                       alt={reward.title}
                       fill
+                        sizes="(max-width: 768px) 100vw, 33vw"
                       className="object-cover"
                     />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <span className="text-gray-400">画像なし</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
