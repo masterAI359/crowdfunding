@@ -24,6 +24,7 @@ import {
 } from "@/app/lib/api";
 import LoadingSpinner from "@/app/components/loading-spinner";
 import Image from "next/image";
+import { SmartImage } from "@/app/utils/image-helper";
 import dynamic from "next/dynamic";
 
 const Chart = dynamic(() => import("react-apexcharts"), { ssr: false });
@@ -1824,21 +1825,12 @@ const CrowdfundingTab = () => {
                       {/* Thumbnail */}
                       <div className="w-48 h-32 bg-gray-200 rounded-lg flex-shrink-0 relative overflow-hidden">
                         {project.image && project.image !== '/assets/crowdfunding/cf-1.png' ? (
-                          project.image.startsWith('http://localhost') || project.image.startsWith('https://localhost') ? (
-                            <img
-                              src={project.image}
-                              alt={project.title}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <Image
-                              src={project.image}
-                              alt={project.title}
-                              fill
-                              className="object-cover"
-                              unoptimized={project.image.startsWith('http://localhost') || project.image.startsWith('https://localhost')}
-                            />
-                          )
+                          <SmartImage
+                            src={project.image}
+                            alt={project.title}
+                            fill
+                            className="object-cover"
+                          />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-gray-400">
                             <svg className="w-12 h-12" fill="currentColor" viewBox="0 0 20 20">

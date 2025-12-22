@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from 'react';
-import Image from 'next/image';
+import { SmartImage } from '@/app/utils/image-helper';
 import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
 
 interface ImageGalleryProps {
@@ -23,7 +23,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ images }) => {
       {/* Main Image Display with Navigation */}
       <div className="relative h-[70%] bg-gray-200 rounded-lg mb-4 flex items-center justify-center">
         {images && images.length > 0 ? (
-          <Image
+          <SmartImage
             src={images[selectedImage]}
             alt={`Project image ${selectedImage + 1}`}
             fill
@@ -84,7 +84,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ images }) => {
                   }`}
                 aria-label={`View image ${index + 1}`}
               >
-                <Image
+                <SmartImage
                   src={image}
                   alt={`Thumbnail ${index + 1}`}
                   width={100}

@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, use, useRef, useEffect } from 'react';
 import Image from 'next/image';
+import { SmartImage } from '@/app/utils/image-helper';
 import ProjectCard from '@/app/components/project-card';
 import ImageGallery from '@/app/components/image-gallery';
 import Link from 'next/link';
@@ -193,7 +194,7 @@ const ProjectDetailPage = ({ params: paramsPromise }: { params: Promise<{ projec
 
             {/* Right Image with Gradient Overlay */}
             <div className="w-[60%] relative">
-              <Image
+              <SmartImage
                 src={project.image}
                 alt={project.title}
                 fill
@@ -208,7 +209,7 @@ const ProjectDetailPage = ({ params: paramsPromise }: { params: Promise<{ projec
           <div className="lg:hidden h-[60vh] mb-10 flex flex-col">
             {/* Top Image */}
             <div className="h-[30vh] relative">
-              <Image
+              <SmartImage
                 src={project.image}
                 alt={project.title}
                 fill
@@ -364,7 +365,7 @@ const ProjectDetailPage = ({ params: paramsPromise }: { params: Promise<{ projec
                       <div className="md:w-full">
                         <h3 className="text-2xl font-bold mb-4 text-[#FF0066]">プロジェクト実行者について</h3>
                         <div className="relative h-[40vh] bg-gray-200 rounded-lg overflow-hidden">
-                          <Image src={creator.image} alt="クリエイターとの対話" fill className="h-[70%] object-cover" />
+                          <SmartImage src={creator.image} alt="クリエイターとの対話" fill className="h-[70%] object-cover" />
                         </div>
                       </div>
                       <div className="md:w-full">

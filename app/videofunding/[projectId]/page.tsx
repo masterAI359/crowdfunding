@@ -104,7 +104,7 @@ const ProjectDetailPage = ({
             {/* Main Video */}
             <div className="w-full xl:w-3/5">
               <div className="relative mb-3 aspect-video overflow-hidden rounded-lg bg-black shadow-lg">
-                <Image
+                <SmartImage
                   src={video.thumbnailUrl || video.url || '/assets/videofunding/video-1.png'}
                   alt={video.title}
                   className="h-full w-full object-cover"
@@ -134,7 +134,7 @@ const ProjectDetailPage = ({
                     className="aspect-video overflow-hidden rounded transition-all hover:border-primary hover:scale-105"
                     aria-label="Previous banner"
                   >
-                    <Image
+                    <SmartImage
                       src={video.thumbnail}
                       alt={`Scene ${index + 1}`}
                       className="h-full w-full object-cover"
@@ -151,7 +151,7 @@ const ProjectDetailPage = ({
               <div className="rounded-lg bg-card xl:px-6">
                 <h3 className="mb-4 text-[26px] font-bold text-black">最新の動画</h3>
                 <div className="relative mb-4 aspect-video overflow-hidden rounded-lg bg-black shadow-md">
-                  <Image
+                  <SmartImage
                     src={video.thumbnailUrl || video.url || '/assets/videofunding/video-1.png'}
                     alt={video.title}
                     className="h-full w-full object-cover"

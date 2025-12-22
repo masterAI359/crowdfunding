@@ -1,6 +1,6 @@
 "use client"
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import Image from 'next/image';
+import { SmartImage } from '@/app/utils/image-helper';
 
 interface BannerProject {
     id: string;
@@ -111,7 +111,7 @@ const ProjectCarousel: React.FC<ProjectCarouselProps> = ({ projects, lightMode =
                             <div className={`relative w-full shadow-lg overflow-hidden flex flex-col md:block rounded-2xl md:rounded-2xl ${lightMode ? "h-[20rem]" : "h-[28rem] sm:h-[32rem] md:h-[28rem] lg:h-[32rem] xl:h-[28rem]"}`}>
                                 {/* === Image Section === */}
                                 <div className={`relative w-full ${lightMode ? "h-2/3 md:h-full" : "h-1/2 md:h-full"}`}>
-                                    <Image
+                                    <SmartImage
                                         src={project.image}
                                         alt={project.title}
                                         fill

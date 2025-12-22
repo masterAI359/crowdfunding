@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import Link from "next/link";
-import Image from "next/image";
+import { SmartImage } from '@/app/utils/image-helper';
 
 
 interface Video {
@@ -35,7 +35,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, detail = false }) => {
     <Link href={`/videofunding/${video.id}`} passHref>
       <div className="relative bg-white rounded-lg overflow-hidden hover:shadow-lg transition-shadow border border-[#E9E9E9] cursor-pointer">
         {/* Project Image */}
-        <Image
+        <SmartImage
           src={video.image}
           alt={video.title}
           className="w-full sm:h-48 h-30 object-cover rounded-t-lg"
