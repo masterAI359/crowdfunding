@@ -154,7 +154,7 @@ const VerifyEmailForm = () => {
 
                 {/* Resend Code Link */}
                 <div className="text-center">
-                    <p className="text-md text-black leading-relaxed font-semibold">
+                    <p className="text-md text-black leading-relaxed font-semibold inline-flex">
                         コードを受け取っていませんか?{" "}
                         {resendCountdown > 0 ? (
                             <span className="text-gray-500">
