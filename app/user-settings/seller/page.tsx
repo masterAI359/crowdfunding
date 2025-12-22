@@ -296,7 +296,7 @@ const SellerDashboardPage = () => {
                                     setActiveTab(child.id);
                                     router.push(child.href);
                                   }}
-                                  className={`w-full text-left px-4 py-2 rounded-lg text-sm transition-colors ${
+                                  className={`w-full text-left px-2 py-2 rounded-lg text-sm transition-colors ${
                                     isActive
                                       ? "bg-[#FF0066] text-white"
                                       : "text-gray-800 hover:bg-gray-100"
@@ -318,7 +318,7 @@ const SellerDashboardPage = () => {
           </div>
 
           {/* Main Content Area */}
-          <div className="flex-1">
+          <div className="flex-1 w-auto">
             {isLoadingData ? (
               <div className="flex items-center justify-center py-12">
                 <LoadingSpinner />
