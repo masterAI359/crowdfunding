@@ -15,7 +15,12 @@ import {
   hideVideoComment,
   showVideoComment,
   getUserLogs,
-  uploadFiles
+  uploadFiles,
+  getProjectsByOwner,
+  createProject,
+  updateProject,
+  deleteProject,
+  publishProject
 } from "@/app/lib/api";
 import LoadingSpinner from "@/app/components/loading-spinner";
 import Image from "next/image";
@@ -1481,7 +1486,485 @@ const VideosTab = ({ videos, onRefresh, isAdmin }: { videos: any[]; onRefresh: (
 
 // Placeholder tabs
 const ProductsTab = () => <div className="p-8"><h1 className="text-2xl font-bold">Products</h1></div>;
-const CrowdfundingTab = () => <div className="p-8"><h1 className="text-2xl font-bold">クラウドファンディング</h1></div>;
+
+// Crowdfunding Tab Component
+const CrowdfundingTab = () => {
+  const [projects, setProjects] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [editingProject, setEditingProject] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({ 
+    title: "", 
+    description: "", 
+    goalAmount: "", 
+    endDate: "",
+    medias: [] as Array<{ url: string; type: 'IMAGE' | 'VIDEO'; order: number }>
+  });
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [createForm, setCreateForm] = useState({ 
+    title: "", 
+    description: "", 
+    goalAmount: "", 
+    endDate: "",
+    medias: [] as Array<{ url: string; type: 'IMAGE' | 'VIDEO'; order: number }>
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    loadProjects();
+  }, []);
+
+  const loadProjects = async () => {
+    setLoading(true);
+    try {
+      const data = await getProjectsByOwner(1, 100);
+      setProjects(data.projects || []);
+    } catch (error) {
+      console.error("Failed to load projects:", error);
+      alert("プロジェクトの読み込みに失敗しました");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEdit = (project: any) => {
+    setEditingProject(project.id);
+    setEditForm({ 
+      title: project.title, 
+      description: project.description || "", 
+      goalAmount: project.goalAmount.toString(),
+      endDate: project.endDate ? new Date(project.endDate).toISOString().split('T')[0] : "",
+      medias: project.medias || []
+    });
+  };
+
+  const handleSave = async (projectId: string) => {
+    if (!editForm.title || !editForm.goalAmount || !editForm.endDate) {
+      alert("タイトル、目標金額、終了日は必須です");
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      await updateProject(projectId, {
+        title: editForm.title,
+        description: editForm.description || undefined,
+        goalAmount: parseInt(editForm.goalAmount),
+        endDate: editForm.endDate,
+        medias: editForm.medias.length > 0 ? editForm.medias : undefined,
+      });
+      setEditingProject(null);
+      loadProjects();
+    } catch (error: any) {
+      console.error("Failed to update project:", error);
+      alert(error.response?.data?.message || "プロジェクトの更新に失敗しました");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDelete = async (projectId: string) => {
+    if (!confirm("本当にこのプロジェクトを削除しますか？")) return;
+    try {
+      await deleteProject(projectId);
+      loadProjects();
+    } catch (error: any) {
+      console.error("Failed to delete project:", error);
+      alert(error.response?.data?.message || "プロジェクトの削除に失敗しました");
+    }
+  };
+
+  const handlePublish = async (projectId: string) => {
+    if (!confirm("このプロジェクトを公開しますか？")) return;
+    try {
+      await publishProject(projectId);
+      loadProjects();
+      alert("プロジェクトを公開しました");
+    } catch (error: any) {
+      console.error("Failed to publish project:", error);
+      alert(error.response?.data?.message || "プロジェクトの公開に失敗しました");
+    }
+  };
+
+  const handleCreate = async () => {
+    if (!createForm.title || !createForm.goalAmount || !createForm.endDate) {
+      alert("タイトル、目標金額、終了日は必須です");
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      await createProject({
+        title: createForm.title,
+        description: createForm.description || undefined,
+        goalAmount: parseInt(createForm.goalAmount),
+        endDate: createForm.endDate,
+        status: 'DRAFT',
+        medias: createForm.medias.length > 0 ? createForm.medias : undefined,
+      });
+      setShowCreateModal(false);
+      setCreateForm({ 
+        title: "", 
+        description: "", 
+        goalAmount: "", 
+        endDate: "",
+        medias: []
+      });
+      loadProjects();
+    } catch (error: any) {
+      console.error("Failed to create project:", error);
+      alert(error.response?.data?.message || "プロジェクトの作成に失敗しました");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const addMedia = (formType: 'edit' | 'create', mediaType: 'IMAGE' | 'VIDEO') => {
+    const url = prompt(`${mediaType === 'IMAGE' ? '画像' : '動画'}URLを入力してください:`);
+    if (url) {
+      if (formType === 'edit') {
+        setEditForm({
+          ...editForm,
+          medias: [...editForm.medias, { url, type: mediaType, order: editForm.medias.length }]
+        });
+      } else {
+        setCreateForm({
+          ...createForm,
+          medias: [...createForm.medias, { url, type: mediaType, order: createForm.medias.length }]
+        });
+      }
+    }
+  };
+
+  const removeMedia = (formType: 'edit' | 'create', index: number) => {
+    if (formType === 'edit') {
+      setEditForm({
+        ...editForm,
+        medias: editForm.medias.filter((_, i) => i !== index)
+      });
+    } else {
+      setCreateForm({
+        ...createForm,
+        medias: createForm.medias.filter((_, i) => i !== index)
+      });
+    }
+  };
+
+  const formatCurrency = (amount: number) => {
+    return `¥${amount.toLocaleString()}`;
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('ja-JP');
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold text-gray-900">クラウドファンディング</h1>
+        <button
+          onClick={() => setShowCreateModal(true)}
+          className="px-6 py-2 bg-[#FF0066] text-white rounded-lg hover:bg-[#E6005C] transition-colors"
+        >
+          プロジェクトを作成
+        </button>
+      </div>
+
+      {loading ? (
+        <div className="flex items-center justify-center py-12">
+          <LoadingSpinner />
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {projects.length === 0 ? (
+            <div className="text-center py-12 text-gray-500">
+              プロジェクトがありません。新しいプロジェクトを作成してください。
+            </div>
+          ) : (
+            projects.map((project) => (
+              <div key={project.id} className="bg-white border border-gray-200 rounded-lg p-6">
+                {editingProject === project.id ? (
+                  <div className="space-y-4">
+                    <input
+                      type="text"
+                      value={editForm.title}
+                      onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF0066]"
+                      placeholder="タイトル"
+                    />
+                    <textarea
+                      value={editForm.description}
+                      onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF0066]"
+                      placeholder="説明文"
+                      rows={4}
+                    />
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">目標金額（円）</label>
+                        <input
+                          type="number"
+                          value={editForm.goalAmount}
+                          onChange={(e) => setEditForm({ ...editForm, goalAmount: e.target.value })}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF0066]"
+                          placeholder="1000000"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">終了日</label>
+                        <input
+                          type="date"
+                          value={editForm.endDate}
+                          onChange={(e) => setEditForm({ ...editForm, endDate: e.target.value })}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF0066]"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">メディア</label>
+                      <div className="flex gap-2 mb-2">
+                        <button
+                          onClick={() => addMedia('edit', 'IMAGE')}
+                          className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                        >
+                          画像を追加
+                        </button>
+                        <button
+                          onClick={() => addMedia('edit', 'VIDEO')}
+                          className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                        >
+                          動画を追加
+                        </button>
+                      </div>
+                      <div className="space-y-2">
+                        {editForm.medias.map((media, index) => (
+                          <div key={index} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
+                            <span className="text-sm text-gray-600">{media.type}: {media.url}</span>
+                            <button
+                              onClick={() => removeMedia('edit', index)}
+                              className="ml-auto text-red-600 hover:text-red-800"
+                            >
+                              削除
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleSave(project.id)}
+                        disabled={isSubmitting}
+                        className="px-4 py-2 bg-[#FF0066] text-white rounded-lg hover:bg-[#E6005C] disabled:opacity-50"
+                      >
+                        保存
+                      </button>
+                      <button
+                        onClick={() => setEditingProject(null)}
+                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                      >
+                        キャンセル
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex gap-6">
+                      {/* Thumbnail */}
+                      <div className="w-48 h-32 bg-gray-200 rounded-lg flex-shrink-0 relative overflow-hidden">
+                        {project.image && project.image !== '/assets/crowdfunding/cf-1.png' ? (
+                          <Image
+                            src={project.image}
+                            alt={project.title}
+                            fill
+                            className="object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-gray-400">
+                            <svg className="w-12 h-12" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Project Info */}
+                      <div className="flex-1">
+                        <div className="flex items-start justify-between mb-2">
+                          <h3 className="text-lg font-semibold text-gray-900">{project.title}</h3>
+                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                            project.status === 'ACTIVE' 
+                              ? 'bg-green-100 text-green-800' 
+                              : project.status === 'DRAFT'
+                              ? 'bg-yellow-100 text-yellow-800'
+                              : 'bg-gray-100 text-gray-800'
+                          }`}>
+                            {project.status === 'ACTIVE' ? '公開中' : project.status === 'DRAFT' ? '下書き' : project.status}
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-800 mb-4">{project.description || "説明なし"}</p>
+                        
+                        {/* Statistics */}
+                        <div className="grid grid-cols-4 gap-4 mb-4">
+                          <div>
+                            <div className="text-sm text-gray-500">目標金額</div>
+                            <div className="text-lg font-semibold text-gray-900">{formatCurrency(project.goalAmount)}</div>
+                          </div>
+                          <div>
+                            <div className="text-sm text-gray-500">調達金額</div>
+                            <div className="text-lg font-semibold text-gray-900">{formatCurrency(project.totalAmount || 0)}</div>
+                          </div>
+                          <div>
+                            <div className="text-sm text-gray-500">達成率</div>
+                            <div className="text-lg font-semibold text-gray-900">{project.achievementRate || 0}%</div>
+                          </div>
+                          <div>
+                            <div className="text-sm text-gray-500">終了日</div>
+                            <div className="text-lg font-semibold text-gray-900">{formatDate(project.endDate)}</div>
+                          </div>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex gap-2">
+                          {project.status === 'DRAFT' && (
+                            <button
+                              onClick={() => handlePublish(project.id)}
+                              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                            >
+                              公開する
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleEdit(project)}
+                            className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                          >
+                            編集
+                          </button>
+                          <button
+                            onClick={() => handleDelete(project.id)}
+                            className="px-4 py-2 bg-red-200 text-red-800 rounded-lg hover:bg-red-300"
+                          >
+                            削除
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      )}
+
+      {/* Create Modal */}
+      {showCreateModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">プロジェクトを作成</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">タイトル *</label>
+                <input
+                  type="text"
+                  value={createForm.title}
+                  onChange={(e) => setCreateForm({ ...createForm, title: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF0066]"
+                  placeholder="プロジェクトのタイトル"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">説明文</label>
+                <textarea
+                  value={createForm.description}
+                  onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF0066]"
+                  rows={4}
+                  placeholder="プロジェクトの説明"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">目標金額（円） *</label>
+                  <input
+                    type="number"
+                    value={createForm.goalAmount}
+                    onChange={(e) => setCreateForm({ ...createForm, goalAmount: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF0066]"
+                    placeholder="1000000"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">終了日 *</label>
+                  <input
+                    type="date"
+                    value={createForm.endDate}
+                    onChange={(e) => setCreateForm({ ...createForm, endDate: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF0066]"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">メディア</label>
+                <div className="flex gap-2 mb-2">
+                  <button
+                    onClick={() => addMedia('create', 'IMAGE')}
+                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                  >
+                    画像を追加
+                  </button>
+                  <button
+                    onClick={() => addMedia('create', 'VIDEO')}
+                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                  >
+                    動画を追加
+                  </button>
+                </div>
+                <div className="space-y-2">
+                  {createForm.medias.map((media, index) => (
+                    <div key={index} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
+                      <span className="text-sm text-gray-600">{media.type}: {media.url}</span>
+                      <button
+                        onClick={() => removeMedia('create', index)}
+                        className="ml-auto text-red-600 hover:text-red-800"
+                      >
+                        削除
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end gap-4 mt-6">
+              <button
+                onClick={() => {
+                  setShowCreateModal(false);
+                  setCreateForm({ 
+                    title: "", 
+                    description: "", 
+                    goalAmount: "", 
+                    endDate: "",
+                    medias: []
+                  });
+                }}
+                disabled={isSubmitting}
+                className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 disabled:opacity-50"
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={handleCreate}
+                disabled={isSubmitting}
+                className="px-6 py-2 bg-[#FF0066] text-white rounded-lg hover:bg-[#E6005C] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {isSubmitting && <LoadingSpinner size="sm" className="text-white" />}
+                {isSubmitting ? "作成中..." : "作成"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 const PaymentTab = () => <div className="p-8"><h1 className="text-2xl font-bold">支払い</h1></div>;
 const NotificationsTab = () => <div className="p-8"><h1 className="text-2xl font-bold">全ての通知</h1></div>;
 const CustomerTab = () => <div className="p-8"><h1 className="text-2xl font-bold">カスタマー</h1></div>;
