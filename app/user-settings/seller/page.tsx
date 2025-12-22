@@ -1663,22 +1663,6 @@ const CrowdfundingTab = () => {
     }
   };
 
-  const addMediaByUrl = (formType: 'edit' | 'create', mediaType: 'IMAGE' | 'VIDEO') => {
-    const url = prompt(`${mediaType === 'IMAGE' ? '画像' : '動画'}URLを入力してください:`);
-    if (url) {
-      if (formType === 'edit') {
-        setEditForm({
-          ...editForm,
-          medias: [...editForm.medias, { url, type: mediaType, order: editForm.medias.length }]
-        });
-      } else {
-        setCreateForm({
-          ...createForm,
-          medias: [...createForm.medias, { url, type: mediaType, order: createForm.medias.length }]
-        });
-      }
-    }
-  };
 
   const removeMedia = (formType: 'edit' | 'create', index: number) => {
     if (formType === 'edit') {
@@ -1800,22 +1784,6 @@ const CrowdfundingTab = () => {
                             />
                             {uploadingMedia ? 'アップロード中...' : '動画をアップロード'}
                           </label>
-                        </div>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => addMediaByUrl('edit', 'IMAGE')}
-                            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm"
-                            disabled={uploadingMedia}
-                          >
-                            画像URLを追加
-                          </button>
-                          <button
-                            onClick={() => addMediaByUrl('edit', 'VIDEO')}
-                            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm"
-                            disabled={uploadingMedia}
-                          >
-                            動画URLを追加
-                          </button>
                         </div>
                       </div>
                       <div className="space-y-2">
@@ -2023,22 +1991,6 @@ const CrowdfundingTab = () => {
                       />
                       {uploadingMedia ? 'アップロード中...' : '動画をアップロード'}
                     </label>
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => addMediaByUrl('create', 'IMAGE')}
-                      className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm"
-                      disabled={uploadingMedia}
-                    >
-                      画像URLを追加
-                    </button>
-                    <button
-                      onClick={() => addMediaByUrl('create', 'VIDEO')}
-                      className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm"
-                      disabled={uploadingMedia}
-                    >
-                      動画URLを追加
-                    </button>
                   </div>
                 </div>
                 <div className="space-y-2">
