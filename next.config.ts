@@ -26,6 +26,12 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**', // Allows all paths from this domain
       },
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '8080',
+        pathname: '/**', // Allows all paths from localhost:8080
+      },
     ],
   },
 };
