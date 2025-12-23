@@ -203,40 +203,51 @@ const SellerProfilePage = () => {
         </section>
 
         {/* MOVIE Section */}
-        <section className="mb-12">
+        <section className="mb-12 bg-white">
           <h2 className="text-3xl md:text-4xl font-bold text-black mb-8">MOVIE</h2>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
             {/* Activity Stats Box */}
-            <div className="bg-gray-50 rounded-lg p-6 border border-gray-200">
+            <div className="col-span-1 max-w-[300px] rounded-lg p-6 border border-gray-200">
               <h3 className="text-xl font-bold text-black mb-6">アクティビティ</h3>
               <div className="space-y-4">
-                <div>
-                  <p className="text-gray-600 mb-1">ショーケース</p>
-                  <p className="text-2xl font-bold text-black">{showcaseCount}</p>
+                <div className="flex justify-between items-center border-b border-gray-300 pb-2">
+                  <p className="mb-1">ショーケース</p>
+                  <p className="text-black">{showcaseCount}</p>
                 </div>
-                <div>
-                  <p className="text-gray-600 mb-1">フォロワー</p>
-                  <p className="text-2xl font-bold text-black">{followerCount.toLocaleString()}</p>
+                <div className="flex justify-between items-center border-b border-gray-300 pb-2">
+                  <p className="mb-1">フォロワー</p>
+                  <p className="text-black">{followerCount.toLocaleString()}</p>
                 </div>
-                <div>
-                  <p className="text-gray-600 mb-1">フォロー中</p>
-                  <p className="text-2xl font-bold text-black">{followingCount}</p>
+                <div className="flex justify-between items-center border-b border-gray-300 pb-2">
+                  <p className="mb-1">フォロー中</p>
+                  <p className="text-black">{followingCount}</p>
                 </div>
-                <div>
-                  <p className="text-gray-600 mb-1">コレクション</p>
-                  <p className="text-2xl font-bold text-black">{collectionCount}</p>
+                <div className="flex justify-between items-center border-b border-gray-300 pb-2">
+                  <p className="mb-1">コレクション</p>
+                  <p className="text-black">{collectionCount}</p>
                 </div>
-                <div>
-                  <p className="text-gray-600 mb-1">メンバー登録</p>
-                  <p className="text-2xl font-bold text-black">{memberSince}</p>
+                <div className="flex justify-between items-center border-b border-gray-300 pb-2">
+                  <p className="mb-1">メンバー登録</p>
+                  <p className="text-black">{memberSince}</p>
                 </div>
               </div>
             </div>
 
             {/* Video Grid */}
-            <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="col-span-3 lg:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-4">
               {videos.slice(0, 3).map((video) => (
-                <VideoCard key={video.id} video={video} detail={true} />
+                <Link key={video.id} href={`/videofunding/${video.id}`} passHref className="col-span-1">
+                  <div className="relative bg-white rounded-lg overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"> 
+                    <img
+                      src={video.image}
+                      alt={video.title}
+                      className="w-full h-48 object-cover"
+                    />
+                    <div className="p-4">
+                      <h3 className="font-bold text-lg text-black mb-2 line-clamp-2">{video.title}</h3>
+                    </div>
+                  </div>
+                </Link>
               ))}
             </div>
           </div>

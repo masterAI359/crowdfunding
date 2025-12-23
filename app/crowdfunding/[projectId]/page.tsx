@@ -177,9 +177,9 @@ const ProjectDetailPage = ({ params: paramsPromise }: { params: Promise<{ projec
         {/* Section 1: Hero Banner */}
         <section className="relative ">
           {/* Desktop Layout */}
-          <div className="hidden lg:flex h-[50vh]">
+          <div className="hidden lg:flex h-[50vh] relative">
             {/* Left Black Background */}
-            <div className="w-[60%] bg-black flex items-center justify-center p-5 ">
+            <div className="w-[60%] bg-black flex items-center justify-center p-5 absolute left-0 top-0 bottom-0">
               <div className="text-white max-w-3xl md:ml-10">
                 <h1 className="xl:text-6xl lg:text-4xl sm:text-3xl  font-bold mb-6">{project.title}</h1>
                 <p className="text-lg mb-8 leading-relaxed">{project.description}</p>
@@ -193,12 +193,12 @@ const ProjectDetailPage = ({ params: paramsPromise }: { params: Promise<{ projec
             </div>
 
             {/* Right Image with Gradient Overlay */}
-            <div className="w-[40%] relative h-full overflow-hidden">
+            <div className="w-[48%] h-full overflow-hidden absolute right-0 top-0 bottom-0 flex-1">
               <SmartImage
                 src={project.image}
                 alt={project.title}
                 fill
-                className="object-cover"
+                className="stretch object-cover"
                 priority
               />
               <div className="absolute inset-0 bg-gradient-to-r from-black via-black/20 to-transparent" />
@@ -213,7 +213,7 @@ const ProjectDetailPage = ({ params: paramsPromise }: { params: Promise<{ projec
                 src={project.image}
                 alt={project.title}
                 fill
-                className="object-cover"
+                className="stretch"
                 priority
               />
             </div>
