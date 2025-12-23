@@ -29,19 +29,6 @@ const apiConfig = getApiHostConfig();
 const nextConfig: NextConfig = {
   // Allow cross-origin requests from specific IPs during development
   allowedDevOrigins: ['162.43.45.104', "https://fernande-prelexical-ceola.ngrok-free.dev"],
-  
-  // HMR configuration for development (especially with tunnels like ngrok)
-  webpackDevMiddleware: process.env.NODE_ENV === 'development' ? {
-    watchOptions: {
-      poll: 800,
-      aggregateTimeout: 300,
-    },
-  } : undefined,
-
-  onDemandEntries: process.env.NODE_ENV === 'development' ? {
-    maxInactiveAge: 60 * 1000,
-    pagesBufferLength: 5,
-  } : undefined,
 
   // Configure HMR for ngrok or similar tunneling services
   ...(() => {
