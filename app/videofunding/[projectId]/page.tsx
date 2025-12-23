@@ -1,5 +1,5 @@
 "use client";
-import React, { use, useState, useEffect } from "react";
+import React, { use, useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { Play, Heart } from "lucide-react";
 import ProjectCarousel from "@/app/components/project-carousel";
@@ -28,6 +28,24 @@ const ProjectDetailPage = ({
   const [recommendedVideos, setRecommendedVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState(true);
   const [isFavorited, setIsFavorited] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isSidebarPlaying, setIsSidebarPlaying] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const sidebarVideoRef = useRef<HTMLVideoElement>(null);
+
+  const handlePlayClick = () => {
+    setIsPlaying(true);
+    if (videoRef.current) {
+      videoRef.current.play();
+    }
+  };
+
+  const handleSidebarPlayClick = () => {
+    setIsSidebarPlaying(true);
+    if (sidebarVideoRef.current) {
+      sidebarVideoRef.current.play();
+    }
+  };
 
   // 動画詳細を取得
   useEffect(() => {
@@ -57,9 +75,9 @@ const ProjectDetailPage = ({
           .map((v: any) => ({
             id: v.id,
             title: v.title,
-            image: v.thumbnailUrl || v.url || '/assets/videofunding/video-1.png',
-            categoryLabel: 'ドキュメンタリー',
-            userLabel: v.owner?.name || '匿名ユーザー',
+            image: v.thumbnailUrl || v.url || '',
+            categoryLabel: '', // Category should come from backend
+            userLabel: v.owner?.name || '',
             viewCount: v.viewCount?.toLocaleString() || '0',
             viewDate: Math.floor((Date.now() - new Date(v.createdAt).getTime()) / (1000 * 60 * 60 * 24)),
           }));
@@ -88,12 +106,10 @@ const ProjectDetailPage = ({
     );
   }
 
-  // サムネイル画像（動画のサムネイルURLを使用、なければデフォルト）
-  const thumbnailUrl = video.thumbnailUrl || video.url || '/assets/videofunding/video-1.png';
-  const thumbnailVideos = Array.from({ length: 8 }, (_, i) => ({
-    id: i + 1,
-    thumbnail: thumbnailUrl,
-  }));
+  // サムネイル画像
+  const thumbnailUrl = video.thumbnailUrl || video.url || '';
+  // Thumbnail videos should come from backend - for now use empty array
+  const thumbnailVideos: Array<{ id: number; thumbnail: string }> = [];
 
   return (
     <div className="min-h-screen bg-white text-gray-700 mx-auto">
@@ -104,21 +120,44 @@ const ProjectDetailPage = ({
             {/* Main Video */}
             <div className="w-full xl:w-3/5">
               <div className="relative mb-3 aspect-video overflow-hidden rounded-lg bg-black shadow-lg">
-                <SmartImage
-                  src={video.thumbnailUrl || video.url || '/assets/videofunding/video-1.png'}
-                  alt={video.title}
-                  className="h-full w-full object-cover"
-                  width={344}
-                  height={200}
-                />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white/90 transition-transform hover:scale-110 shadow-xl">
-                    <Play
-                      className="ml-1 h-10 w-10 text-primary"
-                      fill="currentColor"
-                    />
-                  </div>
-                </div>
+                {isPlaying && video.url ? (
+                  <video
+                    ref={videoRef}
+                    src={video.url}
+                    className="h-full w-full object-cover"
+                    controls
+                    autoPlay
+                    onEnded={() => setIsPlaying(false)}
+                  />
+                ) : (
+                  <>
+                    {video.thumbnailUrl || video.url ? (
+                      <Image
+                        src={video.thumbnailUrl || video.url}
+                        alt={video.title}
+                        className="h-full w-full object-cover"
+                        width={344}
+                        height={200}
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                        <span className="text-gray-400">画像なし</span>
+                      </div>
+                    )}
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <button
+                        onClick={handlePlayClick}
+                        className="flex h-20 w-20 items-center justify-center rounded-full bg-white/90 transition-transform hover:scale-110 shadow-xl cursor-pointer"
+                        aria-label="動画を再生"
+                      >
+                        <Play
+                          className="ml-1 h-10 w-10 text-primary"
+                          fill="currentColor"
+                        />
+                      </button>
+                    </div>
+                  </>
+                )}
                 <div className="absolute left-4 bottom-4">
                   <div className="rounded bg-[#FFD700] px-4 py-1.5 text-sm font-bold text-black shadow-md">
                     {video.title}
@@ -127,6 +166,7 @@ const ProjectDetailPage = ({
               </div>
 
               {/* Thumbnail Grid */}
+              {thumbnailVideos.length > 0 && (
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
                 {thumbnailVideos.map((video, index) => (
                   <button
@@ -134,16 +174,23 @@ const ProjectDetailPage = ({
                     className="aspect-video overflow-hidden rounded transition-all hover:border-primary hover:scale-105"
                     aria-label="Previous banner"
                   >
-                    <SmartImage
+                      {video.thumbnail ? (
+                    <Image
                       src={video.thumbnail}
                       alt={`Scene ${index + 1}`}
                       className="h-full w-full object-cover"
                       width={344}
                       height={100}
                     />
+                      ) : (
+                        <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                          <span className="text-gray-400 text-xs">画像なし</span>
+                        </div>
+                      )}
                   </button>
                 ))}
               </div>
+              )}
             </div>
 
             {/* Sidebar */}
@@ -151,21 +198,44 @@ const ProjectDetailPage = ({
               <div className="rounded-lg bg-card xl:px-6">
                 <h3 className="mb-4 text-[26px] font-bold text-black">最新の動画</h3>
                 <div className="relative mb-4 aspect-video overflow-hidden rounded-lg bg-black shadow-md">
-                  <SmartImage
-                    src={video.thumbnailUrl || video.url || '/assets/videofunding/video-1.png'}
-                    alt={video.title}
-                    className="h-full w-full object-cover"
-                    width={344}
-                    height={100}
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/90 shadow-xl">
-                      <Play
-                        className="ml-1 h-8 w-8 text-primary"
-                        fill="currentColor"
-                      />
-                    </div>
-                  </div>
+                  {isSidebarPlaying && video.url ? (
+                    <video
+                      ref={sidebarVideoRef}
+                      src={video.url}
+                      className="h-full w-full object-cover"
+                      controls
+                      autoPlay
+                      onEnded={() => setIsSidebarPlaying(false)}
+                    />
+                  ) : (
+                    <>
+                      {video.thumbnailUrl || video.url ? (
+                        <Image
+                          src={video.thumbnailUrl || video.url}
+                          alt={video.title}
+                          className="h-full w-full object-cover"
+                          width={344}
+                          height={100}
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                          <span className="text-gray-400">画像なし</span>
+                        </div>
+                      )}
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <button
+                          onClick={handleSidebarPlayClick}
+                          className="flex h-16 w-16 items-center justify-center rounded-full bg-white/90 shadow-xl cursor-pointer transition-transform hover:scale-110"
+                          aria-label="動画を再生"
+                        >
+                          <Play
+                            className="ml-1 h-8 w-8 text-primary"
+                            fill="currentColor"
+                          />
+                        </button>
+                      </div>
+                    </>
+                  )}
                   <div className="absolute left-4 bottom-4">
                     <div className="rounded bg-[#FFD700] px-4 py-1.5 text-sm font-bold text-black shadow-md">
                       {video.title}

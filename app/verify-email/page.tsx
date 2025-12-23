@@ -2,7 +2,7 @@
 import React, { useState, useEffect, Suspense } from "react";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
-import { verifySignupCode, initiateSignup } from "@/app/lib/api";
+import { verifySignupCode, resendVerificationCode } from "@/app/lib/api";
 import LoadingSpinner from "@/app/components/loading-spinner";
 
 const VerifyEmailForm = () => {
@@ -11,6 +11,7 @@ const VerifyEmailForm = () => {
     const [code, setCode] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
+    const [success, setSuccess] = useState("");
     const [resendCountdown, setResendCountdown] = useState(0);
     const email = searchParams?.get("email") || "";
 
@@ -59,9 +60,15 @@ const VerifyEmailForm = () => {
 
         try {
             setIsResending(true);
-            await initiateSignup(email);
+            setError(""); // Clear previous errors
+            setSuccess(""); // Clear previous success
+            await resendVerificationCode(email);
             setResendCountdown(60); // 60秒のカウントダウン
+            setSuccess("認証コードを再送信しました。メールをご確認ください。");
+            // Clear success message after 5 seconds
+            setTimeout(() => setSuccess(""), 5000);
         } catch (err: any) {
+            setSuccess(""); // Clear success on error
             setError(err.response?.data?.message || "コードの再送信に失敗しました");
         } finally {
             setIsResending(false);
@@ -118,6 +125,13 @@ const VerifyEmailForm = () => {
                         </div>
                     </div>
 
+                    {/* Success Message */}
+                    {success && (
+                        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm text-center">
+                            {success}
+                        </div>
+                    )}
+
                     {/* Error Message */}
                     {error && (
                         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm text-center">
@@ -140,7 +154,7 @@ const VerifyEmailForm = () => {
 
                 {/* Resend Code Link */}
                 <div className="text-center">
-                    <p className="text-md text-black leading-relaxed font-semibold">
+                    <p className="text-md text-black leading-relaxed font-semibold inline-flex">
                         コードを受け取っていませんか?{" "}
                         {resendCountdown > 0 ? (
                             <span className="text-gray-500">
