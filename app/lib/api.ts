@@ -257,6 +257,62 @@ export const getRecommendedProjects = async (projectId?: string, limit: number =
   return response.data;
 };
 
+/**
+ * プロジェクト一覧取得（出品者用）
+ */
+export const getProjectsByOwner = async (page: number = 1, limit: number = 20) => {
+  const response = await apiClient.get('/projects/owner/list', {
+    params: { page, limit },
+  });
+  return response.data;
+};
+
+/**
+ * プロジェクト作成
+ */
+export const createProject = async (data: {
+  title: string;
+  description?: string;
+  goalAmount: number;
+  endDate: string;
+  status?: 'DRAFT' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
+  medias?: Array<{ url: string; type: 'IMAGE' | 'VIDEO'; order?: number }>;
+}) => {
+  const response = await apiClient.post('/projects', data);
+  return response.data;
+};
+
+/**
+ * プロジェクト更新
+ */
+export const updateProject = async (id: string, data: {
+  title?: string;
+  description?: string;
+  goalAmount?: number;
+  endDate?: string;
+  status?: 'DRAFT' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
+  medias?: Array<{ url: string; type: 'IMAGE' | 'VIDEO'; order?: number }>;
+}) => {
+  const response = await apiClient.put(`/projects/${id}`, data);
+  return response.data;
+};
+
+/**
+ * プロジェクト削除
+ */
+export const deleteProject = async (id: string) => {
+  const response = await apiClient.delete(`/projects/${id}`);
+  return response.data;
+};
+
+/**
+ * プロジェクト公開
+ */
+export const publishProject = async (id: string) => {
+  const response = await apiClient.post(`/projects/${id}/publish`);
+  return response.data;
+};
+
 // ==================== 決済関連API ====================
 
 /**

@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, use, useRef, useEffect } from 'react';
 import Image from 'next/image';
+import { SmartImage } from '@/app/utils/image-helper';
 import ProjectCard from '@/app/components/project-card';
 import ImageGallery from '@/app/components/image-gallery';
 import Link from 'next/link';
@@ -166,9 +167,9 @@ const ProjectDetailPage = ({ params: paramsPromise }: { params: Promise<{ projec
         {/* Section 1: Hero Banner */}
         <section className="relative ">
           {/* Desktop Layout */}
-          <div className="hidden lg:flex h-[50vh]">
+          <div className="hidden lg:flex h-[50vh] relative">
             {/* Left Black Background */}
-            <div className="w-[60%] bg-black flex items-center justify-center p-5 ">
+            <div className="w-[60%] bg-black flex items-center justify-center p-5 absolute left-0 top-0 bottom-0">
               <div className="text-white max-w-3xl md:ml-10">
                 <h1 className="xl:text-6xl lg:text-4xl sm:text-3xl  font-bold mb-6">{project.title}</h1>
                 <p className="text-lg mb-8 leading-relaxed">{project.description}</p>
@@ -182,12 +183,12 @@ const ProjectDetailPage = ({ params: paramsPromise }: { params: Promise<{ projec
             </div>
 
             {/* Right Image with Gradient Overlay */}
-            <div className="w-[60%] relative">
-              <Image
+            <div className="w-[48%] h-full overflow-hidden absolute right-0 top-0 bottom-0 flex-1">
+              <SmartImage
                 src={project.image}
                 alt={project.title}
                 fill
-                className="object-cover"
+                className="stretch object-cover"
                 priority
               />
               <div className="absolute inset-0 bg-gradient-to-r from-black via-black/20 to-transparent" />
@@ -198,11 +199,11 @@ const ProjectDetailPage = ({ params: paramsPromise }: { params: Promise<{ projec
           <div className="lg:hidden h-[60vh] mb-10 flex flex-col">
             {/* Top Image */}
             <div className="h-[30vh] relative">
-              <Image
+              <SmartImage
                 src={project.image}
                 alt={project.title}
                 fill
-                className="object-cover"
+                className="stretch"
                 priority
               />
             </div>
@@ -354,7 +355,7 @@ const ProjectDetailPage = ({ params: paramsPromise }: { params: Promise<{ projec
                       <div className="md:w-full">
                         <h3 className="text-2xl font-bold mb-4 text-[#FF0066]">プロジェクト実行者について</h3>
                         <div className="relative h-[40vh] bg-gray-200 rounded-lg overflow-hidden">
-                          <Image src={creator.image} alt="クリエイターとの対話" fill className="h-[70%] object-cover" />
+                          <SmartImage src={creator.image} alt="クリエイターとの対話" fill className="h-[70%] object-cover" />
                         </div>
                       </div>
                       <div className="md:w-full">

@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import Image from 'next/image';
+import { SmartImage } from '@/app/utils/image-helper';
 
 type CategoryType =
   | "バラエティー"
@@ -125,7 +125,7 @@ const VideoCarousel: React.FC<VideoCarouselProps> = ({ videos }) => {
               <div className="relative w-full h-[28rem] sm:h-[32rem] md:h-[28rem] lg:h-[32rem] xl:h-[28rem] shadow-lg overflow-hidden flex flex-col md:block rounded-2xl md:rounded-2xl">
                 {/* === Image Section === */}
                 <div className="relative w-full h-1/2 md:h-full">
-                  <Image
+                  <SmartImage
                     src={video.image}
                     alt={video.categoryLabel}
                     fill

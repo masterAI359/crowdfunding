@@ -26,7 +26,7 @@ const LoginPage = () => {
                 if (user?.isAdministrator) {
                     window.location.href = "/admin";
                 } else if (user?.isSeller) {
-                    window.location.href = "/user-settings";
+                    window.location.href = "/seller/profile";
                 } else {
                     window.location.href = "/user-settings";
                 }
