@@ -46,6 +46,22 @@ const nextConfig: NextConfig = {
   compress: true,
   poweredByHeader: false,
   
+  // Rewrite API requests to backend
+  // This proxies /api/* requests to the backend server
+  async rewrites() {
+    // Get backend URL from environment variable or use default
+    // If backend is on same server, use localhost with port
+    // If backend is on different server, set BACKEND_URL environment variable
+    const backendUrl = process.env.BACKEND_URL || 'http://localhost:8080';
+    
+    return [
+      {
+        source: '/api/:path*',
+        destination: `${backendUrl}/api/:path*`,
+      },
+    ];
+  },
+  
   images: {
     // This allows you to use SVGs with the next/image component.
     dangerouslyAllowSVG: true, 

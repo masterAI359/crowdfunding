@@ -1506,7 +1506,17 @@ const CrowdfundingTab = () => {
     description: "", 
     goalAmount: "", 
     endDate: "",
-    medias: [] as Array<{ url: string; type: 'IMAGE' | 'VIDEO'; order: number }>
+    medias: [] as Array<{ url: string; type: 'IMAGE' | 'VIDEO'; order: number }>,
+    returns: [] as Array<{
+      title: string;
+      amount: string;
+      description?: string;
+      notes?: string;
+      stock?: string;
+      order?: number;
+      isVisible?: boolean;
+      imageUrl?: string;
+    }>
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadingMedia, setUploadingMedia] = useState(false);
@@ -1602,6 +1612,16 @@ const CrowdfundingTab = () => {
         endDate: createForm.endDate,
         status: 'DRAFT',
         medias: createForm.medias.length > 0 ? createForm.medias : undefined,
+        returns: createForm.returns.length > 0 ? createForm.returns.map((ret, index) => ({
+          title: ret.title,
+          amount: parseInt(ret.amount) || 0,
+          description: ret.description || undefined,
+          notes: ret.notes || undefined,
+          stock: ret.stock ? parseInt(ret.stock) : null,
+          order: ret.order !== undefined ? ret.order : index,
+          isVisible: ret.isVisible !== undefined ? ret.isVisible : true,
+          imageUrl: ret.imageUrl || undefined,
+        })) : undefined,
       });
       setShowCreateModal(false);
       setCreateForm({ 
@@ -1609,7 +1629,8 @@ const CrowdfundingTab = () => {
         description: "", 
         goalAmount: "", 
         endDate: "",
-        medias: []
+        medias: [],
+        returns: []
       });
       loadProjects();
     } catch (error: any) {
@@ -1677,6 +1698,47 @@ const CrowdfundingTab = () => {
         medias: createForm.medias.filter((_, i) => i !== index)
       });
     }
+  };
+
+  const addReturn = () => {
+    setCreateForm({
+      ...createForm,
+      returns: [
+        ...createForm.returns,
+        {
+          title: '',
+          amount: '',
+          description: '',
+          notes: '',
+          stock: '',
+          order: createForm.returns.length,
+          isVisible: true,
+          imageUrl: '',
+        },
+      ],
+    });
+  };
+
+  const updateReturn = (index: number, field: string, value: any) => {
+    const updatedReturns = [...createForm.returns];
+    updatedReturns[index] = {
+      ...updatedReturns[index],
+      [field]: value,
+    };
+    setCreateForm({
+      ...createForm,
+      returns: updatedReturns,
+    });
+  };
+
+  const removeReturn = (index: number) => {
+    setCreateForm({
+      ...createForm,
+      returns: createForm.returns.filter((_, i) => i !== index).map((ret, i) => ({
+        ...ret,
+        order: i,
+      })),
+    });
   };
 
   const formatCurrency = (amount: number) => {
@@ -2010,6 +2072,119 @@ const CrowdfundingTab = () => {
                   ))}
                 </div>
               </div>
+
+              {/* Returns/Rewards Section */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium text-gray-700">リターン（報酬）</label>
+                  <button
+                    type="button"
+                    onClick={addReturn}
+                    className="px-3 py-1 text-sm bg-[#FF0066] text-white rounded-lg hover:bg-[#E6005C]"
+                  >
+                    + リターンを追加
+                  </button>
+                </div>
+                <div className="space-y-4">
+                  {createForm.returns.map((returnItem, index) => (
+                    <div key={index} className="border border-gray-300 rounded-lg p-4 bg-gray-50">
+                      <div className="flex items-center justify-between mb-3">
+                        <h4 className="font-medium text-gray-900">リターン {index + 1}</h4>
+                        <button
+                          type="button"
+                          onClick={() => removeReturn(index)}
+                          className="text-red-600 hover:text-red-800 text-sm"
+                        >
+                          削除
+                        </button>
+                      </div>
+                      <div className="space-y-3">
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">タイトル *</label>
+                          <input
+                            type="text"
+                            value={returnItem.title}
+                            onChange={(e) => updateReturn(index, 'title', e.target.value)}
+                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF0066]"
+                            placeholder="例: 【お礼のメッセージ動画】"
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-xs font-medium text-gray-700 mb-1">金額（円） *</label>
+                            <input
+                              type="number"
+                              value={returnItem.amount}
+                              onChange={(e) => updateReturn(index, 'amount', e.target.value)}
+                              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF0066]"
+                              placeholder="5000"
+                              min="1"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-gray-700 mb-1">在庫数（空欄で無制限）</label>
+                            <input
+                              type="number"
+                              value={returnItem.stock}
+                              onChange={(e) => updateReturn(index, 'stock', e.target.value)}
+                              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF0066]"
+                              placeholder="100"
+                              min="0"
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">説明</label>
+                          <textarea
+                            value={returnItem.description}
+                            onChange={(e) => updateReturn(index, 'description', e.target.value)}
+                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF0066]"
+                            rows={2}
+                            placeholder="リターンの詳細説明"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">備考・注意点</label>
+                          <textarea
+                            value={returnItem.notes}
+                            onChange={(e) => updateReturn(index, 'notes', e.target.value)}
+                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF0066]"
+                            rows={2}
+                            placeholder="支援者様への注意事項など"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 mb-1">画像URL（任意）</label>
+                          <input
+                            type="url"
+                            value={returnItem.imageUrl}
+                            onChange={(e) => updateReturn(index, 'imageUrl', e.target.value)}
+                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF0066]"
+                            placeholder="https://example.com/image.jpg"
+                          />
+                        </div>
+                        <div className="flex items-center">
+                          <input
+                            type="checkbox"
+                            id={`return-visible-${index}`}
+                            checked={returnItem.isVisible !== false}
+                            onChange={(e) => updateReturn(index, 'isVisible', e.target.checked)}
+                            className="h-4 w-4 text-[#FF0066] rounded focus:ring-[#FF0066]"
+                          />
+                          <label htmlFor={`return-visible-${index}`} className="ml-2 text-xs text-gray-700">
+                            公開する
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {createForm.returns.length === 0 && (
+                    <p className="text-sm text-gray-500 text-center py-4">
+                      リターンがありません。追加ボタンでリターンを追加できます。
+                    </p>
+                  )}
+                </div>
+              </div>
             </div>
             <div className="flex justify-end gap-4 mt-6">
               <button
@@ -2020,7 +2195,8 @@ const CrowdfundingTab = () => {
                     description: "", 
                     goalAmount: "", 
                     endDate: "",
-                    medias: []
+                    medias: [],
+                    returns: []
                   });
                 }}
                 disabled={isSubmitting}

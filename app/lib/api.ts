@@ -2,7 +2,23 @@
 import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axios';
 
 // APIベースURL
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
+// Strategy: Use relative URL if NEXT_PUBLIC_API_URL is not set or is '/api'
+// This allows Next.js rewrites to proxy requests to the backend
+// Otherwise, use the explicit URL from environment variable
+const getApiBaseUrl = (): string => {
+  const envUrl = process.env.NEXT_PUBLIC_API_URL;
+  
+  // If explicitly set to relative path or not set, use relative URL
+  // This enables Next.js rewrites to work
+  if (!envUrl || envUrl === '/api' || envUrl.endsWith('/api')) {
+    return '/api';
+  }
+  
+  // If set to a full URL, use it directly
+  return envUrl;
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 // Axiosインスタンスを作成
 const apiClient: AxiosInstance = axios.create({
@@ -27,6 +43,14 @@ apiClient.interceptors.request.use(
     if (config.data instanceof FormData && config.headers) {
       delete config.headers['Content-Type'];
     }
+    // Debug logging for API requests
+    if (process.env.NODE_ENV === 'development') {
+      console.log('API Request:', {
+        method: config.method?.toUpperCase(),
+        url: `${config.baseURL}${config.url}`,
+        baseURL: config.baseURL,
+      });
+    }
     return config;
   },
   (error) => {
@@ -38,6 +62,27 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
+    // Enhanced error logging
+    if (error.response) {
+      console.error('API Error Response:', {
+        status: error.response.status,
+        statusText: error.response.statusText,
+        url: error.config?.url,
+        baseURL: error.config?.baseURL,
+        fullURL: error.config ? `${error.config.baseURL}${error.config.url}` : 'unknown',
+        data: error.response.data,
+      });
+    } else if (error.request) {
+      console.error('API Error Request:', {
+        url: error.config?.url,
+        baseURL: error.config?.baseURL,
+        fullURL: error.config ? `${error.config.baseURL}${error.config.url}` : 'unknown',
+        message: 'No response received from server',
+      });
+    } else {
+      console.error('API Error:', error.message);
+    }
+
     if (error.response?.status === 401) {
       // 認証エラーの場合、トークンを削除してログインページへリダイレクト
       if (typeof window !== 'undefined') {
@@ -110,10 +155,11 @@ export const getCurrentUser = async () => {
  */
 export const updateUserProfile = async (data: {
   name?: string;
-  phone?: string;
-  dateOfBirth?: string;
-  gender?: string;
+  postalCode?: string;
+  prefecture?: string;
+  city?: string;
   address?: string;
+  address2?: string;
 }) => {
   const response = await apiClient.put('/users/profile', data);
   return response.data;
@@ -277,6 +323,16 @@ export const createProject = async (data: {
   endDate: string;
   status?: 'DRAFT' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
   medias?: Array<{ url: string; type: 'IMAGE' | 'VIDEO'; order?: number }>;
+  returns?: Array<{
+    title: string;
+    amount: number;
+    description?: string;
+    notes?: string;
+    stock?: number | null;
+    order?: number;
+    isVisible?: boolean;
+    imageUrl?: string;
+  }>;
 }) => {
   const response = await apiClient.post('/projects', data);
   return response.data;
@@ -353,6 +409,14 @@ export const createVideoPayment = async (
     quantities,
     customAmount, // Optional custom amount for funding
   });
+  return response.data;
+};
+
+/**
+ * Checkout Sessionを検証
+ */
+export const verifyCheckoutSession = async (sessionId: string) => {
+  const response = await apiClient.get(`/payment/verify-session/${sessionId}`);
   return response.data;
 };
 

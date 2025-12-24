@@ -89,10 +89,14 @@ const CheckoutPage = ({
   }, [searchParams]);
 
   const handlePurchase = async () => {
-    if (!project || rewards.length === 0) return;
+    if (!project || rewards.length === 0) {
+      alert("リターン情報が不足しています");
+      return;
+    }
 
-    if (!isAuthenticated && !email) {
-      alert("メールアドレスを入力してください");
+    if (!isAuthenticated) {
+      alert("ログインが必要です。ログインページに移動します。");
+      router.push('/login');
       return;
     }
 
@@ -104,17 +108,24 @@ const CheckoutPage = ({
         quantities[r.id] = r.quantity;
       });
 
+      console.log('Creating payment with:', { projectId: project.id, returnIds, quantities });
+
       // 決済インテントを作成
       const payment = await createPayment(project.id, returnIds, quantities);
       
+      console.log('Payment created:', payment);
+
       // Stripeの決済画面へリダイレクト
-      if (payment.clientSecret) {
-        // Stripe CheckoutまたはPayment Intentを使用
-        window.location.href = payment.checkoutUrl || `/payment/stripe?clientSecret=${payment.clientSecret}`;
+      if (payment.checkoutUrl) {
+        console.log('Redirecting to Stripe checkout:', payment.checkoutUrl);
+        window.location.href = payment.checkoutUrl;
+      } else {
+        throw new Error('Checkout URLが取得できませんでした');
       }
     } catch (error: any) {
       console.error("決済処理に失敗しました:", error);
-      alert(error.response?.data?.message || "決済処理に失敗しました");
+      const errorMessage = error.response?.data?.message || error.message || "決済処理に失敗しました";
+      alert(errorMessage);
       setProcessing(false);
     }
   };

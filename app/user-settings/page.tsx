@@ -169,7 +169,6 @@ const AccountInfoContent = ({
         { id: "contact", label: "連絡先と設定" },
         { id: "billing", label: "請求" },
         { id: "purchase-history", label: "購入履歴" },
-        { id: "purchased-returns", label: "購入したリターン" },
     ];
 
     return (
@@ -203,7 +202,6 @@ const AccountInfoContent = ({
                 {activeSubTab === "contact" && <ContactAndSettingsTab userData={userData} onUpdate={onUpdate} />}
                 {activeSubTab === "billing" && <BillingTab />}
                 {activeSubTab === "purchase-history" && <PurchaseHistoryTab purchaseData={purchaseData} isLoading={isLoadingData} />}
-                {activeSubTab === "purchased-returns" && <PurchasedReturnsTab purchaseData={purchaseData} isLoading={isLoadingData} />}
             </div>
         </div>
     );
@@ -408,81 +406,7 @@ const PurchaseHistoryTab = ({ purchaseData, isLoading }: { purchaseData: any; is
     );
 };
 
-// Purchased Returns Tab
-const PurchasedReturnsTab = ({ purchaseData, isLoading }: { purchaseData: any; isLoading: boolean }) => {
-    const returns = purchaseData?.returns || [];
-    const videos = purchaseData?.videos || [];
 
-    if (isLoading) {
-        return (
-            <div className="flex items-center justify-center py-12">
-                <LoadingSpinner />
-            </div>
-        );
-    }
-
-    return (
-        <div className="space-y-8">
-            <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">リターン購入履歴</h3>
-                {returns.length === 0 ? (
-                    <p className="text-gray-500">購入したリターンはありません</p>
-                ) : (
-                    <div className="space-y-4">
-                        {returns.map((item: any) => (
-                            <div key={item.id} className="flex items-center gap-4 p-4 border border-gray-200 rounded-lg">
-                                <div className="w-24 h-16 bg-gray-200 rounded flex-shrink-0">
-                                    {item.projectThumbnail && (
-                                        <img src={item.projectThumbnail} alt={item.title} className="w-full h-full object-cover rounded" />
-                                    )}
-                                </div>
-                                <div className="flex-1">
-                                    <h4 className="font-medium text-gray-900">{item.title}</h4>
-                                    <p className="text-sm text-gray-500">
-                                        {new Date(item.purchaseDate).toLocaleDateString("ja-JP")}
-                                    </p>
-                                    {item.projectTitle && (
-                                        <p className="text-xs text-gray-400 mt-1">プロジェクト: {item.projectTitle}</p>
-                                    )}
-                                </div>
-                                <div className="text-right">
-                                    <p className="font-semibold text-gray-900">¥{item.amount.toLocaleString()}</p>
-                                    {item.quantity > 1 && (
-                                        <p className="text-xs text-gray-500">数量: {item.quantity}</p>
-                                    )}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </div>
-
-            <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">動画購入履歴</h3>
-                {videos.length === 0 ? (
-                    <p className="text-gray-500">購入した動画はありません</p>
-                ) : (
-                    <div className="space-y-4">
-                        {videos.map((video: any) => (
-                            <div key={video.id} className="flex items-center gap-4 p-4 border border-gray-200 rounded-lg">
-                                <div className="w-24 h-16 bg-gray-200 rounded flex-shrink-0"></div>
-                                <div className="flex-1">
-                                    <h4 className="font-medium text-gray-900">{video.title || "動画"}</h4>
-                                    <p className="text-sm text-gray-500">
-                                        {new Date(video.purchaseDate || video.date).toLocaleDateString("ja-JP")}
-                                    </p>
-                                </div>
-                                <div className="text-right">
-                                    <p className="font-semibold text-gray-900">¥{(video.price || video.amount || 0).toLocaleString()}</p>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </div>
-        </div>
-    );
-};
 
 export default UserSettingsPage;
 

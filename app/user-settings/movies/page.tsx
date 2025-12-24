@@ -3,16 +3,50 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/app/hooks/useAuth";
-import { getCurrentUser, getPurchaseHistory } from "@/app/lib/api";
+import { getCurrentUser } from "@/app/lib/api";
 import LoadingSpinner from "@/app/components/loading-spinner";
+import apiClient from "@/app/lib/api";
+import Image from "next/image";
+
+interface PurchasedVideo {
+    id: string;
+    title: string;
+    description?: string;
+    url: string;
+    thumbnailUrl?: string;
+    price: number;
+    amount: number;
+    purchaseDate: string;
+    currency: string;
+    owner: {
+        id: string;
+        name?: string;
+    };
+}
+
+interface PurchasedReturn {
+    id: string;
+    title: string;
+    amount: number;
+    quantity: number;
+    projectTitle: string;
+    projectThumbnail: string;
+    purchaseDate: string;
+}
+
+interface PurchaseHistory {
+    returns: PurchasedReturn[];
+    videos: PurchasedVideo[];
+}
 
 const MyMoviesPage = () => {
     const router = useRouter();
     const pathname = usePathname();
     const { user, isAuthenticated, loading } = useAuth();
     const [userData, setUserData] = useState<any>(null);
-    const [purchaseData, setPurchaseData] = useState<any>(null);
+    const [purchaseData, setPurchaseData] = useState<PurchaseHistory>({ returns: [], videos: [] });
     const [isLoadingData, setIsLoadingData] = useState(false);
+    const [activeTab, setActiveTab] = useState<'videos' | 'series' | 'history'>('videos');
 
     useEffect(() => {
         if (!loading && !isAuthenticated) {
@@ -38,8 +72,8 @@ const MyMoviesPage = () => {
     const loadPurchaseData = async () => {
         setIsLoadingData(true);
         try {
-            const data = await getPurchaseHistory();
-            setPurchaseData(data);
+            const response = await apiClient.get('/users/purchases/history');
+            setPurchaseData(response.data);
         } catch (error: any) {
             console.error("Failed to load purchase data:", error);
             // If 404, set empty data instead of showing error
@@ -49,6 +83,22 @@ const MyMoviesPage = () => {
         } finally {
             setIsLoadingData(false);
         }
+    };
+
+    const formatDate = (dateString: string) => {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('ja-JP', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+        });
+    };
+
+    const formatPrice = (amount: number, currency: string = 'jpy') => {
+        if (currency.toLowerCase() === 'jpy') {
+            return `¥${amount.toLocaleString()}`;
+        }
+        return `${amount.toLocaleString()} ${currency.toUpperCase()}`;
     };
 
     if (loading) {
@@ -123,11 +173,10 @@ const MyMoviesPage = () => {
                                         <Link
                                             key={item.id}
                                             href={item.href}
-                                            className={`block px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
-                                                isActive
-                                                    ? "bg-[#FF0066] text-white"
-                                                    : "text-gray-700 hover:bg-gray-100"
-                                            }`}
+                                            className={`block px-4 py-3 rounded-lg text-sm font-medium transition-colors ${isActive
+                                                ? "bg-[#FF0066] text-white"
+                                                : "text-gray-700 hover:bg-gray-100"
+                                                }`}
                                         >
                                             {item.label}
                                         </Link>
@@ -144,155 +193,142 @@ const MyMoviesPage = () => {
                                 <LoadingSpinner />
                             </div>
                         ) : (
-                            <div className="space-y-12">
+                            <div className="flex flex-col gap-8">
                                 {/* Purchased Returns Section */}
                                 <div>
-                                    <h2 className="text-2xl font-bold text-gray-900 mb-6">購入したリターン</h2>
+                                    <h1 className="text-2xl font-bold text-gray-900 mb-6 text-center">購入したリターン</h1>
                                     {returns.length === 0 ? (
-                                        <p className="text-gray-500">購入したリターンはありません</p>
-                                    ) : (
-                                        <div className="space-y-4">
-                                            {/* Featured Return Item */}
-                                            {returns[0] && (
-                                                <div className="flex gap-4 p-6 border border-gray-200 rounded-lg bg-white">
-                                                    <div className="w-32 h-24 bg-gray-800 rounded flex-shrink-0">
-                                                        {returns[0].projectThumbnail && (
-                                                            <img
-                                                                src={returns[0].projectThumbnail}
-                                                                alt={returns[0].title}
-                                                                className="w-full h-full object-cover rounded"
-                                                            />
-                                                        )}
-                                                    </div>
-                                                    <div className="flex-1">
-                                                        <p className="text-sm text-gray-600 mb-2">
-                                                            {returns[0].projectTitle || "プロジェクト名"}
-                                                        </p>
-                                                        <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                                                            {returns[0].title || "伝説のバンド・ピンクサファイヤーが復活 1日だけの復活ライブ"}
-                                                        </h3>
-                                                        <p className="text-xl font-bold text-gray-900 mb-2">
-                                                            The Last Message
-                                                        </p>
-                                                        <p className="text-sm text-gray-600 mb-1">ラストメッセージ</p>
-                                                        <p className="text-sm text-gray-500">人生最後の暴露トーク</p>
-                                                        <p className="text-lg font-semibold text-gray-900 mt-3">
-                                                            ¥{returns[0].amount?.toLocaleString() || "5,000"}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            )}
-
-                                            {/* Additional Return Items */}
-                                            {returns.slice(1).map((item: any, index: number) => (
-                                                <div
-                                                    key={item.id || index}
-                                                    className="flex gap-4 p-4 border border-gray-200 rounded-lg bg-white"
-                                                >
-                                                    <div className="w-24 h-16 bg-gray-800 rounded flex-shrink-0">
-                                                        {item.projectThumbnail && (
-                                                            <img
-                                                                src={item.projectThumbnail}
-                                                                alt={item.title}
-                                                                className="w-full h-full object-cover rounded"
-                                                            />
-                                                        )}
-                                                    </div>
-                                                    <div className="flex-1 flex items-center justify-between">
-                                                        <div>
-                                                            <p className="text-sm text-gray-700">[お礼のメッセージ動画]</p>
-                                                        </div>
-                                                        <div className="text-right">
-                                                            <p className="font-semibold text-gray-900">
-                                                                ¥{item.amount?.toLocaleString() || "5,000"}
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            ))}
+                                        <div className="text-center py-12 bg-white rounded-lg">
+                                            <p className="text-gray-500 mb-4">購入したリターンはありません</p>
                                         </div>
+                                    ) : (
+                                        returns.map((item) => (
+                                            <div key={item.id} className="mb-6">
+                                                {/* Project Banner */}
+                                                <div className="bg-[#ECEBD9] p-4 rounded-t-lg flex items-center gap-4">
+                                                    <div className="flex-1">
+                                                        <p className="text-sm text-gray-700 font-medium">
+                                                            {item.projectTitle}
+                                                        </p>
+                                                    </div>
+                                                    <div className="w-24 h-16 bg-gray-300 rounded overflow-hidden flex-shrink-0">
+                                                        {item.projectThumbnail && (
+                                                            <Image
+                                                                src={item.projectThumbnail}
+                                                                alt={item.projectTitle}
+                                                                width={96}
+                                                                height={64}
+                                                                className="object-cover w-full h-full"
+                                                            />
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                
+                                                {/* Return Items */}
+                                                <div className="bg-white border border-gray-200 rounded-b-lg">
+                                                    {[...Array(item.quantity || 1)].map((_, index) => (
+                                                        <div
+                                                            key={index}
+                                                            className="flex items-center gap-4 p-4 border-b border-gray-100 last:border-b-0"
+                                                        >
+                                                            <div className="w-20 h-16 bg-gray-200 rounded flex-shrink-0"></div>
+                                                            <div className="flex-1">
+                                                                <p className="text-sm font-medium text-gray-900">
+                                                                    {item.title}
+                                                                </p>
+                                                            </div>
+                                                            <div className="text-right">
+                                                                <p className="text-sm font-bold text-gray-900">
+                                                                    {formatPrice(item.amount)}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ))
                                     )}
                                 </div>
 
                                 {/* Purchased Videos Section */}
                                 <div>
-                                    <h2 className="text-2xl font-bold text-gray-900 mb-6">購入した動画</h2>
+                                    <h1 className="text-2xl font-bold text-gray-900 mb-6 text-center">購入した動画</h1>
                                     {videos.length === 0 ? (
-                                        <p className="text-gray-500">購入した動画はありません</p>
+                                        <div className="text-center py-12 bg-white rounded-lg">
+                                            <p className="text-gray-500 mb-4">購入した動画はありません</p>
+                                            <Link
+                                                href="/videofunding"
+                                                className="inline-block bg-[#FF0066] text-white px-6 py-2 rounded-full hover:bg-[#FF0066]/80 transition-colors"
+                                            >
+                                                動画を探す
+                                            </Link>
+                                        </div>
                                     ) : (
-                                        <div className="space-y-4">
-                                            {/* Featured Video Item */}
-                                            {videos[0] && (
-                                                <div className="flex gap-4 p-6 border border-gray-200 rounded-lg bg-white">
-                                                    <div className="w-32 h-24 bg-gray-800 rounded flex-shrink-0 relative">
-                                                        {videos[0].thumbnailUrl && (
-                                                            <img
-                                                                src={videos[0].thumbnailUrl}
-                                                                alt={videos[0].title}
-                                                                className="w-full h-full object-cover rounded"
-                                                            />
-                                                        )}
-                                                        <div className="absolute inset-0 flex items-center justify-center">
-                                                            <svg
-                                                                className="w-12 h-12 text-white opacity-80"
-                                                                fill="currentColor"
-                                                                viewBox="0 0 20 20"
-                                                            >
-                                                                <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
-                                                            </svg>
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex-1">
-                                                        <p className="text-sm text-gray-600 mb-2">
-                                                            {videos[0].projectTitle || "プロジェクト名"}
-                                                        </p>
-                                                        <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                                                            {videos[0].title || "伝説のバンド・ピンクサファイヤーが復活 1日だけの復活ライブ"}
-                                                        </h3>
-                                                        <p className="text-xl font-bold text-gray-900 mb-2">
-                                                            The Last Message
-                                                        </p>
-                                                        <p className="text-sm text-gray-600 mb-1">ラストメッセージ</p>
-                                                        <p className="text-sm text-gray-500">人生最後の暴露トーク</p>
-                                                    </div>
-                                                </div>
-                                            )}
-
-                                            {/* Additional Video Items */}
-                                            {videos.slice(1).map((video: any, index: number) => (
-                                                <div
-                                                    key={video.id || index}
-                                                    className="flex gap-4 p-4 border border-gray-200 rounded-lg bg-white"
-                                                >
-                                                    <div className="w-24 h-16 bg-gray-800 rounded flex-shrink-0 relative">
-                                                        {video.thumbnailUrl && (
-                                                            <img
-                                                                src={video.thumbnailUrl}
-                                                                alt={video.title}
-                                                                className="w-full h-full object-cover rounded"
-                                                            />
-                                                        )}
-                                                        <div className="absolute inset-0 flex items-center justify-center">
-                                                            <svg
-                                                                className="w-8 h-8 text-white opacity-80"
-                                                                fill="currentColor"
-                                                                viewBox="0 0 20 20"
-                                                            >
-                                                                <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
-                                                            </svg>
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex-1 flex items-center justify-between">
-                                                        <div>
-                                                            <p className="text-sm text-gray-700">
-                                                                伝説のバンド1日ライブ vol.0{index + 2}
+                                        <div className="space-y-6">
+                                            {/* Group videos by project if available */}
+                                            {videos.map((video) => (
+                                                <div key={video.id}>
+                                                    {/* Project Banner */}
+                                                    <div className="bg-[#ECEBD9] p-4 rounded-t-lg flex items-center gap-4">
+                                                        <div className="flex-1">
+                                                            <p className="text-sm text-gray-700 font-medium">
+                                                                伝説のバンド・ピンクサファイヤーが復活 1日だけの復活ライブ
                                                             </p>
                                                         </div>
-                                                        <div className="text-right">
-                                                            <p className="font-semibold text-gray-900">
-                                                                ¥{(video.price || video.amount || 500).toLocaleString()}
-                                                            </p>
+                                                        <div className="w-24 h-16 bg-gray-300 rounded overflow-hidden flex-shrink-0">
+                                                            {video.thumbnailUrl && (
+                                                                <Image
+                                                                    src={video.thumbnailUrl}
+                                                                    alt={video.title}
+                                                                    width={96}
+                                                                    height={64}
+                                                                    className="object-cover w-full h-full"
+                                                                />
+                                                            )}
                                                         </div>
+                                                    </div>
+                                                    
+                                                    {/* Video Items */}
+                                                    <div className="bg-white border border-gray-200 rounded-b-lg">
+                                                        <Link href={`/user-settings/movies/watch/${video.id}`}>
+                                                            <div className="flex items-center gap-4 p-4 hover:bg-gray-50 transition-colors">
+                                                                <div className="relative w-20 h-16 bg-gray-200 rounded flex-shrink-0">
+                                                                    {video.thumbnailUrl ? (
+                                                                        <Image
+                                                                            src={video.thumbnailUrl}
+                                                                            alt={video.title}
+                                                                            width={80}
+                                                                            height={64}
+                                                                            className="object-cover w-full h-full rounded"
+                                                                        />
+                                                                    ) : (
+                                                                        <div className="w-full h-full bg-gray-200"></div>
+                                                                    )}
+                                                                    {/* Play icon */}
+                                                                    <div className="absolute inset-0 flex items-center justify-center">
+                                                                        <div className="w-8 h-8 rounded-full bg-white bg-opacity-80 flex items-center justify-center">
+                                                                            <svg
+                                                                                className="w-4 h-4 text-gray-800 ml-0.5"
+                                                                                fill="currentColor"
+                                                                                viewBox="0 0 20 20"
+                                                                            >
+                                                                                <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
+                                                                            </svg>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                                <div className="flex-1">
+                                                                    <p className="text-sm font-medium text-gray-900">
+                                                                        {video.title}
+                                                                    </p>
+                                                                </div>
+                                                                <div className="text-right">
+                                                                    <p className="text-sm font-bold text-gray-900">
+                                                                        {formatPrice(video.amount, video.currency)}
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                        </Link>
                                                     </div>
                                                 </div>
                                             ))}
@@ -309,4 +345,3 @@ const MyMoviesPage = () => {
 };
 
 export default MyMoviesPage;
-

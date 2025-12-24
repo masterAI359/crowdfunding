@@ -185,7 +185,24 @@ const CheckoutPage = ({
       }
     } catch (error: any) {
       console.error("決済処理に失敗しました:", error);
-      alert(error.response?.data?.message || "決済処理に失敗しました");
+      
+      // More detailed error message
+      let errorMessage = "決済処理に失敗しました";
+      if (error.response) {
+        // Server responded with error
+        errorMessage = error.response.data?.message || `サーバーエラー: ${error.response.status} ${error.response.statusText}`;
+        if (error.response.status === 404) {
+          errorMessage = "決済エンドポイントが見つかりません。サーバーの設定を確認してください。";
+        }
+      } else if (error.request) {
+        // Request was made but no response received
+        errorMessage = "サーバーに接続できません。ネットワーク接続を確認してください。";
+      } else {
+        // Error in request setup
+        errorMessage = error.message || "決済処理に失敗しました";
+      }
+      
+      alert(errorMessage);
       setIsProcessing(false);
     }
   };

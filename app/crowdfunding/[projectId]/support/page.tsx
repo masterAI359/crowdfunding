@@ -11,6 +11,7 @@ interface Project {
   title: string;
   description?: string;
   amount: string;
+  goalAmount: string;
   supporters: string;
   daysLeft: string;
   achievementRate: number;
@@ -54,16 +55,54 @@ const SupportPage = ({
           getProjectById(params.projectId),
           getProjectReturns(params.projectId),
         ]);
-        setProject(projectData);
-        setReturns(returnsData || []);
-      } catch (error) {
+        
+        // データを変換してフロントエンドの形式に合わせる
+        const transformedProject: Project = {
+          id: projectData.id,
+          title: projectData.title || '',
+          description: projectData.description || '',
+          amount: `¥${(projectData.totalAmount || 0).toLocaleString()}`,
+          goalAmount: `¥${(projectData.goalAmount || 0).toLocaleString()}`,
+          supporters: (projectData.supporterCount || 0).toLocaleString(),
+          daysLeft: `${projectData.remainingDays || 0}日`,
+          achievementRate: projectData.achievementRate || 0,
+          image: projectData.image || '/placeholder-image.jpg',
+        };
+        
+        // Filter visible returns and ensure proper data structure
+        const filteredReturns = (returnsData || [])
+          .filter((returnItem: any) => returnItem.isVisible !== false)
+          .map((returnItem: any) => ({
+            id: returnItem.id,
+            title: returnItem.title || '',
+            amount: Number(returnItem.amount) || 0,
+            description: returnItem.description || null,
+            notes: returnItem.notes || null,
+            stock: returnItem.stock !== undefined ? returnItem.stock : null,
+            order: returnItem.order || 0,
+            isVisible: returnItem.isVisible !== false,
+            imageUrl: returnItem.imageUrl || null,
+          }))
+          .sort((a: Return, b: Return) => a.order - b.order); // Sort by order
+        
+        setProject(transformedProject);
+        setReturns(filteredReturns);
+      } catch (error: any) {
         console.error("データの取得に失敗しました:", error);
+        // Show user-friendly error message
+        if (error.response?.status === 404) {
+          alert("プロジェクトが見つかりません");
+        } else {
+          alert("データの取得に失敗しました。ページを再読み込みしてください。");
+        }
       } finally {
         setLoading(false);
       }
     };
 
-    fetchData();
+    if (params.projectId) {
+      fetchData();
+    }
   }, [params.projectId]);
 
   if (loading) {
@@ -106,6 +145,22 @@ const SupportPage = ({
     }));
   };
 
+  // Validate stock before proceeding
+  const validateStock = (): boolean => {
+    for (const returnId of selectedRewards) {
+      const returnItem = returns.find((r) => r.id === returnId);
+      if (returnItem) {
+        const requestedQuantity = quantities[returnId] || 1;
+        // Check stock if stock is tracked
+        if (returnItem.stock !== null && returnItem.stock !== undefined && returnItem.stock < requestedQuantity) {
+          alert(`${returnItem.title}の在庫が不足しています。在庫数: ${returnItem.stock}個`);
+          return false;
+        }
+      }
+    }
+    return true;
+  };
+
   // Go to checkout
   const handlePurchase = () => {
     if (isProcessing) return;
@@ -115,19 +170,28 @@ const SupportPage = ({
       return;
     }
 
+    // Validate stock availability
+    if (!validateStock()) {
+      return;
+    }
+
     if (!isAuthenticated) {
-      // 未ログインの場合は、メールアドレスが必要
-      if (!email) {
-        alert("メールアドレスを入力してください");
-        return;
-      }
+      alert("ログインが必要です。ログインページに移動します。");
+      router.push('/login');
+      return;
     }
 
     setIsProcessing(true);
-    // Pass only IDs in the URL
-    const rewardIds = selectedRewards.join(',');
-    const quantitiesStr = selectedRewards.map((id) => quantities[id] || 1).join(',');
-    router.push(`/crowdfunding/checkout?projectId=${params.projectId}&returnIds=${rewardIds}&quantities=${quantitiesStr}`);
+    try {
+      // Pass only IDs in the URL
+      const rewardIds = selectedRewards.join(',');
+      const quantitiesStr = selectedRewards.map((id) => quantities[id] || 1).join(',');
+      router.push(`/crowdfunding/checkout?projectId=${params.projectId}&returnIds=${rewardIds}&quantities=${quantitiesStr}`);
+    } catch (error) {
+      console.error("購入処理エラー:", error);
+      alert("購入処理中にエラーが発生しました。もう一度お試しください。");
+      setIsProcessing(false);
+    }
   };
 
   const handleContinueSupport = () => {
@@ -176,7 +240,7 @@ const SupportPage = ({
               <div className="w-full bg-white border border-black/20 rounded-full h-3 sm:h-4 mb-2">
                 <div
                   className="bg-gradient-to-r from-[#FF0066] to-[#FFA101] h-3 sm:h-4 rounded-full"
-                  style={{ width: `50%` }}
+                  style={{ width: `${Math.min(project.achievementRate, 100)}%` }}
                 ></div>
               </div>
 
@@ -220,102 +284,134 @@ const SupportPage = ({
 
         {/* Rewards */}
         <div className="max-w-5xl mx-auto space-y-6 mb-6 sm:mb-8">
-          {returns.map((returnItem) => (
-            <div
-              key={returnItem.id}
-              className="bg-white border border-[#E9E9E9] rounded-lg"
-            >
-              <div className="bg-[#ECEBD9] px-3 sm:px-4 py-2 rounded-t-lg border-b border-gray-300">
-                <h3 className="font-bold text-lg sm:text-xl text-black">
-                  {returnItem.title}
-                </h3>
-              </div>
+          {returns
+            .filter((returnItem) => returnItem.isVisible !== false)
+            .map((returnItem) => {
+              const isOutOfStock = returnItem.stock !== null && returnItem.stock !== undefined && returnItem.stock <= 0;
+              const isSelected = selectedRewards.includes(returnItem.id);
+              
+              return (
+                <div
+                  key={returnItem.id}
+                  className="bg-white border border-[#E9E9E9] rounded-lg"
+                >
+                  <div className="bg-[#ECEBD9] px-3 sm:px-4 py-2 rounded-t-lg border-b border-gray-300">
+                    <h3 className="font-bold text-lg sm:text-xl text-black">
+                      {returnItem.title}
+                    </h3>
+                  </div>
 
-              <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 items-start">
-                {/* Left: Checkbox + Price + Quantity */}
-                <div className="flex flex-col space-y-3 sm:space-y-4 md:col-span-2">
-                  <div className="flex items-center gap-3 sm:gap-4 md:ml-10">
-                    <input
-                      type="checkbox"
-                      id={`reward-${returnItem.id}`}
-                      checked={selectedRewards.includes(returnItem.id)}
-                      onChange={() => handleRewardSelection(returnItem.id)}
-                      className="h-5 w-5 sm:h-6 sm:w-6 text-red-600 rounded focus:ring-red-500 cursor-pointer opacity-80 ml-4"
-                    />
-                    <label
-                      htmlFor={`reward-${returnItem.id}`}
-                      className="text-2xl sm:text-3xl font-bold flex items-center gap-1"
-                    >
-                      ¥{returnItem.amount?.toLocaleString() || '0'}
-                      <span className="text-sm sm:text-base font-bold">円</span>
-                    </label>
+                  <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 items-start">
+                    {/* Left: Checkbox + Price + Quantity */}
+                    <div className="flex flex-col space-y-3 sm:space-y-4 md:col-span-2">
+                      <div className="flex items-center gap-3 sm:gap-4 md:ml-10">
+                        <input
+                          type="checkbox"
+                          id={`reward-${returnItem.id}`}
+                          checked={isSelected}
+                          onChange={() => handleRewardSelection(returnItem.id)}
+                          disabled={isOutOfStock}
+                          className="h-5 w-5 sm:h-6 sm:w-6 text-red-600 rounded focus:ring-red-500 cursor-pointer opacity-80 ml-4 disabled:opacity-30 disabled:cursor-not-allowed"
+                        />
+                        <label
+                          htmlFor={`reward-${returnItem.id}`}
+                          className="text-2xl sm:text-3xl font-bold flex items-center gap-1"
+                        >
+                          ¥{returnItem.amount?.toLocaleString() || '0'}
+                          <span className="text-sm sm:text-base font-bold">円</span>
+                        </label>
 
-                    {/* Quantity selector */}
-                    <div className="flex items-center justify-between bg-[#F4F3E5] rounded-sm md:pl-6 px-2 py-1 w-fit ml-auto md:mr-[10vw]">
-                      <label
-                        htmlFor={`quantity-${returnItem.id}`}
-                        className="text-sm sm:text-lg font-bold text-black"
-                      >
-                        数量
-                      </label>
-                      <select
-                        id={`quantity-${returnItem.id}`}
-                        value={quantities[returnItem.id] || 1}
-                        onChange={(e) =>
-                          handleQuantityChange(
-                            returnItem.id,
-                            parseInt(e.target.value)
-                          )
-                        }
-                        disabled={!selectedRewards.includes(returnItem.id)}
-                        className="ml-3 sm:ml-6 bg-white cursor-pointer rounded-sm border border-gray-300 focus:border-red-500 focus:ring-red-500 text-sm sm:text-lg font-medium px-2 sm:px-4 py-1 disabled:opacity-50"
-                      >
-                        {[1, 2, 3, 4, 5].map((num) => (
-                          <option key={num} value={num}>
-                            {num}
-                          </option>
-                        ))}
-                      </select>
+                        {/* Quantity selector */}
+                        <div className="flex items-center justify-between bg-[#F4F3E5] rounded-sm md:pl-6 px-2 py-1 w-fit ml-auto md:mr-[10vw]">
+                          <label
+                            htmlFor={`quantity-${returnItem.id}`}
+                            className="text-sm sm:text-lg font-bold text-black"
+                          >
+                            数量
+                          </label>
+                          <select
+                            id={`quantity-${returnItem.id}`}
+                            value={quantities[returnItem.id] || 1}
+                            onChange={(e) =>
+                              handleQuantityChange(
+                                returnItem.id,
+                                parseInt(e.target.value)
+                              )
+                            }
+                            disabled={!isSelected || isOutOfStock}
+                            className="ml-3 sm:ml-6 bg-white cursor-pointer rounded-sm border border-gray-300 focus:border-red-500 focus:ring-red-500 text-sm sm:text-lg font-medium px-2 sm:px-4 py-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {[1, 2, 3, 4, 5]
+                              .filter((num) => {
+                                // Limit quantity based on stock if available
+                                if (returnItem.stock !== null && returnItem.stock !== undefined && returnItem.stock > 0) {
+                                  return num <= returnItem.stock;
+                                }
+                                return true;
+                              })
+                              .map((num) => (
+                                <option key={num} value={num}>
+                                  {num}
+                                </option>
+                              ))}
+                          </select>
+                        </div>
+                      </div>
+
+                      {/* Out of Stock Message */}
+                      {isOutOfStock && (
+                        <div className="md:mx-10">
+                          <p className="text-sm text-red-600 font-medium">
+                            在庫がありません
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Stock Info */}
+                      {returnItem.stock !== null && returnItem.stock !== undefined && returnItem.stock > 0 && (
+                        <div className="md:mx-10">
+                          <p className="text-xs text-gray-500">
+                            在庫: {returnItem.stock}個
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Description */}
+                      {(returnItem.description || returnItem.notes) && (
+                        <div className="leading-relaxed">
+                          <p className="text-sm sm:text-lg text-black text-left md:mx-10 whitespace-pre-line">
+                            {returnItem.description || returnItem.notes}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Right: Reward Image */}
+                    <div className="relative bg-gray-200 w-full h-40 sm:h-50 overflow-hidden rounded-md">
+                      <Image
+                        src={returnItem.imageUrl || project.image}
+                        alt={returnItem.title}
+                        fill
+                        className="object-cover"
+                      />
                     </div>
                   </div>
-
-                  {/* Description */}
-                  {(returnItem.description || returnItem.notes) && (
-                  <div className="leading-relaxed">
-                    <p className="text-sm sm:text-lg text-black text-left md:mx-10 whitespace-pre-line">
-                        {returnItem.description || returnItem.notes}
-                    </p>
-                  </div>
-                  )}
                 </div>
-
-                {/* Right: Reward Image */}
-                <div className="relative bg-gray-200 w-full h-40 sm:h-50 overflow-hidden rounded-md">
-                  <Image
-                    src={returnItem.imageUrl || project.image}
-                    alt={returnItem.title}
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-              </div>
-            </div>
-          ))}
+              );
+            })}
         </div>
 
-        {/* Purchase Button */}
-        {selectedRewards.length > 0 && (
-          <div className="text-center max-w-5xl mx-auto mb-8 sm:mb-10">
-            <button
-              onClick={handlePurchase}
-              disabled={isProcessing}
-              className="bg-[#FF0066] text-white cursor-pointer font-bold py-3 sm:py-4 px-12 sm:px-20 rounded-full text-md sm:text-lg hover:bg-[#FF0066]/80 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mx-auto"
-            >
-              {isProcessing && <LoadingSpinner size="sm" className="text-white" />}
-              {isProcessing ? "処理中..." : "購入する"}
-            </button>
-          </div>
-        )}
+        {/* Purchase Button - Always visible */}
+        <div className="text-center max-w-5xl mx-auto mb-8 sm:mb-10">
+          <button
+            onClick={handlePurchase}
+            disabled={isProcessing || selectedRewards.length === 0}
+            className="bg-[#FF0066] text-white cursor-pointer font-bold py-3 sm:py-4 px-12 sm:px-20 rounded-full text-md sm:text-lg hover:bg-[#FF0066]/80 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mx-auto"
+          >
+            {isProcessing && <LoadingSpinner size="sm" className="text-white" />}
+            {isProcessing ? "処理中..." : selectedRewards.length === 0 ? "リターンを選択してください" : "購入する"}
+          </button>
+        </div>
       </main>
 
       {/* ❻ Non-Registered User Flow - UPDATED STYLE & FEATURES */}
