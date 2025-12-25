@@ -1,34 +1,31 @@
-"use client";
-import React from "react";
-import Link from "next/link";
-import { SmartImage } from '@/app/utils/image-helper';
-
+'use client'
+import React from 'react'
+import Link from 'next/link'
+import { SmartImage } from '@/app/utils/image-helper'
 
 interface Video {
-  id: string | number;
-  title: string;
-  image: string;
-  categoryLabel: string;
-  userLabel: string;
-  viewCount: string;
-  viewDate: number;
+  id: string | number
+  title: string
+  image: string
+  categoryLabel: string
+  userLabel: string
+  viewCount: string
+  viewDate: number
 }
 
 interface VideoCardProps {
-  video: Video;
-  detail?: boolean;
+  video: Video
+  detail?: boolean
 }
 
-type CategoryType = "バラエティー" | "スピリチュアル" | "ミュージック" | "ドキュメンタリー";
-
-
+type CategoryType = 'バラエティー' | 'スピリチュアル' | 'ミュージック' | 'ドキュメンタリー'
 
 const categoryStyles: Record<CategoryType, string> = {
-  バラエティー: "bg-[#06C755] text-white",
-  スピリチュアル: "bg-[#FFA101] text-white",
-  ミュージック: "bg-[#4285F4] text-white",
-  ドキュメンタリー: "bg-[#A442F4] text-white"
-};
+  バラエティー: 'bg-[#06C755] text-white',
+  スピリチュアル: 'bg-[#FFA101] text-white',
+  ミュージック: 'bg-[#4285F4] text-white',
+  ドキュメンタリー: 'bg-[#A442F4] text-white',
+}
 
 const VideoCard: React.FC<VideoCardProps> = ({ video, detail = false }) => {
   return (
@@ -43,7 +40,9 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, detail = false }) => {
           height={201}
         />
 
-        <span className={`absolute top-0 right-0 rounded-tr-2.5 rounded-bl-[5px] px-1.5 py-0.5 text-base ${categoryStyles[video.categoryLabel as CategoryType]}`}>
+        <span
+          className={`absolute top-0 right-0 rounded-tr-2.5 rounded-bl-[5px] px-1.5 py-0.5 text-base ${categoryStyles[video.categoryLabel as CategoryType]}`}
+        >
           {video.categoryLabel}
         </span>
 
@@ -54,9 +53,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, detail = false }) => {
           </h3>
           {detail && (
             <div className="flex flex-col gap-1 justify-start align-start px-2 text-[14px]">
-              <p className="text-black line-clamp-1">
-                {video.userLabel}
-              </p>
+              <p className="text-black line-clamp-1">{video.userLabel}</p>
               <p className="text-gray-500 line-clamp-1">
                 視聴回数：{video.viewCount}・{video.viewDate}日前
               </p>
@@ -65,7 +62,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, detail = false }) => {
         </div>
       </div>
     </Link>
-  );
-};
+  )
+}
 
-export default VideoCard;
+export default VideoCard

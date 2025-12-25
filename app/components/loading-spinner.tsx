@@ -1,17 +1,17 @@
-"use client";
-import React from "react";
+'use client'
+import React from 'react'
 
 interface LoadingSpinnerProps {
-  size?: "sm" | "md" | "lg";
-  className?: string;
+  size?: 'sm' | 'md' | 'lg'
+  className?: string
 }
 
-const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ size = "md", className = "" }) => {
+const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ size = 'md', className = '' }) => {
   const sizeClasses = {
-    sm: "w-4 h-4",
-    md: "w-5 h-5",
-    lg: "w-6 h-6",
-  };
+    sm: 'w-4 h-4',
+    md: 'w-5 h-5',
+    lg: 'w-6 h-6',
+  }
 
   return (
     <svg
@@ -34,8 +34,7 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ size = "md", className 
         d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
       ></path>
     </svg>
-  );
-};
+  )
+}
 
-export default LoadingSpinner;
-
+export default LoadingSpinner

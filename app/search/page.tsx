@@ -1,58 +1,58 @@
-"use client";
-import React, { useState, useEffect } from "react";
-import { searchProjects, getProjects } from "@/app/lib/api";
-import ProjectCard from "@/app/components/project-card";
+'use client'
+import React, { useState, useEffect } from 'react'
+import { searchProjects, getProjects } from '@/app/lib/api'
+import ProjectCard from '@/app/components/project-card'
 
 interface Project {
-  id: string;
-  title: string;
-  description?: string;
-  amount: string;
-  supporters: string;
-  daysLeft: string;
-  achievementRate: number;
-  image: string;
+  id: string
+  title: string
+  description?: string
+  amount: string
+  supporters: string
+  daysLeft: string
+  achievementRate: number
+  image: string
 }
 
 const SearchPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState("人気順");
-  const [searchKeyword, setSearchKeyword] = useState("映画");
-  const [showAdvanced, setShowAdvanced] = useState(false);
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [totalCount, setTotalCount] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [activeTab, setActiveTab] = useState('人気順')
+  const [searchKeyword, setSearchKeyword] = useState('映画')
+  const [showAdvanced, setShowAdvanced] = useState(false)
+  const [projects, setProjects] = useState<Project[]>([])
+  const [totalCount, setTotalCount] = useState(0)
+  const [loading, setLoading] = useState(true)
+  const [currentPage, setCurrentPage] = useState(1)
 
-  const sortTabs = ["人気順", "新着順", "終了日が近い順", "支援総額順"];
+  const sortTabs = ['人気順', '新着順', '終了日が近い順', '支援総額順']
 
   // Map sort tab to backend sortBy parameter
   const getSortBy = (tab: string) => {
     switch (tab) {
-      case "人気順":
-        return "popular";
-      case "新着順":
-        return undefined; // default is newest
-      case "終了日が近い順":
-        return "ending";
-      case "支援総額順":
-        return "amount";
+      case '人気順':
+        return 'popular'
+      case '新着順':
+        return undefined // default is newest
+      case '終了日が近い順':
+        return 'ending'
+      case '支援総額順':
+        return 'amount'
       default:
-        return undefined;
+        return undefined
     }
-  };
+  }
 
   // Fetch projects based on search
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        setLoading(true);
-        const sortBy = getSortBy(activeTab);
-        let response;
-        
+        setLoading(true)
+        const sortBy = getSortBy(activeTab)
+        let response
+
         if (searchKeyword && searchKeyword.trim()) {
-          response = await searchProjects(searchKeyword, currentPage, 12);
+          response = await searchProjects(searchKeyword, currentPage, 12)
         } else {
-          response = await getProjects(currentPage, 12, sortBy);
+          response = await getProjects(currentPage, 12, sortBy)
         }
 
         const transformedProjects = (response.projects || []).map((project: any) => ({
@@ -64,113 +64,115 @@ const SearchPage: React.FC = () => {
           daysLeft: `${project.remainingDays || 0}日`,
           achievementRate: project.achievementRate || 0,
           image: project.image || '',
-        }));
+        }))
 
-        setProjects(transformedProjects);
-        setTotalCount(response.pagination?.total || 0);
+        setProjects(transformedProjects)
+        setTotalCount(response.pagination?.total || 0)
       } catch (error) {
-        console.error("プロジェクトの取得に失敗しました:", error);
+        console.error('プロジェクトの取得に失敗しました:', error)
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
-    };
+    }
 
-    fetchProjects();
-  }, [searchKeyword, activeTab, currentPage]);
+    fetchProjects()
+  }, [searchKeyword, activeTab, currentPage])
 
   return (
     <div className="min-h-screen bg-white text-black pb-5">
       <main className="mx-auto">
-
-         {/* === Mobile Filters (Dropdown + Search Bar) === */}
+        {/* === Mobile Filters (Dropdown + Search Bar) === */}
         <div className="block lg:hidden max-w-full p-4 rounded-md mb-6 bg-[#ECEBD9]">
-        {/* Dropdowns */}
-        <div className="flex gap-2 mb-3">
+          {/* Dropdowns */}
+          <div className="flex gap-2 mb-3">
             {/* Category Select */}
             <div className="relative flex-1">
-            <label htmlFor="category-select" className="sr-only">カテゴリー</label>
-            <select id="category-select" className="w-full appearance-none border border-[#d5d5d5] bg-white rounded-sm p-2 text-sm pr-8">
+              <label htmlFor="category-select" className="sr-only">
+                カテゴリー
+              </label>
+              <select
+                id="category-select"
+                className="w-full appearance-none border border-[#d5d5d5] bg-white rounded-sm p-2 text-sm pr-8"
+              >
                 <option>全カテゴリー</option>
                 <option>映画</option>
                 <option>音楽</option>
                 <option>アート</option>
-            </select>
-            <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center">
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center">
                 <svg
-                width="12"
-                height="15"
-                viewBox="0 0 17 22"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
+                  width="12"
+                  height="15"
+                  viewBox="0 0 17 22"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
                 >
-                <path d="M8.5 0L15.8612 9H1.13878L8.5 0Z" fill="#4E4A49" />
-                <path d="M8.5 22L15.8612 13H1.13878L8.5 22Z" fill="#4E4A49" />
+                  <path d="M8.5 0L15.8612 9H1.13878L8.5 0Z" fill="#4E4A49" />
+                  <path d="M8.5 22L15.8612 13H1.13878L8.5 22Z" fill="#4E4A49" />
                 </svg>
-            </div>
+              </div>
             </div>
 
             {/* Region Select */}
             <div className="relative flex-1">
-            <label htmlFor="region-select" className="sr-only">地域</label>
-            <select id="region-select" className="w-full appearance-none border border-[#d5d5d5] bg-white rounded-sm p-2 text-sm pr-8">
+              <label htmlFor="region-select" className="sr-only">
+                地域
+              </label>
+              <select
+                id="region-select"
+                className="w-full appearance-none border border-[#d5d5d5] bg-white rounded-sm p-2 text-sm pr-8"
+              >
                 <option>全地域</option>
                 <option>東京</option>
                 <option>大阪</option>
                 <option>福岡</option>
-            </select>
-            <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center">
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center">
                 <svg
-                width="12"
-                height="15"
-                viewBox="0 0 17 22"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
+                  width="12"
+                  height="15"
+                  viewBox="0 0 17 22"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
                 >
-                <path d="M8.5 0L15.8612 9H1.13878L8.5 0Z" fill="#4E4A49" />
-                <path d="M8.5 22L15.8612 13H1.13878L8.5 22Z" fill="#4E4A49" />
+                  <path d="M8.5 0L15.8612 9H1.13878L8.5 0Z" fill="#4E4A49" />
+                  <path d="M8.5 22L15.8612 13H1.13878L8.5 22Z" fill="#4E4A49" />
                 </svg>
+              </div>
             </div>
-            </div>
-        </div>
+          </div>
 
-        {/* Search Bar */}
-        <div className="flex mb-3">
+          {/* Search Bar */}
+          <div className="flex mb-3">
             <input
-            type="text"
-            value={searchKeyword}
-            onChange={(e) => setSearchKeyword(e.target.value)}
-            className="flex-grow border border-[#d5d5d5] bg-white rounded-l-md p-2 text-sm"
-            placeholder="キーワード検索"
+              type="text"
+              value={searchKeyword}
+              onChange={(e) => setSearchKeyword(e.target.value)}
+              className="flex-grow border border-[#d5d5d5] bg-white rounded-l-md p-2 text-sm"
+              placeholder="キーワード検索"
             />
-            <button className="bg-gray-700 text-white px-4 rounded-r-md text-sm">
-            検索
-            </button>
-        </div>
+            <button className="bg-gray-700 text-white px-4 rounded-r-md text-sm">検索</button>
+          </div>
 
-        {/* Sort Tabs */}
-        <div className="flex gap-3 text-sm text-gray-800">
-            {["人気順", "新着順", "終了順"].map((tab) => (
-            <button
+          {/* Sort Tabs */}
+          <div className="flex gap-3 text-sm text-gray-800">
+            {['人気順', '新着順', '終了順'].map((tab) => (
+              <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`${
-                activeTab === tab ? "font-bold text-[#FF0066]" : "text-black"
-                }`}
-            >
+                className={`${activeTab === tab ? 'font-bold text-[#FF0066]' : 'text-black'}`}
+              >
                 {tab}
-            </button>
+              </button>
             ))}
-        </div>
+          </div>
         </div>
 
         {/* === Desktop Sorting Tabs === */}
         <div className="py-9 bg-[#ECEBD9] w-full hidden lg:block">
           <div className="max-w-5xl hidden md:flex items-center lg:flex-row gap-3 mx-auto">
-            
             {/* Label for Sorting */}
-            <span className="font-bold text-sm text-black whitespace-nowrap">
-              並べ替え
-            </span>
+            <span className="font-bold text-sm text-black whitespace-nowrap">並べ替え</span>
 
             {/* Sorting Tabs */}
             {sortTabs.map((tab) => (
@@ -179,8 +181,8 @@ const SearchPage: React.FC = () => {
                 onClick={() => setActiveTab(tab)}
                 className={`px-3 py-1.5 rounded-sm text-sm font-medium border flex-shrink-0 ${
                   activeTab === tab
-                    ? "bg-[#FF0066] text-white border-red-500"
-                    : "bg-[#F9F9F5] text-black hover:bg-gray-100 border-[#D5D5D5]"
+                    ? 'bg-[#FF0066] text-white border-red-500'
+                    : 'bg-[#F9F9F5] text-black hover:bg-gray-100 border-[#D5D5D5]'
                 }`}
               >
                 {tab}
@@ -212,7 +214,6 @@ const SearchPage: React.FC = () => {
         {showAdvanced && (
           <div className="max-w-5xl mx-auto bg-white border border-gray-300 rounded-md shadow-md p-6 mt-4">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-
               {/* 目標金額 */}
               <div>
                 <div className="flex items-center gap-2 mb-2">
@@ -236,7 +237,13 @@ const SearchPage: React.FC = () => {
                   <h3 className="font-bold text-gray-800">目標金額</h3>
                 </div>
                 <hr className="mb-3 border-gray-300" />
-                {["50万円以下","50万円〜300万円","300万円〜1000万円","1000万円〜3000万円","3000万円以上"].map((label, i) => (
+                {[
+                  '50万円以下',
+                  '50万円〜300万円',
+                  '300万円〜1000万円',
+                  '1000万円〜3000万円',
+                  '3000万円以上',
+                ].map((label, i) => (
                   <label key={i} className="flex items-center mb-2 text-sm text-gray-700">
                     <input type="checkbox" className="mr-2" /> {label}
                   </label>
@@ -266,11 +273,13 @@ const SearchPage: React.FC = () => {
                   <h3 className="font-bold text-gray-800">リターン金額</h3>
                 </div>
                 <hr className="mb-3 border-gray-300" />
-                {["1000円以下","1000円〜5000円","5000円〜1万円","1万円〜3万円","3万円以上"].map((label, i) => (
-                  <label key={i} className="flex items-center mb-2 text-sm text-gray-700">
-                    <input type="checkbox" className="mr-2" /> {label}
-                  </label>
-                ))}
+                {['1000円以下', '1000円〜5000円', '5000円〜1万円', '1万円〜3万円', '3万円以上'].map(
+                  (label, i) => (
+                    <label key={i} className="flex items-center mb-2 text-sm text-gray-700">
+                      <input type="checkbox" className="mr-2" /> {label}
+                    </label>
+                  )
+                )}
               </div>
 
               {/* 達成率 */}
@@ -296,7 +305,7 @@ const SearchPage: React.FC = () => {
                   <h3 className="font-bold text-gray-800">達成率</h3>
                 </div>
                 <hr className="mb-3 border-gray-300" />
-                {["70%未満","70%〜100%","100%以上"].map((label, i) => (
+                {['70%未満', '70%〜100%', '100%以上'].map((label, i) => (
                   <label key={i} className="flex items-center mb-2 text-sm text-gray-700">
                     <input type="checkbox" className="mr-2" /> {label}
                   </label>
@@ -326,7 +335,14 @@ const SearchPage: React.FC = () => {
                   <h3 className="font-bold text-gray-800">プロジェクトの種類</h3>
                 </div>
                 <hr className="mb-3 border-gray-300" />
-                {["もうすぐ公開","募集中のもの","終了したもの","コロナサポートプログラム","コミュニティのみ","ふるさと納税のみ"].map((label, i) => (
+                {[
+                  'もうすぐ公開',
+                  '募集中のもの',
+                  '終了したもの',
+                  'コロナサポートプログラム',
+                  'コミュニティのみ',
+                  'ふるさと納税のみ',
+                ].map((label, i) => (
                   <label key={i} className="flex items-center mb-2 text-sm text-gray-700">
                     <input type="checkbox" className="mr-2" /> {label}
                   </label>
@@ -348,7 +364,6 @@ const SearchPage: React.FC = () => {
             </div>
           </div>
         )}
-
 
         {/* === Search Heading === */}
         <h2 className="text-lg md:text-xl font-bold mb-8 max-w-5xl mx-auto mt-10 px-4 md:px-0">
@@ -379,7 +394,7 @@ const SearchPage: React.FC = () => {
         )}
       </main>
     </div>
-  );
-};
+  )
+}
 
-export default SearchPage;
+export default SearchPage

@@ -1,34 +1,34 @@
-import type { NextConfig } from "next";
+import type { NextConfig } from 'next'
 
 // Get API URL from environment variable
 const getApiUrl = (): string => {
-  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
-};
+  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api'
+}
 
 // Extract hostname and protocol from API URL
 const getApiHostConfig = () => {
   try {
-    const apiUrl = getApiUrl();
-    const url = new URL(apiUrl);
+    const apiUrl = getApiUrl()
+    const url = new URL(apiUrl)
     return {
       protocol: url.protocol.replace(':', '') as 'http' | 'https',
       hostname: url.hostname,
       port: url.port || '',
-    };
+    }
   } catch {
     return {
       protocol: 'http' as const,
       hostname: 'localhost',
       port: '8080',
-    };
+    }
   }
-};
+}
 
-const apiConfig = getApiHostConfig();
+const apiConfig = getApiHostConfig()
 
 const nextConfig: NextConfig = {
   // Allow cross-origin requests from specific IPs during development
-  allowedDevOrigins: ['162.43.45.104', "https://fernande-prelexical-ceola.ngrok-free.dev"],
+  allowedDevOrigins: ['162.43.45.104', 'https://fernande-prelexical-ceola.ngrok-free.dev'],
 
   // Configure HMR for ngrok or similar tunneling services
   ...(() => {
@@ -37,35 +37,35 @@ const nextConfig: NextConfig = {
         publicRuntimeConfig: {
           hmrHost: process.env.NEXT_PUBLIC_HMR_HOST,
         },
-      };
+      }
     }
-    return {};
+    return {}
   })(),
-  
+
   // Production optimizations
   compress: true,
   poweredByHeader: false,
-  
+
   // Rewrite API requests to backend
   // This proxies /api/* requests to the backend server
   async rewrites() {
     // Get backend URL from environment variable or use default
     // If backend is on same server, use localhost with port
     // If backend is on different server, set BACKEND_URL environment variable
-    const backendUrl = process.env.BACKEND_URL || 'http://localhost:8080';
-    
+    const backendUrl = process.env.BACKEND_URL || 'http://localhost:8080'
+
     return [
       {
         source: '/api/:path*',
         destination: `${backendUrl}/api/:path*`,
       },
-    ];
+    ]
   },
-  
+
   images: {
     // This allows you to use SVGs with the next/image component.
-    dangerouslyAllowSVG: true, 
-    
+    dangerouslyAllowSVG: true,
+
     // The recommended way to allow external images.
     remotePatterns: [
       {
@@ -106,6 +106,6 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-};
+}
 
-export default nextConfig;
+export default nextConfig

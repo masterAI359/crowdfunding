@@ -1,19 +1,19 @@
-"use client";
-import React from "react";
-import Link from "next/link";
+'use client'
+import React from 'react'
+import Link from 'next/link'
 
 interface Project {
-  id: string | number;
-  title: string;
-  amount: string;
-  supporters: string;
-  daysLeft: string;
-  achievementRate: number;
-  image: string;
+  id: string | number
+  title: string
+  amount: string
+  supporters: string
+  daysLeft: string
+  achievementRate: number
+  image: string
 }
 
 interface ProjectCardProps {
-  project: Project;
+  project: Project
 }
 
 const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
@@ -80,11 +80,10 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
               </div>
             </div>
           </div>
-
         </div>
       </div>
     </Link>
-  );
-};
+  )
+}
 
-export default ProjectCard;
+export default ProjectCard

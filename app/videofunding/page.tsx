@@ -1,32 +1,32 @@
-"use client";
-import React, { useState, useEffect } from "react";
-import VideoCard from "../components/video-card";
-import VideoCarousel from "../components/video-carousel";
-import { getVideos } from "@/app/lib/api";
+'use client'
+import React, { useState, useEffect } from 'react'
+import VideoCard from '../components/video-card'
+import VideoCarousel from '../components/video-carousel'
+import { getVideos } from '@/app/lib/api'
 
 interface Video {
-  id: string | number;
-  title: string;
-  image: string;
-  categoryLabel: string;
-  userLabel: string;
-  viewCount: string;
-  viewDate: number;
+  id: string | number
+  title: string
+  image: string
+  categoryLabel: string
+  userLabel: string
+  viewCount: string
+  viewDate: number
 }
 
 const VideofundingPage = () => {
-  const [videos, setVideos] = useState<Video[]>([]);
-  const [bannerVideos, setBannerVideos] = useState<Video[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [loading, setLoading] = useState(true);
+  const [videos, setVideos] = useState<Video[]>([])
+  const [bannerVideos, setBannerVideos] = useState<Video[]>([])
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [loading, setLoading] = useState(true)
 
   // 動画一覧を取得
   useEffect(() => {
     const fetchVideos = async () => {
       try {
-        setLoading(true);
-        const response = await getVideos(currentPage, 12);
+        setLoading(true)
+        const response = await getVideos(currentPage, 12)
         const transformedVideos = (response.videos || []).map((video: any) => ({
           id: video.id,
           title: video.title,
@@ -34,25 +34,27 @@ const VideofundingPage = () => {
           categoryLabel: '', // Category should come from backend
           userLabel: video.owner?.name || '',
           viewCount: video.viewCount?.toLocaleString() || '0',
-          viewDate: Math.floor((Date.now() - new Date(video.createdAt).getTime()) / (1000 * 60 * 60 * 24)),
-        }));
-        setVideos(transformedVideos);
-        setTotalPages(response.pagination?.totalPages || 1);
+          viewDate: Math.floor(
+            (Date.now() - new Date(video.createdAt).getTime()) / (1000 * 60 * 60 * 24)
+          ),
+        }))
+        setVideos(transformedVideos)
+        setTotalPages(response.pagination?.totalPages || 1)
       } catch (error) {
-        console.error("動画の取得に失敗しました:", error);
+        console.error('動画の取得に失敗しました:', error)
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
-    };
+    }
 
-    fetchVideos();
-  }, [currentPage]);
+    fetchVideos()
+  }, [currentPage])
 
   // バナー動画（最初の5件をレコメンドとして使用）
   useEffect(() => {
     const fetchBannerVideos = async () => {
       try {
-        const response = await getVideos(1, 5);
+        const response = await getVideos(1, 5)
         const transformedVideos = (response.videos || []).map((video: any) => ({
           id: video.id,
           title: video.title,
@@ -60,16 +62,18 @@ const VideofundingPage = () => {
           categoryLabel: '', // Category should come from backend
           userLabel: video.owner?.name || '',
           viewCount: video.viewCount?.toLocaleString() || '0',
-          viewDate: Math.floor((Date.now() - new Date(video.createdAt).getTime()) / (1000 * 60 * 60 * 24)),
-        }));
-        setBannerVideos(transformedVideos);
+          viewDate: Math.floor(
+            (Date.now() - new Date(video.createdAt).getTime()) / (1000 * 60 * 60 * 24)
+          ),
+        }))
+        setBannerVideos(transformedVideos)
       } catch (error) {
-        console.error("バナー動画の取得に失敗しました:", error);
+        console.error('バナー動画の取得に失敗しました:', error)
       }
-    };
+    }
 
-    fetchBannerVideos();
-  }, []);
+    fetchBannerVideos()
+  }, [])
 
   return (
     <div className="min-h-screen bg-white text-gray-700">
@@ -92,7 +96,7 @@ const VideofundingPage = () => {
         <div className="flex justify-center space-x-0">
           <button
             type="button"
-            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+            onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
             disabled={currentPage === 1}
             className="h-8 w-8 flex items-center justify-center rounded-full border border-black hover:bg-gray-100 transition-colors mr-5 disabled:opacity-50 disabled:cursor-not-allowed"
             aria-label="Previous page"
@@ -116,10 +120,11 @@ const VideofundingPage = () => {
               key={page}
               type="button"
               onClick={() => setCurrentPage(page)}
-              className={`h-8 w-8 flex items-center font-regular text-2xl justify-center rounded-full ${page === currentPage
-                ? "bg-[#FF0066] text-white border border-[#FF0066]"
-                : " hover:bg-gray-100"
-                }`}
+              className={`h-8 w-8 flex items-center font-regular text-2xl justify-center rounded-full ${
+                page === currentPage
+                  ? 'bg-[#FF0066] text-white border border-[#FF0066]'
+                  : ' hover:bg-gray-100'
+              }`}
               aria-label={`Page ${page}`}
             >
               {page}
@@ -128,7 +133,7 @@ const VideofundingPage = () => {
 
           <button
             type="button"
-            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+            onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
             disabled={currentPage === totalPages}
             className="h-8 w-8 flex items-center justify-center rounded-full border border-black hover:bg-gray-100 transition-colors ml-5 disabled:opacity-50 disabled:cursor-not-allowed"
             aria-label="Next page"
@@ -149,7 +154,7 @@ const VideofundingPage = () => {
         </div>
       </main>
     </div>
-  );
-};
+  )
+}
 
-export default VideofundingPage;
+export default VideofundingPage

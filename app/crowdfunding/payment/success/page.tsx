@@ -1,62 +1,62 @@
-"use client";
-import React, { use, useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-import Image from "next/image";
-import { verifyCheckoutSession, getProjectById } from "@/app/lib/api";
-import LoadingSpinner from "@/app/components/loading-spinner";
+'use client'
+import React, { use, useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import Image from 'next/image'
+import { verifyCheckoutSession, getProjectById } from '@/app/lib/api'
+import LoadingSpinner from '@/app/components/loading-spinner'
 
 interface PaymentDetails {
-  sessionId: string;
-  paymentStatus: string;
-  status: string;
-  amountTotal: number;
-  currency: string;
-  customerEmail?: string;
-  projectId?: string;
-  userId?: string;
-  paymentIntentId?: string;
-  projectTitle?: string;
-  projectDescription?: string;
-  projectImage?: string;
+  sessionId: string
+  paymentStatus: string
+  status: string
+  amountTotal: number
+  currency: string
+  customerEmail?: string
+  projectId?: string
+  userId?: string
+  paymentIntentId?: string
+  projectTitle?: string
+  projectDescription?: string
+  projectImage?: string
 }
 
 interface Project {
-  id: string;
-  title: string;
-  description: string;
-  image: string;
+  id: string
+  title: string
+  description: string
+  image: string
 }
 
 const CrowdfundingPaymentSuccessPage = ({
   searchParams: searchParamsPromise,
 }: {
-  searchParams: Promise<{ session_id?: string }>;
+  searchParams: Promise<{ session_id?: string }>
 }) => {
-  const router = useRouter();
-  const searchParams = use(searchParamsPromise);
-  const sessionId = searchParams?.session_id;
-  
-  const [paymentDetails, setPaymentDetails] = useState<PaymentDetails | null>(null);
-  const [project, setProject] = useState<Project | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const router = useRouter()
+  const searchParams = use(searchParamsPromise)
+  const sessionId = searchParams?.session_id
+
+  const [paymentDetails, setPaymentDetails] = useState<PaymentDetails | null>(null)
+  const [project, setProject] = useState<Project | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const verifySession = async () => {
       if (!sessionId) {
-        setError("セッションIDが見つかりません");
-        setLoading(false);
-        return;
+        setError('セッションIDが見つかりません')
+        setLoading(false)
+        return
       }
 
       try {
-        setLoading(true);
-        const details = await verifyCheckoutSession(sessionId);
-        setPaymentDetails(details);
+        setLoading(true)
+        const details = await verifyCheckoutSession(sessionId)
+        setPaymentDetails(details)
 
         // プロジェクト情報を取得
-        const projectId = details.projectId;
+        const projectId = details.projectId
         if (projectId) {
           try {
             // バックエンドから情報が返されている場合はそれを使用
@@ -66,52 +66,52 @@ const CrowdfundingPaymentSuccessPage = ({
                 title: details.projectTitle,
                 description: details.projectDescription || '',
                 image: details.projectImage || '/assets/crowdfunding/cf-1.png',
-              });
+              })
             } else {
               // APIから取得
-              const projectData = await getProjectById(projectId);
+              const projectData = await getProjectById(projectId)
               setProject({
                 id: projectData.id,
                 title: projectData.title,
                 description: projectData.description || '',
                 image: projectData.image || '/assets/crowdfunding/cf-1.png',
-              });
+              })
             }
           } catch (err) {
-            console.error("プロジェクト情報の取得に失敗しました:", err);
+            console.error('プロジェクト情報の取得に失敗しました:', err)
           }
         }
       } catch (err: any) {
-        console.error("セッションの検証に失敗しました:", err);
-        setError(err.response?.data?.message || "決済情報の確認に失敗しました");
+        console.error('セッションの検証に失敗しました:', err)
+        setError(err.response?.data?.message || '決済情報の確認に失敗しました')
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
-    };
+    }
 
-    verifySession();
-  }, [sessionId]);
+    verifySession()
+  }, [sessionId])
 
   const formatAmount = (amount: number, currency: string) => {
     // Stripe returns amounts in smallest currency unit
     // For JPY (Japanese Yen), there are no decimal places, so amount is already in yen
     // For other currencies (USD, EUR, etc.), divide by 100 to get the actual amount
-    let amountToFormat = amount;
+    let amountToFormat = amount
     if (currency !== 'jpy') {
       // For currencies with decimal places, divide by 100
-      amountToFormat = amount / 100;
+      amountToFormat = amount / 100
     }
     // JPY amounts are already in yen, no conversion needed
-    const formattedAmount = amountToFormat.toLocaleString("ja-JP");
-    return `¥${formattedAmount}`;
-  };
+    const formattedAmount = amountToFormat.toLocaleString('ja-JP')
+    return `¥${formattedAmount}`
+  }
 
   if (loading) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <LoadingSpinner />
       </div>
-    );
+    )
   }
 
   if (error || !paymentDetails) {
@@ -133,10 +133,8 @@ const CrowdfundingPaymentSuccessPage = ({
               />
             </svg>
           </div>
-          <h1 className="text-2xl font-bold text-black mb-4">
-            エラーが発生しました
-          </h1>
-          <p className="text-gray-600 mb-8">{error || "決済情報が見つかりません"}</p>
+          <h1 className="text-2xl font-bold text-black mb-4">エラーが発生しました</h1>
+          <p className="text-gray-600 mb-8">{error || '決済情報が見つかりません'}</p>
           <div className="flex gap-4 justify-center">
             <Link
               href="/crowdfunding"
@@ -153,10 +151,10 @@ const CrowdfundingPaymentSuccessPage = ({
           </div>
         </div>
       </div>
-    );
+    )
   }
 
-  const isPaid = paymentDetails.paymentStatus === "paid";
+  const isPaid = paymentDetails.paymentStatus === 'paid'
 
   return (
     <div className="min-h-screen bg-white">
@@ -197,28 +195,24 @@ const CrowdfundingPaymentSuccessPage = ({
             </div>
           )}
           <h1 className="text-3xl md:text-4xl font-bold text-black mb-4">
-            {isPaid ? "ご支援ありがとうございます！" : "決済処理中です"}
+            {isPaid ? 'ご支援ありがとうございます！' : '決済処理中です'}
           </h1>
           <p className="text-gray-600 text-lg">
             {isPaid
-              ? "決済が正常に完了しました。プロジェクトの成功に向けてご支援いただき、誠にありがとうございます。"
-              : "決済が処理中です。しばらくお待ちください。"}
+              ? '決済が正常に完了しました。プロジェクトの成功に向けてご支援いただき、誠にありがとうございます。'
+              : '決済が処理中です。しばらくお待ちください。'}
           </p>
         </div>
 
         {/* Payment Details Card */}
         <div className="bg-white border-2 border-gray-200 rounded-lg p-6 md:p-8 mb-8">
           <h2 className="text-xl font-bold text-black mb-6">決済情報</h2>
-          
+
           <div className="space-y-4">
             <div className="flex justify-between items-center border-b border-gray-200 pb-3">
               <span className="text-gray-600">決済ステータス</span>
-              <span
-                className={`font-semibold ${
-                  isPaid ? "text-green-600" : "text-yellow-600"
-                }`}
-              >
-                {isPaid ? "完了" : "処理中"}
+              <span className={`font-semibold ${isPaid ? 'text-green-600' : 'text-yellow-600'}`}>
+                {isPaid ? '完了' : '処理中'}
               </span>
             </div>
 
@@ -259,7 +253,7 @@ const CrowdfundingPaymentSuccessPage = ({
             <div className="flex gap-4">
               <div className="w-24 h-24 rounded-lg overflow-hidden bg-gray-200 flex-shrink-0 relative">
                 <Image
-                  src={project.image || "/assets/crowdfunding/cf-1.png"}
+                  src={project.image || '/assets/crowdfunding/cf-1.png'}
                   alt={project.title}
                   fill
                   className="object-cover"
@@ -267,9 +261,7 @@ const CrowdfundingPaymentSuccessPage = ({
               </div>
               <div className="flex-1">
                 <h4 className="font-bold text-black mb-2">{project.title}</h4>
-                <p className="text-gray-600 text-sm line-clamp-2">
-                  {project.description}
-                </p>
+                <p className="text-gray-600 text-sm line-clamp-2">{project.description}</p>
                 <Link
                   href={`/crowdfunding/${project.id}`}
                   className="text-[#FF0066] hover:underline text-sm mt-2 inline-block"
@@ -312,8 +304,7 @@ const CrowdfundingPaymentSuccessPage = ({
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default CrowdfundingPaymentSuccessPage;
-
+export default CrowdfundingPaymentSuccessPage

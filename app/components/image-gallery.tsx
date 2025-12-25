@@ -1,22 +1,22 @@
-"use client";
-import React, { useState } from 'react';
-import { SmartImage } from '@/app/utils/image-helper';
-import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
+'use client'
+import React, { useState } from 'react'
+import { SmartImage } from '@/app/utils/image-helper'
+import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react'
 
 interface ImageGalleryProps {
-  images: string[];
+  images: string[]
 }
 
 const ImageGallery: React.FC<ImageGalleryProps> = ({ images }) => {
-  const [selectedImage, setSelectedImage] = useState(0);
+  const [selectedImage, setSelectedImage] = useState(0)
 
   const handlePrevious = () => {
-    setSelectedImage((prev) => (prev > 0 ? prev - 1 : images.length - 1));
-  };
+    setSelectedImage((prev) => (prev > 0 ? prev - 1 : images.length - 1))
+  }
 
   const handleNext = () => {
-    setSelectedImage((prev) => (prev < images.length - 1 ? prev + 1 : 0));
-  };
+    setSelectedImage((prev) => (prev < images.length - 1 ? prev + 1 : 0))
+  }
 
   return (
     <div className="lg:h-full h-[400px] md:h-[500px]">
@@ -80,8 +80,9 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ images }) => {
               className="flex-shrink-0 w-1/3 md:w-1/4 h-20 md:h-36 cursor-pointer px-1 overflow-hidden snap-center touch-manipulation"
             >
               <button
-                className={`border-2 rounded-lg w-full h-full ${selectedImage === index ? 'border-[#FF0066] border-2' : 'border-gray-300'
-                  } transition-colors active:opacity-70`}
+                className={`border-2 rounded-lg w-full h-full ${
+                  selectedImage === index ? 'border-[#FF0066] border-2' : 'border-gray-300'
+                } transition-colors active:opacity-70`}
                 aria-label={`View image ${index + 1}`}
               >
                 <SmartImage
@@ -97,8 +98,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ images }) => {
         </div>
       )}
     </div>
-  );
-};
+  )
+}
 
-export default ImageGallery;
-
+export default ImageGallery
