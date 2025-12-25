@@ -245,10 +245,8 @@ const ContactAndSettingsTab = ({ userData, onUpdate }: { userData: any; onUpdate
     try {
       await updateUserProfile({
         name: formData.name,
-        phone: formData.phone,
-        dateOfBirth: formData.dateOfBirth,
-        gender: formData.gender,
         address: formData.address,
+        // Note: phone, dateOfBirth, and gender are not currently supported by the backend API
       })
       setSuccess('プロフィールが正常に更新されました')
       onUpdate()
