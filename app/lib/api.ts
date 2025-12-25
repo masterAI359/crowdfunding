@@ -689,4 +689,22 @@ export const getAdminStripeStats = async () => {
   return response.data
 }
 
+/**
+ * 管理者用：連絡先一覧取得
+ */
+export const getAdminContacts = async (search?: string) => {
+  const response = await apiClient.get('/admin/contacts', {
+    params: { search },
+  })
+  return response.data
+}
+
+/**
+ * 管理者用：連絡先削除
+ */
+export const deleteAdminContact = async (contactId: string) => {
+  const response = await apiClient.delete(`/admin/contacts/${contactId}`)
+  return response.data
+}
+
 export default apiClient
