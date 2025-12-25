@@ -1,103 +1,98 @@
-"use client";
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { SmartImage } from '@/app/utils/image-helper';
+'use client'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { SmartImage } from '@/app/utils/image-helper'
 
-type CategoryType =
-  | "バラエティー"
-  | "スピリチュアル"
-  | "ミュージック"
-  | "ドキュメンタリー";
+type CategoryType = 'バラエティー' | 'スピリチュアル' | 'ミュージック' | 'ドキュメンタリー'
 
 const categoryStyles: Record<CategoryType, string> = {
-  バラエティー: "bg-[#06C755] text-white",
-  スピリチュアル: "bg-[#FFA101] text-white",
-  ミュージック: "bg-[#4285F4] text-white",
-  ドキュメンタリー: "bg-[#A442F4] text-white",
-};
+  バラエティー: 'bg-[#06C755] text-white',
+  スピリチュアル: 'bg-[#FFA101] text-white',
+  ミュージック: 'bg-[#4285F4] text-white',
+  ドキュメンタリー: 'bg-[#A442F4] text-white',
+}
 
 interface Video {
-  id: string | number;
-  title: string;
-  image: string;
-  categoryLabel: string;
-  userLabel?: string;
-  viewCount?: string;
-  viewDate?: number;
+  id: string | number
+  title: string
+  image: string
+  categoryLabel: string
+  userLabel?: string
+  viewCount?: string
+  viewDate?: number
 }
 
 interface VideoCarouselProps {
-  videos: Video[];
+  videos: Video[]
 }
 
 const VideoCarousel: React.FC<VideoCarouselProps> = ({ videos }) => {
   // Create a padded list for the infinite loop effect
   const loopedVideos = useMemo(() => {
     if (videos.length > 0) {
-      const firstItem = videos[0];
-      const lastItem = videos[videos.length - 1];
-      return [lastItem, ...videos, firstItem];
+      const firstItem = videos[0]
+      const lastItem = videos[videos.length - 1]
+      return [lastItem, ...videos, firstItem]
     }
-    return [];
-  }, [videos]);
+    return []
+  }, [videos])
 
-  const [currentIndex, setCurrentIndex] = useState(1);
-  const [isTransitionEnabled, setIsTransitionEnabled] = useState(true);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(1)
+  const [isTransitionEnabled, setIsTransitionEnabled] = useState(true)
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
+  const itemRefs = useRef<(HTMLDivElement | null)[]>([])
 
   const handlePrevBanner = () => {
-    if (!isTransitionEnabled) return; // Prevent clicks during the "jump" animation
-    setCurrentIndex((prevIndex) => prevIndex - 1);
-  };
+    if (!isTransitionEnabled) return // Prevent clicks during the "jump" animation
+    setCurrentIndex((prevIndex) => prevIndex - 1)
+  }
 
   const handleNextBanner = () => {
-    if (!isTransitionEnabled) return; // Prevent clicks during the "jump" animation
-    setCurrentIndex((prevIndex) => prevIndex + 1);
-  };
+    if (!isTransitionEnabled) return // Prevent clicks during the "jump" animation
+    setCurrentIndex((prevIndex) => prevIndex + 1)
+  }
 
   // This single, robust useEffect now handles both scrolling and the infinite loop logic.
   useEffect(() => {
-    const container = scrollContainerRef.current;
-    const targetNode = itemRefs.current[currentIndex];
+    const container = scrollContainerRef.current
+    const targetNode = itemRefs.current[currentIndex]
 
     if (container && targetNode) {
-      const containerHalfWidth = container.offsetWidth / 2;
-      const elementHalfWidth = targetNode.offsetWidth / 2;
-      const targetScrollLeft =
-        targetNode.offsetLeft - containerHalfWidth + elementHalfWidth;
+      const containerHalfWidth = container.offsetWidth / 2
+      const elementHalfWidth = targetNode.offsetWidth / 2
+      const targetScrollLeft = targetNode.offsetLeft - containerHalfWidth + elementHalfWidth
 
       // Perform the scroll
       container.scrollTo({
         left: targetScrollLeft,
-        behavior: isTransitionEnabled ? "smooth" : "auto", // Use 'auto' for instant jumps
-      });
+        behavior: isTransitionEnabled ? 'smooth' : 'auto', // Use 'auto' for instant jumps
+      })
     }
 
     // This function runs when the scroll transition ends
     const handleTransitionEnd = () => {
       if (currentIndex === 0) {
         // After scrolling to the cloned last item, jump to the real last item
-        setIsTransitionEnabled(false); // Disable transitions for the silent jump
-        setCurrentIndex(loopedVideos.length - 2);
+        setIsTransitionEnabled(false) // Disable transitions for the silent jump
+        setCurrentIndex(loopedVideos.length - 2)
       } else if (currentIndex === loopedVideos.length - 1) {
         // After scrolling to the cloned first item, jump to the real first item
-        setIsTransitionEnabled(false); // Disable transitions for the silent jump
-        setCurrentIndex(1);
+        setIsTransitionEnabled(false) // Disable transitions for the silent jump
+        setCurrentIndex(1)
       }
-    };
+    }
 
     // Listen for the end of the scroll animation
-    const scrollEndTimer = setTimeout(handleTransitionEnd, 500); // 500ms matches CSS duration
+    const scrollEndTimer = setTimeout(handleTransitionEnd, 500) // 500ms matches CSS duration
 
     // This effect runs right after the jump to re-enable transitions for the next user click
     if (!isTransitionEnabled) {
       requestAnimationFrame(() => {
-        setIsTransitionEnabled(true);
-      });
+        setIsTransitionEnabled(true)
+      })
     }
 
-    return () => clearTimeout(scrollEndTimer);
-  }, [currentIndex, isTransitionEnabled, loopedVideos.length]);
+    return () => clearTimeout(scrollEndTimer)
+  }, [currentIndex, isTransitionEnabled, loopedVideos.length])
 
   return (
     <div className="relative w-full md:mb-16 mb-12">
@@ -106,20 +101,16 @@ const VideoCarousel: React.FC<VideoCarouselProps> = ({ videos }) => {
         className="flex hide-scrollbar overflow-x-auto snap-x snap-mandatory scroll-smooth sm:px-6 px-4 md:px-10"
       >
         {loopedVideos.map((video, index) => {
-          const isCenter = index === currentIndex;
+          const isCenter = index === currentIndex
           return (
             <div
               ref={(el) => {
-                itemRefs.current[index] = el;
+                itemRefs.current[index] = el
               }}
               key={`${video.id}-${index}`}
-              className={`snap-center shrink-0 w-[90%] sm:w-[80%] md:w-[100%] lg:w-[85%] xl:w-[55%] p-2 ${isTransitionEnabled
-                  ? "transition-all duration-500 ease-in-out"
-                  : ""
-                } ${isCenter
-                  ? "scale-100 opacity-100"
-                  : "scale-100 brightness-50"
-                }`}
+              className={`snap-center shrink-0 w-[90%] sm:w-[80%] md:w-[100%] lg:w-[85%] xl:w-[55%] p-2 ${
+                isTransitionEnabled ? 'transition-all duration-500 ease-in-out' : ''
+              } ${isCenter ? 'scale-100 opacity-100' : 'scale-100 brightness-50'}`}
             >
               {/* Wrapper with responsive layout */}
               <div className="relative w-full h-[28rem] sm:h-[32rem] md:h-[28rem] lg:h-[32rem] xl:h-[28rem] shadow-lg overflow-hidden flex flex-col md:block rounded-2xl md:rounded-2xl">
@@ -129,14 +120,16 @@ const VideoCarousel: React.FC<VideoCarouselProps> = ({ videos }) => {
                     src={video.image}
                     alt={video.categoryLabel}
                     fill
-                    style={{ objectFit: "cover" }}
+                    style={{ objectFit: 'cover' }}
                     sizes="(max-width: 768px) 100vw, 50vw"
                     priority={isCenter}
                     className="object-cover"
                   />
                   <span
-                    className={`absolute top-0 right-0 rounded-tr-2.5 rounded-bl-[5px] px-1.5 py-0.5 text-base ${categoryStyles[video.categoryLabel as CategoryType] || "bg-gray-500 text-white"
-                      }`}
+                    className={`absolute top-0 right-0 rounded-tr-2.5 rounded-bl-[5px] px-1.5 py-0.5 text-base ${
+                      categoryStyles[video.categoryLabel as CategoryType] ||
+                      'bg-gray-500 text-white'
+                    }`}
                   >
                     {video.categoryLabel}
                   </span>
@@ -148,7 +141,7 @@ const VideoCarousel: React.FC<VideoCarouselProps> = ({ videos }) => {
                 {/* === Info Section === */}
               </div>
             </div>
-          );
+          )
         })}
       </div>
 
@@ -198,8 +191,7 @@ const VideoCarousel: React.FC<VideoCarouselProps> = ({ videos }) => {
         </svg>
       </button>
     </div>
-  );
-};
+  )
+}
 
-export default VideoCarousel;
-
+export default VideoCarousel

@@ -1,5 +1,5 @@
-import React from "react";
-import Link from "next/link";
+import React from 'react'
+import Link from 'next/link'
 const Footer = () => {
   return (
     <footer className="bg-[#1D2635] text-gray-300">
@@ -11,10 +11,7 @@ const Footer = () => {
         >
           {/* Brand / Logo */}
           <div className="flex-shrink-0">
-            <Link
-              href="/"
-              className="flex flex-col justify-center items-center"
-            >
+            <Link href="/" className="flex flex-col justify-center items-center">
               <img
                 src="/assets/common/logo-landing-footer-sp.png"
                 className="w-[200px] sm:w-[347px] md:hidden"
@@ -46,13 +43,22 @@ const Footer = () => {
 
             {/* Legal / Informational Links */}
             <div className="flex flex-col space-y-3">
-              <Link href="/terms-of-service" className="text-sm sm:text-xl font-bold hover:text-white">
+              <Link
+                href="/terms-of-service"
+                className="text-sm sm:text-xl font-bold hover:text-white"
+              >
                 利用規約
               </Link>
-              <Link href="/privacy-policy" className="text-sm sm:text-xl font-bold hover:text-white">
+              <Link
+                href="/privacy-policy"
+                className="text-sm sm:text-xl font-bold hover:text-white"
+              >
                 プライバシーポリシー
               </Link>
-              <Link href="/commercial-tran" className="text-sm sm:text-xl font-bold hover:text-white">
+              <Link
+                href="/commercial-tran"
+                className="text-sm sm:text-xl font-bold hover:text-white"
+              >
                 特定商取引法に基づく表記
               </Link>
               <Link href="/contact" className="text-sm sm:text-xl font-bold hover:text-white">
@@ -74,10 +80,7 @@ const Footer = () => {
         <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-8">
           <div className="flex-shrink-0 ">
             <Link href="/">
-              <img
-                src="/assets/common/logo-landing-footer-pc.png"
-                alt=""
-              />
+              <img src="/assets/common/logo-landing-footer-pc.png" alt="" />
             </Link>
           </div>
 
@@ -123,7 +126,7 @@ const Footer = () => {
         </div>
       </div>
     </footer>
-  );
-};
+  )
+}
 
-export default Footer;
+export default Footer

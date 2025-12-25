@@ -1,74 +1,73 @@
-"use client";
-import React, { use, useState, useEffect, useRef } from "react";
-import Image from "next/image";
-import { Play, Heart } from "lucide-react";
-import ProjectCarousel from "@/app/components/project-carousel";
-import VideoRecommendationsFlow from "@/app/components/video-recommendations-flow";
-import { getVideoById, getVideos } from "@/app/lib/api";
+'use client'
+import React, { use, useState, useEffect, useRef } from 'react'
+import Image from 'next/image'
+import { Play, Heart } from 'lucide-react'
+import ProjectCarousel from '@/app/components/project-carousel'
+import VideoRecommendationsFlow from '@/app/components/video-recommendations-flow'
+import { getVideoById, getVideos } from '@/app/lib/api'
 
 interface Video {
-  id: string | number;
-  title: string;
-  image: string;
-  categoryLabel: string;
-  userLabel: string;
-  viewCount: string;
-  viewDate: number;
-  description?: string;
-  url?: string;
+  id: string | number
+  title: string
+  image: string
+  categoryLabel: string
+  userLabel: string
+  viewCount: string
+  viewDate: number
+  description?: string
+  url?: string
 }
 
 const ProjectDetailPage = ({
   params: paramsPromise,
 }: {
-  params: Promise<{ projectId: string }>;
+  params: Promise<{ projectId: string }>
 }) => {
-  const params = use(paramsPromise);
-  const [video, setVideo] = useState<any>(null);
-  const [recommendedVideos, setRecommendedVideos] = useState<Video[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [isFavorited, setIsFavorited] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isSidebarPlaying, setIsSidebarPlaying] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const sidebarVideoRef = useRef<HTMLVideoElement>(null);
+  const params = use(paramsPromise)
+  const [video, setVideo] = useState<any>(null)
+  const [recommendedVideos, setRecommendedVideos] = useState<Video[]>([])
+  const [loading, setLoading] = useState(true)
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [isSidebarPlaying, setIsSidebarPlaying] = useState(false)
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const sidebarVideoRef = useRef<HTMLVideoElement>(null)
 
   const handlePlayClick = () => {
-    setIsPlaying(true);
+    setIsPlaying(true)
     if (videoRef.current) {
-      videoRef.current.play();
+      videoRef.current.play()
     }
-  };
+  }
 
   const handleSidebarPlayClick = () => {
-    setIsSidebarPlaying(true);
+    setIsSidebarPlaying(true)
     if (sidebarVideoRef.current) {
-      sidebarVideoRef.current.play();
+      sidebarVideoRef.current.play()
     }
-  };
+  }
 
   // 動画詳細を取得
   useEffect(() => {
     const fetchVideo = async () => {
       try {
-        setLoading(true);
-        const data = await getVideoById(params.projectId);
-        setVideo(data);
+        setLoading(true)
+        const data = await getVideoById(params.projectId)
+        setVideo(data)
       } catch (error) {
-        console.error("動画の取得に失敗しました:", error);
+        console.error('動画の取得に失敗しました:', error)
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
-    };
+    }
 
-    fetchVideo();
-  }, [params.projectId]);
+    fetchVideo()
+  }, [params.projectId])
 
   // レコメンド動画を取得
   useEffect(() => {
     const fetchRecommended = async () => {
       try {
-        const response = await getVideos(1, 20);
+        const response = await getVideos(1, 20)
         const transformedVideos = (response.videos || [])
           .filter((v: any) => v.id !== params.projectId)
           .slice(0, 10)
@@ -79,23 +78,25 @@ const ProjectDetailPage = ({
             categoryLabel: '', // Category should come from backend
             userLabel: v.owner?.name || '',
             viewCount: v.viewCount?.toLocaleString() || '0',
-            viewDate: Math.floor((Date.now() - new Date(v.createdAt).getTime()) / (1000 * 60 * 60 * 24)),
-          }));
-        setRecommendedVideos(transformedVideos);
+            viewDate: Math.floor(
+              (Date.now() - new Date(v.createdAt).getTime()) / (1000 * 60 * 60 * 24)
+            ),
+          }))
+        setRecommendedVideos(transformedVideos)
       } catch (error) {
-        console.error("レコメンド動画の取得に失敗しました:", error);
+        console.error('レコメンド動画の取得に失敗しました:', error)
       }
-    };
+    }
 
-    fetchRecommended();
-  }, [params.projectId]);
+    fetchRecommended()
+  }, [params.projectId])
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center text-gray-700">
         <p>読み込み中...</p>
       </div>
-    );
+    )
   }
 
   if (!video) {
@@ -103,13 +104,13 @@ const ProjectDetailPage = ({
       <div className="min-h-screen flex items-center justify-center text-gray-700">
         <p>動画が見つかりませんでした。</p>
       </div>
-    );
+    )
   }
 
   // サムネイル画像
-  const thumbnailUrl = video.thumbnailUrl || video.url || '';
+  const thumbnailUrl = video.thumbnailUrl || video.url || ''
   // Thumbnail videos should come from backend - for now use empty array
-  const thumbnailVideos: Array<{ id: number; thumbnail: string }> = [];
+  const thumbnailVideos: Array<{ id: number; thumbnail: string }> = []
 
   return (
     <div className="min-h-screen bg-white text-gray-700 mx-auto">
@@ -150,10 +151,7 @@ const ProjectDetailPage = ({
                         className="flex h-20 w-20 items-center justify-center rounded-full bg-white/90 transition-transform hover:scale-110 shadow-xl cursor-pointer"
                         aria-label="動画を再生"
                       >
-                        <Play
-                          className="ml-1 h-10 w-10 text-primary"
-                          fill="currentColor"
-                        />
+                        <Play className="ml-1 h-10 w-10 text-primary" fill="currentColor" />
                       </button>
                     </div>
                   </>
@@ -167,29 +165,29 @@ const ProjectDetailPage = ({
 
               {/* Thumbnail Grid */}
               {thumbnailVideos.length > 0 && (
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
-                {thumbnailVideos.map((video, index) => (
-                  <button
-                    key={index}
-                    className="aspect-video overflow-hidden rounded transition-all hover:border-primary hover:scale-105"
-                    aria-label="Previous banner"
-                  >
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                  {thumbnailVideos.map((video, index) => (
+                    <button
+                      key={index}
+                      className="aspect-video overflow-hidden rounded transition-all hover:border-primary hover:scale-105"
+                      aria-label="Previous banner"
+                    >
                       {video.thumbnail ? (
-                    <Image
-                      src={video.thumbnail}
-                      alt={`Scene ${index + 1}`}
-                      className="h-full w-full object-cover"
-                      width={344}
-                      height={100}
-                    />
+                        <Image
+                          src={video.thumbnail}
+                          alt={`Scene ${index + 1}`}
+                          className="h-full w-full object-cover"
+                          width={344}
+                          height={100}
+                        />
                       ) : (
                         <div className="w-full h-full bg-gray-200 flex items-center justify-center">
                           <span className="text-gray-400 text-xs">画像なし</span>
                         </div>
                       )}
-                  </button>
-                ))}
-              </div>
+                    </button>
+                  ))}
+                </div>
               )}
             </div>
 
@@ -228,10 +226,7 @@ const ProjectDetailPage = ({
                           className="flex h-16 w-16 items-center justify-center rounded-full bg-white/90 shadow-xl cursor-pointer transition-transform hover:scale-110"
                           aria-label="動画を再生"
                         >
-                          <Play
-                            className="ml-1 h-8 w-8 text-primary"
-                            fill="currentColor"
-                          />
+                          <Play className="ml-1 h-8 w-8 text-primary" fill="currentColor" />
                         </button>
                       </div>
                     </>
@@ -284,7 +279,7 @@ const ProjectDetailPage = ({
         />
       </main>
     </div>
-  );
-};
+  )
+}
 
-export default ProjectDetailPage;
+export default ProjectDetailPage
