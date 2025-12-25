@@ -272,7 +272,12 @@ export default function AdminReleaseVideoPage() {
                     {/* Thumbnail */}
                     <div className="w-48 h-32 bg-gray-200 rounded-lg flex-shrink-0 relative overflow-hidden">
                       {video.thumbnailUrl ? (
-                        <Image src={video.thumbnailUrl} alt={video.title} fill className="object-cover" />
+                        <Image
+                          src={video.thumbnailUrl}
+                          alt={video.title}
+                          fill
+                          className="object-cover"
+                        />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-gray-400">
                           <svg className="w-12 h-12" fill="currentColor" viewBox="0 0 20 20">
@@ -295,7 +300,9 @@ export default function AdminReleaseVideoPage() {
                           />
                           <textarea
                             value={editForm.description}
-                            onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                            onChange={(e) =>
+                              setEditForm({ ...editForm, description: e.target.value })
+                            }
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF0066]"
                             placeholder="説明文"
                             rows={3}
@@ -330,8 +337,12 @@ export default function AdminReleaseVideoPage() {
                         </div>
                       ) : (
                         <>
-                          <h3 className="text-lg font-semibold text-gray-900 mb-2">{video.title}</h3>
-                          <p className="text-sm text-gray-800 mb-4">{video.description || '説明なし'}</p>
+                          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                            {video.title}
+                          </h3>
+                          <p className="text-sm text-gray-800 mb-4">
+                            {video.description || '説明なし'}
+                          </p>
                           <div className="mb-4">
                             <span className="text-sm text-gray-500">価格: </span>
                             <span className="text-lg font-semibold text-gray-900">
@@ -466,7 +477,9 @@ export default function AdminReleaseVideoPage() {
 
               {/* Video Upload Section */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">動画ファイル *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  動画ファイル *
+                </label>
                 <div className="space-y-2">
                   <input
                     type="file"
@@ -481,7 +494,8 @@ export default function AdminReleaseVideoPage() {
                   )}
                   {selectedVideoFile && (
                     <p className="text-sm text-gray-800">
-                      選択中: {selectedVideoFile.name} ({(selectedVideoFile.size / 1024 / 1024).toFixed(2)} MB)
+                      選択中: {selectedVideoFile.name} (
+                      {(selectedVideoFile.size / 1024 / 1024).toFixed(2)} MB)
                     </p>
                   )}
                 </div>
@@ -489,7 +503,9 @@ export default function AdminReleaseVideoPage() {
 
               {/* Thumbnail Upload Section */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">サムネイル画像</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  サムネイル画像
+                </label>
                 <div className="space-y-2">
                   <input
                     type="file"
@@ -508,7 +524,8 @@ export default function AdminReleaseVideoPage() {
                   )}
                   {selectedThumbnailFile && (
                     <p className="text-sm text-gray-800">
-                      選択中: {selectedThumbnailFile.name} ({(selectedThumbnailFile.size / 1024).toFixed(2)} KB)
+                      選択中: {selectedThumbnailFile.name} (
+                      {(selectedThumbnailFile.size / 1024).toFixed(2)} KB)
                     </p>
                   )}
                 </div>
@@ -518,7 +535,13 @@ export default function AdminReleaseVideoPage() {
               <button
                 onClick={() => {
                   setShowUploadModal(false)
-                  setUploadForm({ title: '', description: '', url: '', thumbnailUrl: '', price: '' })
+                  setUploadForm({
+                    title: '',
+                    description: '',
+                    url: '',
+                    thumbnailUrl: '',
+                    price: '',
+                  })
                   setSelectedVideoFile(null)
                   setSelectedThumbnailFile(null)
                   setVideoPreview(null)
@@ -638,9 +661,7 @@ export default function AdminReleaseVideoPage() {
             <h2 className="text-2xl font-bold text-gray-900 mb-6">シリーズ設定</h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  シリーズ名
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">シリーズ名</label>
                 <input
                   type="text"
                   value={seriesForm.seriesName}
@@ -675,7 +696,9 @@ export default function AdminReleaseVideoPage() {
                               } else {
                                 setSeriesForm({
                                   ...seriesForm,
-                                  selectedVideos: seriesForm.selectedVideos.filter((id) => id !== video.id),
+                                  selectedVideos: seriesForm.selectedVideos.filter(
+                                    (id) => id !== video.id
+                                  ),
                                 })
                               }
                             }}
@@ -735,4 +758,3 @@ export default function AdminReleaseVideoPage() {
     </div>
   )
 }
-

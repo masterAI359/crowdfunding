@@ -214,7 +214,8 @@ export default function AllContactsPage() {
               <p className="text-yellow-800">{error}</p>
               {error.includes('バックエンドAPI') && (
                 <p className="text-sm text-yellow-700 mt-2">
-                  この機能を使用するには、バックエンドに `/api/admin/contacts` エンドポイントを実装する必要があります。
+                  この機能を使用するには、バックエンドに `/api/admin/contacts`
+                  エンドポイントを実装する必要があります。
                 </p>
               )}
             </div>
@@ -274,9 +275,7 @@ export default function AllContactsPage() {
                             {contact.phoneNumber || '-'}
                           </p>
                         </td>
-                        <td className="py-4 px-4">
-                          {getContactTypeBadge(contact)}
-                        </td>
+                        <td className="py-4 px-4">{getContactTypeBadge(contact)}</td>
                         <td className="py-4 px-4">
                           <p className="text-[16px] font-weight-[400] line-height-[140%] text-gray-900">
                             {formatCurrency(contact.purchaseAmount)}
@@ -394,4 +393,3 @@ export default function AllContactsPage() {
     </div>
   )
 }
-

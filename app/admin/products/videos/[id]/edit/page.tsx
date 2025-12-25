@@ -59,7 +59,10 @@ export default function VideoEditPage() {
         thumbnailUrl: data.thumbnailUrl || '',
         price: data.price || 0,
         isVisible: data.isVisible !== undefined ? data.isVisible : true,
-        totalSupportAmount: data.totalSupportAmount !== undefined && data.totalSupportAmount !== null ? data.totalSupportAmount : (data.netProfit || 0),
+        totalSupportAmount:
+          data.totalSupportAmount !== undefined && data.totalSupportAmount !== null
+            ? data.totalSupportAmount
+            : data.netProfit || 0,
         commentsEnabled: data.commentsEnabled !== undefined ? data.commentsEnabled : true,
       })
     } catch (error) {
@@ -132,9 +135,7 @@ export default function VideoEditPage() {
         <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-md p-6">
           {/* Video Preview */}
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              プレビュー
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">プレビュー</label>
             <div className="relative rounded-lg overflow-hidden bg-gray-100 aspect-video max-w-md">
               {formData.thumbnailUrl ? (
                 <SmartImage
@@ -232,7 +233,10 @@ export default function VideoEditPage() {
 
           {/* Total Support Amount */}
           <div className="mb-6">
-            <label htmlFor="totalSupportAmount" className="block text-sm font-medium text-gray-700 mb-2">
+            <label
+              htmlFor="totalSupportAmount"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
               現在の総支援額（円）
             </label>
             <input
@@ -240,23 +244,23 @@ export default function VideoEditPage() {
               id="totalSupportAmount"
               min="0"
               value={formData.totalSupportAmount}
-              onChange={(e) => setFormData({ ...formData, totalSupportAmount: parseInt(e.target.value) || 0 })}
+              onChange={(e) =>
+                setFormData({ ...formData, totalSupportAmount: parseInt(e.target.value) || 0 })
+              }
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF0066]"
               placeholder="0"
             />
-            <p className="mt-1 text-sm text-gray-500">
-              管理者が手動で設定できる総支援額です
-            </p>
+            <p className="mt-1 text-sm text-gray-500">管理者が手動で設定できる総支援額です</p>
           </div>
 
           {/* Visibility Status */}
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              公開ステータス
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">公開ステータス</label>
             <select
               value={formData.isVisible ? 'VISIBLE' : 'DRAFT'}
-              onChange={(e) => setFormData({ ...formData, isVisible: e.target.value === 'VISIBLE' })}
+              onChange={(e) =>
+                setFormData({ ...formData, isVisible: e.target.value === 'VISIBLE' })
+              }
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF0066]"
             >
               <option value="VISIBLE">公開中</option>
@@ -273,9 +277,7 @@ export default function VideoEditPage() {
                 onChange={(e) => setFormData({ ...formData, commentsEnabled: e.target.checked })}
                 className="w-5 h-5 text-[#FF0066] border-gray-300 rounded focus:ring-[#FF0066]"
               />
-              <span className="text-sm font-medium text-gray-700">
-                コメントを有効にする
-              </span>
+              <span className="text-sm font-medium text-gray-700">コメントを有効にする</span>
             </label>
             <p className="mt-1 text-sm text-gray-500 ml-8">
               この動画へのコメントを有効または無効にします
@@ -296,7 +298,9 @@ export default function VideoEditPage() {
               </div>
               <div>
                 <p className="text-xs text-gray-500">純利益</p>
-                <p className="text-lg font-semibold text-gray-900">¥{(video.netProfit || 0).toLocaleString()}</p>
+                <p className="text-lg font-semibold text-gray-900">
+                  ¥{(video.netProfit || 0).toLocaleString()}
+                </p>
               </div>
               <div>
                 <p className="text-xs text-gray-500">所有者</p>
@@ -327,4 +331,3 @@ export default function VideoEditPage() {
     </div>
   )
 }
-

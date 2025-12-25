@@ -167,10 +167,7 @@ export default function AdminReleaseCrowdfundingPage() {
     }
   }
 
-  const handleMediaFileSelect = async (
-    formType: 'edit' | 'create',
-    file: File | null
-  ) => {
+  const handleMediaFileSelect = async (formType: 'edit' | 'create', file: File | null) => {
     if (!file) return
 
     if (!file.type.startsWith('image/')) {
@@ -369,7 +366,9 @@ export default function AdminReleaseCrowdfundingPage() {
                           <input
                             type="number"
                             value={editForm.goalAmount}
-                            onChange={(e) => setEditForm({ ...editForm, goalAmount: e.target.value })}
+                            onChange={(e) =>
+                              setEditForm({ ...editForm, goalAmount: e.target.value })
+                            }
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF0066]"
                             placeholder="1000000"
                           />
@@ -415,7 +414,9 @@ export default function AdminReleaseCrowdfundingPage() {
                               className="flex items-center gap-2 p-2 bg-gray-50 rounded"
                             >
                               <span className="text-sm text-gray-600 flex-1 truncate">
-                                {media.url.length > 50 ? `${media.url.substring(0, 50)}...` : media.url}
+                                {media.url.length > 50
+                                  ? `${media.url.substring(0, 50)}...`
+                                  : media.url}
                               </span>
                               <button
                                 onClick={() => removeMedia('edit', index)}
@@ -448,12 +449,21 @@ export default function AdminReleaseCrowdfundingPage() {
                       <div className="flex gap-6">
                         {project.image && (
                           <div className="w-48 h-32 bg-gray-200 rounded-lg flex-shrink-0 relative overflow-hidden">
-                            <Image src={project.image} alt={project.title} fill className="object-cover" />
+                            <Image
+                              src={project.image}
+                              alt={project.title}
+                              fill
+                              className="object-cover"
+                            />
                           </div>
                         )}
                         <div className="flex-1">
-                          <h3 className="text-lg font-semibold text-gray-900 mb-2">{project.title}</h3>
-                          <p className="text-sm text-gray-600 mb-4">{project.description || '説明なし'}</p>
+                          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                            {project.title}
+                          </h3>
+                          <p className="text-sm text-gray-600 mb-4">
+                            {project.description || '説明なし'}
+                          </p>
                           <div className="grid grid-cols-4 gap-4 mb-4">
                             <div>
                               <div className="text-sm text-gray-500">目標金額</div>
@@ -475,7 +485,9 @@ export default function AdminReleaseCrowdfundingPage() {
                             </div>
                             <div>
                               <div className="text-sm text-gray-500">ステータス</div>
-                              <div className="text-lg font-semibold text-gray-900">{project.status}</div>
+                              <div className="text-lg font-semibold text-gray-900">
+                                {project.status}
+                              </div>
                             </div>
                           </div>
                           <div className="flex gap-2">
@@ -539,7 +551,9 @@ export default function AdminReleaseCrowdfundingPage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">目標金額（円） *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    目標金額（円） *
+                  </label>
                   <input
                     type="number"
                     value={createForm.goalAmount}
@@ -559,7 +573,9 @@ export default function AdminReleaseCrowdfundingPage() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">メディア（画像）</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  メディア（画像）
+                </label>
                 <div className="mb-2">
                   <label className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 cursor-pointer inline-block">
                     <input
@@ -787,4 +803,3 @@ export default function AdminReleaseCrowdfundingPage() {
     </div>
   )
 }
-
