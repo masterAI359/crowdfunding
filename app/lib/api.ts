@@ -502,6 +502,7 @@ export const createVideo = async (data: {
   description?: string
   url: string
   thumbnailUrl?: string
+  price?: number
 }) => {
   const response = await apiClient.post('/videos', data)
   return response.data
@@ -518,6 +519,7 @@ export const updateVideo = async (
     url?: string
     thumbnailUrl?: string
     isVisible?: boolean
+    price?: number
   }
 ) => {
   const response = await apiClient.put(`/videos/${id}`, data)

@@ -19,6 +19,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       sales: pathname.startsWith('/admin/sales') || pathname.startsWith('/admin/stripe'),
       website: pathname.startsWith('/admin/website'),
       contacts: pathname.startsWith('/admin/contacts'),
+      release: pathname.startsWith('/admin/release'),
     }
     return state
   }
@@ -74,6 +75,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       sales: pathname.startsWith('/admin/sales') || pathname.startsWith('/admin/stripe'),
       website: pathname.startsWith('/admin/website'),
       contacts: pathname.startsWith('/admin/contacts'),
+      release: pathname.startsWith('/admin/release'),
     })
   }, [pathname])
 
@@ -217,6 +219,33 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         { id: 'all', label: '全ての連絡先', href: '/admin/contacts/all' },
         { id: 'exhibitors', label: '出品者', href: '/admin/contacts/exhibitors' },
         { id: 'customers', label: 'カスタマー', href: '/admin/contacts/customers' },
+      ],
+    },
+    {
+      id: 'release',
+      label: 'Release',
+      type: 'category' as const,
+      icon: (
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 20 20"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M10 2L3 6V10C3 14.55 6.36 18.74 10 20C13.64 18.74 17 14.55 17 10V6L10 2ZM15 10C15 13.53 12.61 16.7 10 17.93C7.39 16.7 5 13.53 5 10V7.3L10 4.19L15 7.3V10ZM10 12C11.1 12 12 11.1 12 10C12 8.9 11.1 8 10 8C8.9 8 8 8.9 8 10C8 11.1 8.9 12 10 12Z"
+            fill="black"
+          />
+        </svg>
+      ),
+      children: [
+        {
+          id: 'crowdfunding',
+          label: 'クラウドファンディング',
+          href: '/admin/release/crowdfunding',
+        },
+        { id: 'videos', label: '動画コンテンツ', href: '/admin/release/video' },
       ],
     },
   ]
