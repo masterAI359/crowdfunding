@@ -560,5 +560,96 @@ export const getUserLogs = async (userId?: string, action?: string, page: number
   return response.data;
 };
 
+/**
+ * 管理者ダッシュボード統計情報取得
+ */
+export const getAdminDashboardStats = async (dateRange: string = '7days') => {
+  const response = await apiClient.get('/admin/dashboard/stats', {
+    params: { dateRange },
+  });
+  return response.data;
+};
+
+/**
+ * 管理者用：全プロジェクト取得（ステータス問わず）
+ */
+export const getAdminProjects = async (page: number = 1, limit: number = 100, search?: string) => {
+  const response = await apiClient.get('/admin/projects', {
+    params: { page, limit, search },
+  });
+  return response.data;
+};
+
+/**
+ * 管理者用：クラウドファンディング統計情報取得
+ */
+export const getAdminCrowdfundingStats = async () => {
+  const response = await apiClient.get('/admin/crowdfunding/stats');
+  return response.data;
+};
+
+/**
+ * 管理者用：全動画取得（表示状態問わず）
+ */
+export const getAdminVideos = async (page: number = 1, limit: number = 100, search?: string) => {
+  const response = await apiClient.get('/admin/videos', {
+    params: { page, limit, search },
+  });
+  return response.data;
+};
+
+/**
+ * 管理者用：動画コンテンツ統計情報取得
+ */
+export const getAdminVideoStats = async () => {
+  const response = await apiClient.get('/admin/videos/stats');
+  return response.data;
+};
+
+/**
+ * 管理者用：動画更新（所有者チェックなし）
+ */
+export const updateAdminVideo = async (id: string, data: {
+  title?: string;
+  description?: string;
+  url?: string;
+  thumbnailUrl?: string;
+  isVisible?: boolean;
+}) => {
+  const response = await apiClient.put(`/admin/videos/${id}`, data);
+  return response.data;
+};
+
+/**
+ * 管理者用：動画削除（所有者チェックなし）
+ */
+export const deleteAdminVideo = async (id: string) => {
+  const response = await apiClient.delete(`/admin/videos/${id}`);
+  return response.data;
+};
+
+/**
+ * 管理者用：決済履歴取得
+ */
+export const getAdminPayments = async (
+  page: number = 1,
+  limit: number = 50,
+  search?: string,
+  status?: string,
+) => {
+  const response = await apiClient.get('/admin/stripe/payments', {
+    params: { page, limit, search, status },
+  });
+  return response.data;
+};
+
+/**
+ * 管理者用：Stripe統計情報取得
+ */
+export const getAdminStripeStats = async () => {
+  const response = await apiClient.get('/admin/stripe/stats');
+  return response.data;
+};
+
 export default apiClient;
 

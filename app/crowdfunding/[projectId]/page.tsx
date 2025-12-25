@@ -46,6 +46,10 @@ const ProjectDetailPage = ({ params: paramsPromise }: { params: Promise<{ projec
       try {
         setLoading(true);
         const data = await getProjectById(params.projectId);
+        
+        // お気に入り状態を明示的に取得（boolean値として確実に扱う）
+        const favoriteStatus = Boolean(data.isFavorite);
+        
         // データを変換してフロントエンドの形式に合わせる
         const transformedProject: Project = {
           id: data.id,
@@ -65,13 +69,15 @@ const ProjectDetailPage = ({ params: paramsPromise }: { params: Promise<{ projec
             description: ret.description || ret.notes || '',
             notes: ret.notes,
           })),
-          isFavorited: data.isFavorite || false,
+          isFavorited: favoriteStatus,
           owner: data.owner, // Add owner information
         };
         setProject(transformedProject);
-        setIsFavorited(data.isFavorite || false);
+        setIsFavorited(favoriteStatus);
       } catch (error) {
         console.error("プロジェクトの取得に失敗しました:", error);
+        // エラー時はお気に入り状態をfalseにリセット
+        setIsFavorited(false);
       } finally {
         setLoading(false);
       }
@@ -131,10 +137,12 @@ const ProjectDetailPage = ({ params: paramsPromise }: { params: Promise<{ projec
     if (!project || isTogglingFavorite) return;
     try {
       setIsTogglingFavorite(true);
-      await toggleFavorite(project.id);
-      setIsFavorited(!isFavorited);
+      const response = await toggleFavorite(project.id);
+      // Use the response from the API to ensure UI is in sync with server state
+      setIsFavorited(response?.isFavorite ?? !isFavorited);
     } catch (error) {
       console.error("お気に入りの更新に失敗しました:", error);
+      // On error, don't change the state to keep UI consistent
     } finally {
       setIsTogglingFavorite(false);
     }
@@ -294,12 +302,13 @@ const ProjectDetailPage = ({ params: paramsPromise }: { params: Promise<{ projec
                   ) : (
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      className={`h-6 w-6 md:h-8 md:w-8 ${isFavorited ? 'text-[#FF0066] fill-current' : 'text-gray-400'}`}
-                      fill="none"
+                      className={`h-6 w-6 md:h-8 md:w-8 ${isFavorited ? 'text-[#FF0066]' : 'text-gray-400'}`}
+                      fill={isFavorited ? 'currentColor' : 'none'}
                       viewBox="0 0 24 24"
                       stroke="currentColor"
+                      strokeWidth={isFavorited ? 3 : 2}
                     >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                     </svg>
                   )}
                 </button>

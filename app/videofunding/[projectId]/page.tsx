@@ -27,7 +27,6 @@ const ProjectDetailPage = ({
   const [video, setVideo] = useState<any>(null);
   const [recommendedVideos, setRecommendedVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isFavorited, setIsFavorited] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isSidebarPlaying, setIsSidebarPlaying] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
