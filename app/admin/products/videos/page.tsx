@@ -9,6 +9,7 @@ import {
 } from '@/app/lib/api'
 import LoadingSpinner from '@/app/components/loading-spinner'
 import { SmartImage } from '@/app/utils/image-helper'
+import { EditIcon } from 'lucide-react'
 
 interface Video {
   id: string
@@ -137,6 +138,10 @@ export default function VideosProductsPage() {
       console.error('Failed to copy link:', error)
       alert('リンクのコピーに失敗しました')
     }
+  }
+
+  const handleEdit = (videoId: string) => {
+    router.push(`/admin/products/videos/${videoId}/edit`)
   }
 
   const handleDelete = async (videoId: string) => {
@@ -301,7 +306,7 @@ export default function VideosProductsPage() {
                             >
                               <td className="py-4 px-4">
                                 <div className="flex items-center gap-3">
-                                  <div className="relative rounded overflow-hidden flex-shrink-0">
+                                  <div className="relative rounded overflow-hidden shrink-0">
                                     <SmartImage
                                       src={getVideoThumbnail(video)}
                                       alt={video.title}
@@ -363,6 +368,7 @@ export default function VideosProductsPage() {
                                       viewBox="0 0 24 24"
                                       fill="none"
                                       xmlns="http://www.w3.org/2000/svg"
+                                      className="w-[20px] h-[20px] hover:text-[#FF0066]"
                                     >
                                       <path
                                         d="M14.8279 12.0004L16.2429 13.4144L19.0709 10.5864C19.8211 9.83625 20.2425 8.81881 20.2425 7.75792C20.2425 6.69702 19.8211 5.67958 19.0709 4.92942C18.6995 4.55797 18.2585 4.26333 17.7732 4.0623C17.2879 3.86128 16.7677 3.75781 16.2424 3.75781C15.1815 3.75781 14.1641 4.17925 13.4139 4.92942L10.5859 7.75742L11.9999 9.17242L14.8279 6.34342C15.2031 5.96827 15.7119 5.75751 16.2424 5.75751C16.773 5.75751 17.2818 5.96827 17.6569 6.34342C18.0321 6.71856 18.2428 7.22738 18.2428 7.75792C18.2428 8.28846 18.0321 8.79727 17.6569 9.17242L14.8279 12.0004ZM11.9999 14.8294L13.4139 16.2434L10.5859 19.0714C9.83576 19.8216 8.81832 20.243 7.75743 20.243C6.69653 20.243 5.67909 19.8216 4.92893 19.0714C4.17876 18.3212 3.75732 17.3038 3.75732 16.2429C3.75732 15.182 4.17876 14.1646 4.92893 13.4144L7.75693 10.5864L9.17193 12.0004L6.34293 14.8294C5.96791 15.2046 5.75728 15.7133 5.75738 16.2438C5.75747 16.7742 5.96828 17.2829 6.34343 17.6579C6.71858 18.0329 7.22733 18.2436 7.75778 18.2435C8.28823 18.2434 8.79691 18.0326 9.17193 17.6574L11.9999 14.8294Z"
@@ -386,6 +392,7 @@ export default function VideosProductsPage() {
                                       viewBox="0 0 24 24"
                                       fill="none"
                                       xmlns="http://www.w3.org/2000/svg"
+                                      className="w-[20px] h-[20px] hover:text-[#FF0066]"
                                     >
                                       <path
                                         d="M12 18C17.523 18 22 12 22 12C22 12 17.523 6 12 6C6.477 6 2 12 2 12C2 12 6.477 18 12 18Z"
@@ -401,7 +408,14 @@ export default function VideosProductsPage() {
                                       />
                                     </svg>
                                   </button>
-
+                                  {/* Edit Button */}
+                                  <button
+                                    onClick={() => handleEdit(video.id)}
+                                    className="p-2 text-gray-600 hover:bg-gray-100 rounded transition-colors"
+                                    title="動画を編集"
+                                  >
+                                    <EditIcon className="w-[20px] h-[20px] font-semibold" />
+                                  </button>
                                   {/* Action Menu Button */}
                                   <div className="relative">
                                     <button
