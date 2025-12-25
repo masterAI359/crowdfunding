@@ -652,6 +652,9 @@ export const updateAdminVideo = async (
     url?: string
     thumbnailUrl?: string
     isVisible?: boolean
+    price?: number
+    commentsEnabled?: boolean
+    totalSupportAmount?: number
   }
 ) => {
   const response = await apiClient.put(`/admin/videos/${id}`, data)
