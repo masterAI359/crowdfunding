@@ -5,6 +5,7 @@ import { Play, Heart } from 'lucide-react'
 import ProjectCarousel from '@/app/components/project-carousel'
 import VideoRecommendationsFlow from '@/app/components/video-recommendations-flow'
 import { getVideoById, getVideos } from '@/app/lib/api'
+import LoadingSpinner from '@/app/components/loading-spinner'
 
 interface Video {
   id: string | number
@@ -29,6 +30,8 @@ const ProjectDetailPage = ({
   const [loading, setLoading] = useState(true)
   const [isPlaying, setIsPlaying] = useState(false)
   const [isSidebarPlaying, setIsSidebarPlaying] = useState(false)
+  const [isFavorited, setIsFavorited] = useState(false)
+  const [isTogglingFavorite, setIsTogglingFavorite] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
   const sidebarVideoRef = useRef<HTMLVideoElement>(null)
 
@@ -46,6 +49,19 @@ const ProjectDetailPage = ({
     }
   }
 
+  // 動画のお気に入り状態を取得（localStorageから）
+  const getVideoFavoriteStatus = (videoId: string): boolean => {
+    if (typeof window === 'undefined') return false
+    try {
+      const favorites = JSON.parse(
+        localStorage.getItem('videoFavorites') || '[]',
+      )
+      return favorites.includes(videoId)
+    } catch {
+      return false
+    }
+  }
+
   // 動画詳細を取得
   useEffect(() => {
     const fetchVideo = async () => {
@@ -53,8 +69,13 @@ const ProjectDetailPage = ({
         setLoading(true)
         const data = await getVideoById(params.projectId)
         setVideo(data)
+        
+        // お気に入り状態をlocalStorageから取得
+        const favoriteStatus = getVideoFavoriteStatus(params.projectId)
+        setIsFavorited(favoriteStatus)
       } catch (error) {
         console.error('動画の取得に失敗しました:', error)
+        setIsFavorited(false)
       } finally {
         setLoading(false)
       }
@@ -62,6 +83,42 @@ const ProjectDetailPage = ({
 
     fetchVideo()
   }, [params.projectId])
+
+  // お気に入り切り替え
+  const handleToggleFavorite = async () => {
+    if (!video || isTogglingFavorite) return
+    
+    try {
+      setIsTogglingFavorite(true)
+      
+      // localStorageから現在のお気に入りリストを取得
+      const favorites = JSON.parse(
+        localStorage.getItem('videoFavorites') || '[]',
+      )
+      
+      const videoId = String(video.id)
+      const isCurrentlyFavorited = favorites.includes(videoId)
+      
+      let newFavorites: string[]
+      if (isCurrentlyFavorited) {
+        // お気に入りから削除
+        newFavorites = favorites.filter((id: string) => id !== videoId)
+        setIsFavorited(false)
+      } else {
+        // お気に入りに追加
+        newFavorites = [...favorites, videoId]
+        setIsFavorited(true)
+      }
+      
+      // localStorageに保存
+      localStorage.setItem('videoFavorites', JSON.stringify(newFavorites))
+    } catch (error) {
+      console.error('お気に入りの更新に失敗しました:', error)
+      // エラー時は状態を変更しない
+    } finally {
+      setIsTogglingFavorite(false)
+    }
+  }
 
   // レコメンド動画を取得
   useEffect(() => {
@@ -256,8 +313,28 @@ const ProjectDetailPage = ({
                     </a>
                   </div>
                   <div className="flex flex-col justify-start">
-                    <button className="col-span-1 self-center" aria-label="Previous banner">
-                      <Heart className="h-10 sm:h-14 w-10 sm:w-14 text-[#D9D9D9]" />
+                    <button
+                      onClick={handleToggleFavorite}
+                      disabled={isTogglingFavorite}
+                      className="col-span-1 self-center cursor-pointer flex items-center justify-center rounded-3xl hover:bg-gray-50/60 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      aria-label={
+                        isFavorited
+                          ? 'お気に入りから削除'
+                          : 'お気に入りに追加'
+                      }
+                    >
+                      {isTogglingFavorite ? (
+                        <LoadingSpinner
+                          size="sm"
+                          className="text-[#FF0066] h-10 sm:h-14 w-10 sm:w-14"
+                        />
+                      ) : (
+                        <Heart
+                          className={`h-10 sm:h-14 w-10 sm:w-14 ${
+                            isFavorited ? 'text-[#FF0066] fill-[#FF0066]' : 'text-[#D9D9D9]'
+                          }`}
+                        />
+                      )}
                     </button>
                   </div>
                 </div>
