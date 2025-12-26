@@ -1,8 +1,23 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Basic Authentication
+
+This site is protected with Basic HTTP authentication. To configure the credentials, set the following environment variables:
+
+```bash
+BASIC_AUTH_USER=your-username
+BASIC_AUTH_PASSWORD=your-password
+```
+
+**Default credentials** (if not set):
+- Username: `admin`
+- Password: `password`
+
+**Important**: Change these defaults in production! Create a `.env.local` file in the frontend directory with your secure credentials.
+
 ## Getting Started
 
-First, run the development server:
+First, set up your environment variables (see Basic Authentication section above), then run the development server:
 
 ```bash
 npm run dev
