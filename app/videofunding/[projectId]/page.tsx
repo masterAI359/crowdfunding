@@ -53,9 +53,7 @@ const ProjectDetailPage = ({
   const getVideoFavoriteStatus = (videoId: string): boolean => {
     if (typeof window === 'undefined') return false
     try {
-      const favorites = JSON.parse(
-        localStorage.getItem('videoFavorites') || '[]',
-      )
+      const favorites = JSON.parse(localStorage.getItem('videoFavorites') || '[]')
       return favorites.includes(videoId)
     } catch {
       return false
@@ -69,7 +67,7 @@ const ProjectDetailPage = ({
         setLoading(true)
         const data = await getVideoById(params.projectId)
         setVideo(data)
-        
+
         // お気に入り状態をlocalStorageから取得
         const favoriteStatus = getVideoFavoriteStatus(params.projectId)
         setIsFavorited(favoriteStatus)
@@ -87,18 +85,16 @@ const ProjectDetailPage = ({
   // お気に入り切り替え
   const handleToggleFavorite = async () => {
     if (!video || isTogglingFavorite) return
-    
+
     try {
       setIsTogglingFavorite(true)
-      
+
       // localStorageから現在のお気に入りリストを取得
-      const favorites = JSON.parse(
-        localStorage.getItem('videoFavorites') || '[]',
-      )
-      
+      const favorites = JSON.parse(localStorage.getItem('videoFavorites') || '[]')
+
       const videoId = String(video.id)
       const isCurrentlyFavorited = favorites.includes(videoId)
-      
+
       let newFavorites: string[]
       if (isCurrentlyFavorited) {
         // お気に入りから削除
@@ -109,7 +105,7 @@ const ProjectDetailPage = ({
         newFavorites = [...favorites, videoId]
         setIsFavorited(true)
       }
-      
+
       // localStorageに保存
       localStorage.setItem('videoFavorites', JSON.stringify(newFavorites))
     } catch (error) {
@@ -317,11 +313,7 @@ const ProjectDetailPage = ({
                       onClick={handleToggleFavorite}
                       disabled={isTogglingFavorite}
                       className="col-span-1 self-center cursor-pointer flex items-center justify-center rounded-3xl hover:bg-gray-50/60 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      aria-label={
-                        isFavorited
-                          ? 'お気に入りから削除'
-                          : 'お気に入りに追加'
-                      }
+                      aria-label={isFavorited ? 'お気に入りから削除' : 'お気に入りに追加'}
                     >
                       {isTogglingFavorite ? (
                         <LoadingSpinner
