@@ -203,11 +203,11 @@ const ProjectDetailPage = ({
           <div className="hidden lg:flex h-[50vh] relative">
             {/* Left Black Background */}
             <div className="w-[60%] bg-black flex items-center justify-center p-5 absolute left-0 top-0 bottom-0">
-              <div className="text-white max-w-3xl md:ml-10">
-                <h1 className="xl:text-6xl lg:text-4xl sm:text-3xl  font-bold mb-6">
+              <div className="text-white max-w-3xl md:ml-10 text-balance">
+                <h1 className="xl:text-6xl lg:text-4xl sm:text-3xl font-bold mb-6 text-balance tracking-tight line-height-[1.2]">
                   {project.title}
                 </h1>
-                <p className="text-lg mb-8 leading-relaxed">{project.description}</p>
+                <p className="text-lg mb-8 leading-relaxed text-balance line-height-1">{project.description}</p>
                 <Link
                   href={`/crowdfunding/${project.id}/support`}
                   className="bg-[#FF0066] hover:bg-[#FF0066]/80 text-white font-bold py-4 px-8 sm:w-1/2 rounded-full transition-colors text-center"

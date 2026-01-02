@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
 import { useAuth } from '@/app/hooks/useAuth'
-import { getCurrentUser, getPurchaseHistory, updateUserProfile } from '@/app/lib/api'
+import { getCurrentUser, getPurchaseHistory, updateUserProfile, updateCardInfo } from '@/app/lib/api'
 import LoadingSpinner from '@/app/components/loading-spinner'
 
 const UserSettingsPage = () => {
@@ -200,7 +200,7 @@ const AccountInfoContent = ({
         {activeSubTab === 'contact' && (
           <ContactAndSettingsTab userData={userData} onUpdate={onUpdate} />
         )}
-        {activeSubTab === 'billing' && <BillingTab />}
+        {activeSubTab === 'billing' && <BillingTab userData={userData} onUpdate={onUpdate} />}
         {activeSubTab === 'purchase-history' && (
           <PurchaseHistoryTab purchaseData={purchaseData} isLoading={isLoadingData} />
         )}
@@ -345,23 +345,264 @@ const ContactAndSettingsTab = ({ userData, onUpdate }: { userData: any; onUpdate
 }
 
 // Billing Tab
-const BillingTab = () => {
+const BillingTab = ({ userData, onUpdate }: { userData: any; onUpdate: () => void }) => {
+  const [isEditing, setIsEditing] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
+  const [formData, setFormData] = useState({
+    cardNumber: userData?.cardNumber || '',
+    cardLast4: userData?.cardLast4 || '',
+    cardExpMonth: userData?.cardExpMonth || '',
+    cardExpYear: userData?.cardExpYear || '',
+    cardBrand: userData?.cardBrand || '',
+  })
+  const [showFullCardNumber, setShowFullCardNumber] = useState(false)
+
+  useEffect(() => {
+    if (userData) {
+      setFormData({
+        cardNumber: userData.cardNumber || '',
+        cardLast4: userData.cardLast4 || '',
+        cardExpMonth: userData.cardExpMonth || '',
+        cardExpYear: userData.cardExpYear || '',
+        cardBrand: userData.cardBrand || '',
+      })
+    }
+  }, [userData])
+
+  const handleEdit = () => {
+    setIsEditing(true)
+    setError('')
+    setSuccess('')
+  }
+
+  const handleCancel = () => {
+    setIsEditing(false)
+    setFormData({
+      cardNumber: userData?.cardNumber || '',
+      cardLast4: userData?.cardLast4 || '',
+      cardExpMonth: userData?.cardExpMonth || '',
+      cardExpYear: userData?.cardExpYear || '',
+      cardBrand: userData?.cardBrand || '',
+    })
+    setError('')
+    setSuccess('')
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+    setSuccess('')
+    setIsSaving(true)
+
+    try {
+      // バリデーション
+      if (formData.cardNumber) {
+        const cardNumberDigits = formData.cardNumber.replace(/\D/g, '')
+        if (cardNumberDigits.length < 13 || cardNumberDigits.length > 19) {
+          throw new Error('カード番号は13-19桁の数字である必要があります')
+        }
+      }
+
+      if (formData.cardLast4 && !/^\d{4}$/.test(formData.cardLast4)) {
+        throw new Error('カード番号の下4桁は4桁の数字である必要があります')
+      }
+
+      if (formData.cardExpMonth && (Number(formData.cardExpMonth) < 1 || Number(formData.cardExpMonth) > 12)) {
+        throw new Error('有効期限の月は1-12の間で指定してください')
+      }
+
+      const currentYear = new Date().getFullYear()
+      if (formData.cardExpYear && Number(formData.cardExpYear) < currentYear) {
+        throw new Error('有効期限の年が無効です')
+      }
+
+      await updateCardInfo({
+        cardNumber: formData.cardNumber || undefined,
+        cardLast4: formData.cardLast4 || undefined,
+        cardExpMonth: formData.cardExpMonth ? Number(formData.cardExpMonth) : undefined,
+        cardExpYear: formData.cardExpYear ? Number(formData.cardExpYear) : undefined,
+        cardBrand: formData.cardBrand || undefined,
+      })
+
+      setSuccess('クレジットカード情報が正常に更新されました')
+      setIsEditing(false)
+      onUpdate()
+    } catch (err: any) {
+      setError(err.response?.data?.message || err.message || 'カード情報の更新に失敗しました')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const hasCardInfo = userData?.cardLast4 || userData?.cardExpMonth || userData?.cardExpYear
+
   return (
     <div className="space-y-6">
       <div>
         <h3 className="text-lg font-semibold text-gray-900 mb-4">登録されたクレジットカード</h3>
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-500 mb-1">カード番号</p>
-              <p className="text-lg font-mono">**** **** **** 1234</p>
-              <p className="text-sm text-gray-500 mt-2">有効期限: 12/25</p>
-            </div>
-            <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-              変更
-            </button>
+        {!isEditing ? (
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
+            {hasCardInfo ? (
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <p className="text-sm text-gray-500 mb-1">カード番号</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-lg font-mono">
+                      {showFullCardNumber && userData?.cardNumber
+                        ? userData.cardNumber.replace(/(.{4})/g, '$1 ').trim()
+                        : `${userData?.cardBrand ? userData.cardBrand + ' ' : ''}**** **** **** ${userData?.cardLast4 || '****'}`}
+                    </p>
+                    {userData?.cardNumber && (
+                      <button
+                        onMouseDown={() => setShowFullCardNumber(true)}
+                        onMouseUp={() => setShowFullCardNumber(false)}
+                        onMouseLeave={() => setShowFullCardNumber(false)}
+                        onTouchStart={() => setShowFullCardNumber(true)}
+                        onTouchEnd={() => setShowFullCardNumber(false)}
+                        className="px-3 py-1 text-xs bg-gray-200 hover:bg-gray-300 rounded transition-colors"
+                      >
+                        {showFullCardNumber ? '離すと非表示' : '長押しで表示'}
+                      </button>
+                    )}
+                  </div>
+                  {userData?.cardExpMonth && userData?.cardExpYear && (
+                    <p className="text-sm text-gray-500 mt-2">
+                      有効期限: {String(userData.cardExpMonth).padStart(2, '0')}/{String(userData.cardExpYear).slice(-2)}
+                    </p>
+                  )}
+                </div>
+                <button
+                  onClick={handleEdit}
+                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors ml-4"
+                >
+                  変更
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-500">カード情報が登録されていません</p>
+                </div>
+                <button
+                  onClick={handleEdit}
+                  className="px-4 py-2 bg-[#FF0066] text-white rounded-lg hover:bg-[#E6005C] transition-colors"
+                >
+                  カードを登録
+                </button>
+              </div>
+            )}
           </div>
-        </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="bg-gray-50 border border-gray-200 rounded-lg p-6 space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">カード番号</label>
+                <input
+                  type="text"
+                  maxLength={23}
+                  value={formData.cardNumber.replace(/(.{4})/g, '$1 ').trim()}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, '')
+                    setFormData({
+                      ...formData,
+                      cardNumber: value,
+                      cardLast4: value.slice(-4) || formData.cardLast4,
+                    })
+                  }}
+                  placeholder="1234 5678 9012 3456"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF0066] focus:border-transparent font-mono"
+                />
+                <p className="mt-1 text-xs text-gray-500">カード番号を入力してください（数字のみ）</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">カードブランド</label>
+                <select
+                  value={formData.cardBrand}
+                  onChange={(e) => setFormData({ ...formData, cardBrand: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF0066] focus:border-transparent"
+                >
+                  <option value="">選択してください</option>
+                  <option value="Visa">Visa</option>
+                  <option value="Mastercard">Mastercard</option>
+                  <option value="JCB">JCB</option>
+                  <option value="American Express">American Express</option>
+                  <option value="Diners Club">Diners Club</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">カード番号（下4桁）</label>
+                <input
+                  type="text"
+                  maxLength={4}
+                  value={formData.cardLast4}
+                  onChange={(e) => setFormData({ ...formData, cardLast4: e.target.value.replace(/\D/g, '') })}
+                  placeholder="1234"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF0066] focus:border-transparent"
+                  readOnly
+                  disabled
+                />
+                <p className="mt-1 text-xs text-gray-500">カード番号から自動入力されます</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">有効期限（月）</label>
+                <select
+                  value={formData.cardExpMonth}
+                  onChange={(e) => setFormData({ ...formData, cardExpMonth: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF0066] focus:border-transparent"
+                >
+                  <option value="">選択してください</option>
+                  {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
+                    <option key={month} value={month}>
+                      {String(month).padStart(2, '0')}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">有効期限（年）</label>
+                <input
+                  type="number"
+                  min={new Date().getFullYear()}
+                  max={new Date().getFullYear() + 20}
+                  value={formData.cardExpYear}
+                  onChange={(e) => setFormData({ ...formData, cardExpYear: e.target.value })}
+                  placeholder={new Date().getFullYear().toString()}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF0066] focus:border-transparent"
+                />
+              </div>
+            </div>
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+                {error}
+              </div>
+            )}
+            {success && (
+              <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">
+                {success}
+              </div>
+            )}
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={handleCancel}
+                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                disabled={isSaving}
+              >
+                キャンセル
+              </button>
+              <button
+                type="submit"
+                disabled={isSaving}
+                className="px-6 py-2 bg-[#FF0066] text-white rounded-lg hover:bg-[#E6005C] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {isSaving && <LoadingSpinner size="sm" className="text-white" />}
+                保存
+              </button>
+            </div>
+          </form>
+        )}
       </div>
     </div>
   )

@@ -186,6 +186,20 @@ export const updateUserProfile = async (data: {
 }
 
 /**
+ * クレジットカード情報更新
+ */
+export const updateCardInfo = async (data: {
+  cardNumber?: string
+  cardLast4?: string
+  cardExpMonth?: number
+  cardExpYear?: number
+  cardBrand?: string
+}) => {
+  const response = await apiClient.put('/users/card', data)
+  return response.data
+}
+
+/**
  * パスワード変更
  */
 export const changePassword = async (oldPassword: string, newPassword: string) => {
