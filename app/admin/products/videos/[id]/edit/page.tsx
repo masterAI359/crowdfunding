@@ -4,6 +4,7 @@ import { useRouter, useParams } from 'next/navigation'
 import { getVideoById, updateAdminVideo } from '@/app/lib/api'
 import LoadingSpinner from '@/app/components/loading-spinner'
 import { SmartImage } from '@/app/utils/image-helper'
+import { showError, showSuccess, handleApiError } from '@/app/lib/toast'
 
 interface Video {
   id: string
@@ -67,7 +68,7 @@ export default function VideoEditPage() {
       })
     } catch (error) {
       console.error('Failed to load video:', error)
-      alert('動画の読み込みに失敗しました')
+      handleApiError(error)
       router.back()
     } finally {
       setLoading(false)
@@ -90,11 +91,11 @@ export default function VideoEditPage() {
         commentsEnabled: formData.commentsEnabled,
         totalSupportAmount: formData.totalSupportAmount || undefined,
       })
-      alert('動画情報を更新しました')
+      showSuccess('動画情報を更新しました')
       router.push('/admin/products/videos')
     } catch (error) {
       console.error('Failed to update video:', error)
-      alert('動画の更新に失敗しました')
+      handleApiError(error)
     } finally {
       setSaving(false)
     }

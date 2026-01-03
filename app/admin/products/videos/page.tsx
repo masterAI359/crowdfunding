@@ -10,6 +10,7 @@ import {
 import LoadingSpinner from '@/app/components/loading-spinner'
 import { SmartImage } from '@/app/utils/image-helper'
 import { EditIcon } from 'lucide-react'
+import { showError, showSuccess, handleApiError } from '@/app/lib/toast'
 
 interface Video {
   id: string
@@ -119,7 +120,7 @@ export default function VideosProductsPage() {
       await loadVideos()
     } catch (error) {
       console.error('Failed to update status:', error)
-      alert('ステータスの更新に失敗しました')
+      handleApiError(error)
     } finally {
       setIsUpdatingStatus(null)
     }
@@ -133,10 +134,10 @@ export default function VideosProductsPage() {
     const link = `${window.location.origin}/user-settings/movies/watch/${videoId}`
     try {
       await navigator.clipboard.writeText(link)
-      alert('リンクをコピーしました')
+      showSuccess('リンクをコピーしました')
     } catch (error) {
       console.error('Failed to copy link:', error)
-      alert('リンクのコピーに失敗しました')
+      showError('リンクのコピーに失敗しました')
     }
   }
 
@@ -151,10 +152,10 @@ export default function VideosProductsPage() {
     try {
       await deleteAdminVideo(videoId)
       await loadVideos()
-      alert('動画を削除しました')
+      showSuccess('動画を削除しました')
     } catch (error) {
       console.error('Failed to delete video:', error)
-      alert('動画の削除に失敗しました')
+      handleApiError(error)
     }
   }
 

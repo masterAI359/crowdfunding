@@ -640,6 +640,23 @@ export const getAdminCrowdfundingStats = async () => {
 }
 
 /**
+ * 管理者用：プロジェクトの数値を上書き
+ */
+export const overrideProjectValue = async (
+  projectId: string,
+  field: 'amount' | 'achievementRate' | 'supporterCount',
+  value: number,
+  isActive: boolean = true
+) => {
+  const response = await apiClient.post(`/admin/projects/${projectId}/override`, {
+    field,
+    value,
+    isActive,
+  })
+  return response.data
+}
+
+/**
  * 管理者用：全動画取得（表示状態問わず）
  */
 export const getAdminVideos = async (page: number = 1, limit: number = 100, search?: string) => {
@@ -674,6 +691,47 @@ export const updateAdminVideo = async (
   }
 ) => {
   const response = await apiClient.put(`/admin/videos/${id}`, data)
+  return response.data
+}
+
+/**
+ * 管理者用：レコメンドプロジェクトを設定
+ */
+export const setRecommendedProject = async (
+  projectId: string,
+  order: number,
+  isActive: boolean = true
+) => {
+  const response = await apiClient.post(`/admin/projects/${projectId}/recommend`, {
+    order,
+    isActive,
+  })
+  return response.data
+}
+
+/**
+ * 管理者用：バナープロジェクトを設定（一括）
+ */
+export const setBannerProjects = async (projectIds: string[]) => {
+  const response = await apiClient.post('/admin/banner-projects', {
+    projectIds,
+  })
+  return response.data
+}
+
+/**
+ * 管理者用：バナープロジェクト一覧取得
+ */
+export const getAdminBannerProjects = async () => {
+  const response = await apiClient.get('/admin/banner-projects')
+  return response.data
+}
+
+/**
+ * バナープロジェクト取得（公開用）
+ */
+export const getBannerProjects = async () => {
+  const response = await apiClient.get('/projects/banner/list')
   return response.data
 }
 

@@ -10,6 +10,7 @@ import {
 } from '@/app/lib/api'
 import LoadingSpinner from '@/app/components/loading-spinner'
 import Image from 'next/image'
+import { showError, showSuccess, handleApiError } from '@/app/lib/toast'
 
 export default function AdminReleaseCrowdfundingPage() {
   const [projects, setProjects] = useState<any[]>([])
@@ -55,7 +56,7 @@ export default function AdminReleaseCrowdfundingPage() {
       setProjects(data.projects || [])
     } catch (error) {
       console.error('Failed to load projects:', error)
-      alert('プロジェクトの読み込みに失敗しました')
+      handleApiError(error)
     } finally {
       setLoading(false)
     }
@@ -74,7 +75,7 @@ export default function AdminReleaseCrowdfundingPage() {
 
   const handleSave = async (projectId: string) => {
     if (!editForm.title || !editForm.goalAmount || !editForm.endDate) {
-      alert('タイトル、目標金額、終了日は必須です')
+      showError('タイトル、目標金額、終了日は必須です')
       return
     }
 
@@ -88,10 +89,11 @@ export default function AdminReleaseCrowdfundingPage() {
         medias: editForm.medias.length > 0 ? editForm.medias : undefined,
       })
       setEditingProject(null)
+      showSuccess('プロジェクトを更新しました')
       loadProjects()
     } catch (error: any) {
       console.error('Failed to update project:', error)
-      alert(error.response?.data?.message || 'プロジェクトの更新に失敗しました')
+      handleApiError(error)
     } finally {
       setIsSubmitting(false)
     }
@@ -101,10 +103,11 @@ export default function AdminReleaseCrowdfundingPage() {
     if (!confirm('本当にこのプロジェクトを削除しますか？')) return
     try {
       await deleteProject(projectId)
+      showSuccess('プロジェクトを削除しました')
       loadProjects()
     } catch (error: any) {
       console.error('Failed to delete project:', error)
-      alert(error.response?.data?.message || 'プロジェクトの削除に失敗しました')
+      handleApiError(error)
     }
   }
 
@@ -112,17 +115,17 @@ export default function AdminReleaseCrowdfundingPage() {
     if (!confirm('このプロジェクトを公開しますか？')) return
     try {
       await publishProject(projectId)
+      showSuccess('プロジェクトを公開しました')
       loadProjects()
-      alert('プロジェクトを公開しました')
     } catch (error: any) {
       console.error('Failed to publish project:', error)
-      alert(error.response?.data?.message || 'プロジェクトの公開に失敗しました')
+      handleApiError(error)
     }
   }
 
   const handleCreate = async () => {
     if (!createForm.title || !createForm.goalAmount || !createForm.endDate) {
-      alert('タイトル、目標金額、終了日は必須です')
+      showError('タイトル、目標金額、終了日は必須です')
       return
     }
 
@@ -149,6 +152,7 @@ export default function AdminReleaseCrowdfundingPage() {
               }))
             : undefined,
       })
+      showSuccess('プロジェクトを作成しました')
       setShowCreateModal(false)
       setCreateForm({
         title: '',
@@ -161,7 +165,7 @@ export default function AdminReleaseCrowdfundingPage() {
       loadProjects()
     } catch (error: any) {
       console.error('Failed to create project:', error)
-      alert(error.response?.data?.message || 'プロジェクトの作成に失敗しました')
+      handleApiError(error)
     } finally {
       setIsSubmitting(false)
     }
@@ -171,7 +175,7 @@ export default function AdminReleaseCrowdfundingPage() {
     if (!file) return
 
     if (!file.type.startsWith('image/')) {
-      alert('画像ファイルを選択してください')
+      showError('画像ファイルを選択してください')
       return
     }
 
@@ -202,11 +206,11 @@ export default function AdminReleaseCrowdfundingPage() {
           })
         }
       } else {
-        alert('ファイルのアップロードに失敗しました')
+        showError('ファイルのアップロードに失敗しました')
       }
     } catch (error: any) {
       console.error('Failed to upload media:', error)
-      alert(error.response?.data?.message || 'ファイルのアップロードに失敗しました')
+      handleApiError(error)
     } finally {
       setUploadingMedia(false)
     }
@@ -216,7 +220,7 @@ export default function AdminReleaseCrowdfundingPage() {
     if (!file) return
 
     if (!file.type.startsWith('image/')) {
-      alert('画像ファイルを選択してください')
+      showError('画像ファイルを選択してください')
       return
     }
 
@@ -230,11 +234,11 @@ export default function AdminReleaseCrowdfundingPage() {
         const imageUrl = uploadedFile.url
         updateReturn(returnIndex, 'imageUrl', imageUrl)
       } else {
-        alert('ファイルのアップロードに失敗しました')
+        showError('ファイルのアップロードに失敗しました')
       }
     } catch (error: any) {
       console.error('Failed to upload return image:', error)
-      alert(error.response?.data?.message || 'ファイルのアップロードに失敗しました')
+      handleApiError(error)
     } finally {
       setUploadingMedia(false)
     }

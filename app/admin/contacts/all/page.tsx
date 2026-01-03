@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { getAdminContacts, deleteAdminContact } from '@/app/lib/api'
 import LoadingSpinner from '@/app/components/loading-spinner'
+import { showError, showSuccess, handleApiError } from '@/app/lib/toast'
 
 interface Contact {
   id: string
@@ -116,10 +117,10 @@ export default function AllContactsPage() {
     try {
       const url = `${window.location.origin}/admin/contacts/${contact.id}`
       await navigator.clipboard.writeText(url)
-      alert('リンクをコピーしました')
+      showSuccess('リンクをコピーしました')
     } catch (err) {
       console.error('Failed to copy link:', err)
-      alert('リンクのコピーに失敗しました')
+      showError('リンクのコピーに失敗しました')
     }
   }
 
@@ -132,10 +133,10 @@ export default function AllContactsPage() {
       await deleteAdminContact(contact.id)
       // Reload contacts after deletion
       loadContacts()
-      alert('削除しました')
+      showSuccess('削除しました')
     } catch (err: any) {
       console.error('Failed to delete contact:', err)
-      alert('削除に失敗しました')
+      handleApiError(error)
     }
   }
 

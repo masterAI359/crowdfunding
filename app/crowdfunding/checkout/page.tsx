@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { getProjectById, createPayment } from '@/app/lib/api'
 import { useAuth } from '@/app/hooks/useAuth'
 import LoadingSpinner from '@/app/components/loading-spinner'
+import { showError, handleApiError } from '@/app/lib/toast'
 
 interface Project {
   id: string
@@ -98,12 +99,12 @@ const CheckoutPage = ({
 
   const handlePurchase = async () => {
     if (!project || rewards.length === 0) {
-      alert('リターン情報が不足しています')
+      showError('リターン情報が不足しています')
       return
     }
 
     if (!isAuthenticated) {
-      alert('ログインが必要です。ログインページに移動します。')
+      showError('ログインが必要です。ログインページに移動します。')
       router.push('/login')
       return
     }
@@ -132,9 +133,7 @@ const CheckoutPage = ({
       }
     } catch (error: any) {
       console.error('決済処理に失敗しました:', error)
-      const errorMessage =
-        error.response?.data?.message || error.message || '決済処理に失敗しました'
-      alert(errorMessage)
+      handleApiError(error)
       setProcessing(false)
     }
   }

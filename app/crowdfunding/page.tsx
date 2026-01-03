@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react'
 import ProjectCard from '../components/project-card'
 import ProjectCarousel from '../components/project-carousel'
-import { getProjects, getRecommendedProjects } from '@/app/lib/api'
+import { getProjects, getBannerProjects } from '@/app/lib/api'
 
 interface Project {
   id: string
@@ -51,25 +51,28 @@ const CrowdfundingPage = () => {
     fetchProjects()
   }, [currentPage])
 
-  // バナープロジェクト（レコメンド）を取得
+  // バナープロジェクトを取得
   useEffect(() => {
     const fetchBannerProjects = async () => {
       try {
-        const recommended = await getRecommendedProjects(undefined, 5)
+        const projects = await getBannerProjects()
         // データを変換してフロントエンドの形式に合わせる
-        const transformedProjects = (recommended || []).map((project: any) => ({
-          id: project.id,
-          title: project.title,
-          description: project.description,
-          amount: `¥${(project.totalAmount || 0).toLocaleString()}`,
-          supporters: (project.supporterCount || 0).toLocaleString(),
-          daysLeft: `${project.remainingDays || 0}日`,
-          achievementRate: project.achievementRate || 0,
-          image: project.image || '',
-        }))
+        const transformedProjects = (projects || [])
+          .filter((project: any) => project && project.id) // nullや無効なプロジェクトを除外
+          .map((project: any) => ({
+            id: project.id,
+            title: project.title || '',
+            description: project.description || '',
+            amount: `¥${(project.totalAmount || 0).toLocaleString()}`,
+            supporters: (project.supporterCount || 0).toLocaleString(),
+            daysLeft: `${project.remainingDays || 0}日`,
+            achievementRate: project.achievementRate || 0,
+            image: project.image || '/assets/crowdfunding/cf-1.png',
+          }))
         setBannerProjects(transformedProjects)
       } catch (error) {
-        console.error('レコメンドプロジェクトの取得に失敗しました:', error)
+        console.error('バナープロジェクトの取得に失敗しました:', error)
+        setBannerProjects([])
       }
     }
 

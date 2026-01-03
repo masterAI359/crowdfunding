@@ -6,6 +6,7 @@ import Footer from './components/Footer'
 import './globals.css'
 import NavbarWrapper from './components/NavbarWrapper'
 import ClientWrapper from './components/ClientWrapper'
+import ToastProvider from './components/ToastProvider'
 
 // Configure Inter font for general text
 const inter = Inter({
@@ -55,6 +56,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <main className="pt-25 md:pt-20 bg-[#f5f7f9]">{children}</main>
           <ClientWrapper />
           <Footer />
+          <ToastProvider />
         </div>
       </body>
     </html>
