@@ -9,6 +9,9 @@ import {
   setRecommendedProject,
   setBannerProjects as saveBannerProjects,
   getAdminBannerProjects,
+  getAdminVideos,
+  setBannerVideos as saveBannerVideos,
+  getAdminBannerVideos,
 } from '@/app/lib/api'
 import LoadingSpinner from '@/app/components/loading-spinner'
 import { SmartImage } from '@/app/utils/image-helper'
@@ -43,6 +46,13 @@ export default function AdminPage() {
   const [loadingAllProjects, setLoadingAllProjects] = useState(false)
   const [selectedBannerProjects, setSelectedBannerProjects] = useState<string[]>([])
   const [isSavingBanner, setIsSavingBanner] = useState(false)
+  const [showBannerVideos, setShowBannerVideos] = useState(false)
+  const [bannerVideos, setBannerVideos] = useState<any[]>([])
+  const [allVideos, setAllVideos] = useState<any[]>([])
+  const [loadingBannerVideos, setLoadingBannerVideos] = useState(false)
+  const [loadingAllVideos, setLoadingAllVideos] = useState(false)
+  const [selectedBannerVideos, setSelectedBannerVideos] = useState<string[]>([])
+  const [isSavingBannerVideos, setIsSavingBannerVideos] = useState(false)
 
   useEffect(() => {
     setIsMounted(true)
@@ -112,6 +122,53 @@ export default function AdminPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showBannerProjects])
+
+  // バナー動画関連の関数
+  const loadBannerVideos = async () => {
+    try {
+      setLoadingBannerVideos(true)
+      const videos = await getAdminBannerVideos()
+      setBannerVideos(videos || [])
+      // バナー動画が読み込まれたら、選択状態を更新
+      if (videos && videos.length > 0) {
+        const uniqueIds: string[] = Array.from(new Set(videos.map((v: any) => v.id as string)))
+        setSelectedBannerVideos(uniqueIds)
+      } else {
+        setSelectedBannerVideos([])
+      }
+    } catch (error) {
+      console.error('Failed to load banner videos:', error)
+      handleApiError(error)
+    } finally {
+      setLoadingBannerVideos(false)
+    }
+  }
+
+  const loadAllVideos = async () => {
+    try {
+      setLoadingAllVideos(true)
+      const response = await getAdminVideos(1, 100)
+      const videos = response.videos || []
+      // 重複を除去
+      const uniqueVideos = Array.from(new Map(videos.map((v: any) => [v.id, v])).values())
+      setAllVideos(uniqueVideos)
+    } catch (error) {
+      console.error('Failed to load videos:', error)
+      handleApiError(error)
+    } finally {
+      setLoadingAllVideos(false)
+    }
+  }
+
+  // バナー動画関連
+  useEffect(() => {
+    if (showBannerVideos) {
+      // バナー動画を先に読み込んで選択状態を設定
+      loadBannerVideos()
+      loadAllVideos()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showBannerVideos])
 
 
   if (loading) {
@@ -481,6 +538,51 @@ export default function AdminPage() {
     }
   }
 
+  const handleToggleBannerVideo = (videoId: string) => {
+    setSelectedBannerVideos((prev) => {
+      // 重複を除去
+      const uniquePrev = Array.from(new Set(prev))
+      if (uniquePrev.includes(videoId)) {
+        // チェックを外す
+        return uniquePrev.filter((id) => id !== videoId)
+      } else {
+        // チェックを付ける（最大5件まで）
+        if (uniquePrev.length >= 5) {
+          showError('バナー動画は最大5件まで選択できます')
+          return uniquePrev
+        }
+        return [...uniquePrev, videoId]
+      }
+    })
+  }
+
+  const handleSaveBannerVideos = async () => {
+    if (selectedBannerVideos.length === 0) {
+      showError('少なくとも1つの動画を選択してください')
+      return
+    }
+
+    try {
+      setIsSavingBannerVideos(true)
+      console.log('Saving banner videos:', selectedBannerVideos)
+
+      // 選択された動画を一括で設定
+      const result = await saveBannerVideos(selectedBannerVideos)
+      console.log('Banner videos saved result:', result)
+
+      // 保存後にバナー動画を再読み込み
+      await loadBannerVideos()
+      
+      showSuccess('バナー動画を保存しました')
+    } catch (error: any) {
+      console.error('Failed to save banner videos:', error)
+      console.error('Error details:', error.response?.data || error.message)
+      handleApiError(error)
+    } finally {
+      setIsSavingBannerVideos(false)
+    }
+  }
+
   return (
     <div className="p-8">
       <div className="max-w-7xl mx-auto">
@@ -718,6 +820,114 @@ export default function AdminPage() {
                             className="px-3 py-1 bg-[#FF0066] text-white rounded-full text-sm"
                           >
                             {index + 1}. {project.title}
+                          </span>
+                        )
+                      })
+                      .filter((item) => item !== null)}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Banner Videos Section */}
+        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-2xl font-bold text-gray-900">おすすめ動画設定</h2>
+            <button
+              onClick={() => setShowBannerVideos(!showBannerVideos)}
+              className="px-4 py-2 bg-[#FF0066] text-white rounded-lg hover:bg-[#E6005C] transition-colors"
+            >
+              {showBannerVideos ? '閉じる' : '設定'}
+            </button>
+          </div>
+
+          {showBannerVideos && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between mb-4">
+                <p className="text-sm text-gray-600">
+                  おすすめ動画を選択してください（最大5件、選択順に表示されます）
+                </p>
+                <button
+                  onClick={handleSaveBannerVideos}
+                  disabled={isSavingBannerVideos || loadingBannerVideos}
+                  className="px-6 py-2 bg-[#FF0066] text-white rounded-lg hover:bg-[#E6005C] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {isSavingBannerVideos ? '保存中...' : '保存'}
+                </button>
+              </div>
+
+              {loadingBannerVideos || loadingAllVideos ? (
+                <div className="flex justify-center py-8">
+                  <LoadingSpinner />
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-96 overflow-y-auto">
+                  {allVideos
+                    .filter((v) => v.isVisible)
+                    .map((video) => {
+                      const isSelected = selectedBannerVideos.includes(video.id)
+                      const selectedIndex = selectedBannerVideos.indexOf(video.id)
+                      return (
+                        <div
+                          key={video.id}
+                          className={`border-2 rounded-lg p-3 hover:shadow-md transition-all cursor-pointer ${
+                            isSelected
+                              ? 'border-[#FF0066] bg-pink-50'
+                              : 'border-gray-200 hover:border-gray-300'
+                          }`}
+                          onClick={() => handleToggleBannerVideo(video.id)}
+                        >
+                          <div className="flex items-start gap-3">
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => handleToggleBannerVideo(video.id)}
+                              onClick={(e) => e.stopPropagation()}
+                              className="mt-1 w-5 h-5 text-[#FF0066] border-gray-300 rounded focus:ring-[#FF0066] cursor-pointer"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <div className="relative w-full h-32 mb-2 rounded overflow-hidden bg-gray-200">
+                                <SmartImage
+                                  src={video.thumbnailUrl || video.url || '/assets/crowdfunding/cf-1.png'}
+                                  alt={video.title}
+                                  fill
+                                  className="object-cover"
+                                />
+                              </div>
+                              <h4 className="font-semibold text-gray-900 text-sm mb-1 line-clamp-2">
+                                {video.title}
+                              </h4>
+                              {isSelected && (
+                                <p className="text-xs text-[#FF0066] font-medium">
+                                  選択中（順序: {selectedIndex + 1}）
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
+                </div>
+              )}
+
+              {selectedBannerVideos.length > 0 && (
+                <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                  <h4 className="font-semibold text-gray-900 mb-2">
+                    選択中の動画 ({selectedBannerVideos.length}/5)
+                  </h4>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedBannerVideos
+                      .map((videoId, index) => {
+                        const video = allVideos.find((v) => v.id === videoId)
+                        if (!video) return null
+                        return (
+                          <span
+                            key={`${videoId}-${index}`}
+                            className="px-3 py-1 bg-[#FF0066] text-white rounded-full text-sm"
+                          >
+                            {index + 1}. {video.title}
                           </span>
                         )
                       })

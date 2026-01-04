@@ -6,7 +6,7 @@ import ProjectCard from '@/app/components/project-card'
 import ImageGallery from '@/app/components/image-gallery'
 import Link from 'next/link'
 import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react'
-import { getProjectById, toggleFavorite, getRecommendedProjects } from '@/app/lib/api'
+import { getProjectById, toggleFavorite, getRecommendedProjects, getExecutorInfo } from '@/app/lib/api'
 import LoadingSpinner from '@/app/components/loading-spinner'
 
 interface Project {
@@ -33,6 +33,19 @@ interface Project {
     name?: string
     email?: string
   }
+  executorInfo?: Array<{
+    id: string
+    name?: string
+    imageUrl?: string
+    introduction?: string
+    userId?: string
+    order: number
+    user?: {
+      id: string
+      name?: string
+      email?: string
+    }
+  }>
 }
 
 const ProjectDetailPage = ({
@@ -47,6 +60,7 @@ const ProjectDetailPage = ({
   const [loading, setLoading] = useState(true)
   const [isTogglingFavorite, setIsTogglingFavorite] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
+  const [executorInfo, setExecutorInfo] = useState<Project['executorInfo']>([])
 
   const scrollRef = useRef<HTMLDivElement>(null)
 
@@ -84,6 +98,19 @@ const ProjectDetailPage = ({
         }
         setProject(transformedProject)
         setIsFavorited(favoriteStatus)
+
+        // 実行者情報を取得
+        try {
+          const executorData = await getExecutorInfo(params.projectId)
+          if (executorData && Array.isArray(executorData)) {
+            setExecutorInfo(executorData)
+          } else {
+            setExecutorInfo([])
+          }
+        } catch (error) {
+          console.error('実行者情報の取得に失敗しました:', error)
+          setExecutorInfo([])
+        }
       } catch (error) {
         console.error('プロジェクトの取得に失敗しました:', error)
         // エラー時はお気に入り状態をfalseにリセット
@@ -185,13 +212,13 @@ const ProjectDetailPage = ({
   // Creator information from project owner
   const creators = project.owner
     ? [
-        {
-          id: project.owner.id,
-          title: project.owner.name || '',
-          image: project.image,
-          text: project.description || '',
-        },
-      ]
+      {
+        id: project.owner.id,
+        title: project.owner.name || '',
+        image: project.image,
+        text: project.description || '',
+      },
+    ]
     : []
 
   return (
@@ -356,7 +383,7 @@ const ProjectDetailPage = ({
             <div className="relative">
               <div ref={scrollRef} className="flex space-x-6 overflow-x-auto pb-4 hide-scrollbar">
                 {recommendedProjects.map((recProject) => (
-                  <div key={recProject.id} className="flex-shrink-0 w-75">
+                  <div key={recProject.id} className="shrink-0 w-75">
                     <ProjectCard project={recProject} />
                   </div>
                 ))}
@@ -388,31 +415,66 @@ const ProjectDetailPage = ({
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 md:gap-8">
               {/* Left Column: About the Creator (60% width on desktop) */}
               <div className="lg:col-span-3 space-y-6 md:space-y-8">
-                {/* First Content Block */}
-                {creators.map((creator) => (
-                  <div key={creator.id} className="bg-white rounded-lg pb-10">
-                    <div className="flex flex-col gap-6">
-                      <div className="w-full">
-                        <h3 className="text-xl md:text-2xl font-bold mb-4 text-[#FF0066]">
-                          プロジェクト実行者について
-                        </h3>
-                        <div className="relative h-[30vh] md:h-auto bg-gray-200 rounded-lg overflow-hidden shadow">
-                          <SmartImage
-                            src={creator.image}
-                            alt="クリエイターとの対話"
-                            fill
-                            className="w-full h-full shadow"
-                          />
+                {executorInfo && executorInfo.length > 0 ? (
+                  <div className="bg-white rounded-lg pb-10">
+                    <h3 className="text-xl md:text-2xl font-bold mb-4 md:mb-6 text-[#FF0066]">
+                      プロジェクト実行者について
+                    </h3>
+                    <div className="space-y-6 md:space-y-8">
+                      {executorInfo.map((executor) => (
+                        <div key={executor.id} className="space-y-4 md:space-y-6">
+                          <h3 className="text-xl md:text-2xl font-bold mb-4 md:mb-6 text-[#FF0066]">
+                            {executor.name}
+                          </h3>
+                          {/* Executor Image */}
+                          {executor.imageUrl && (
+                            <div className="relative w-full h-[30vh] md:h-[40vh] bg-gray-200 rounded-lg overflow-hidden">
+                              <SmartImage
+                                src={executor.imageUrl}
+                                alt={executor.name || 'プロジェクト実行者'}
+                                fill
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          )}
+
+                          {/* Introduction Text */}
+                          {executor.introduction && (
+                            <p className="text-sm md:text-base text-black leading-relaxed whitespace-pre-line">
+                              {executor.introduction}
+                            </p>
+                          )}
                         </div>
-                      </div>
-                      <div className="w-full">
-                        <p className="text-sm md:text-base text-black leading-relaxed">
-                          {creator.text}
-                        </p>
-                      </div>
+                      ))}
                     </div>
                   </div>
-                ))}
+                ) : (
+                  // Fallback to old creator display if no executor info
+                  creators.map((creator) => (
+                    <div key={creator.id} className="bg-white rounded-lg pb-10">
+                      <div className="flex flex-col gap-6">
+                        <div className="w-full">
+                          <h3 className="text-xl md:text-2xl font-bold mb-4 text-[#FF0066]">
+                            プロジェクト実行者について
+                          </h3>
+                          <div className="relative h-[30vh] md:h-auto bg-gray-200 rounded-lg overflow-hidden shadow">
+                            <SmartImage
+                              src={creator.image}
+                              alt="クリエイターとの対話"
+                              fill
+                              className="w-full h-full shadow"
+                            />
+                          </div>
+                        </div>
+                        <div className="w-full">
+                          <p className="text-sm md:text-base text-black leading-relaxed">
+                            {creator.text}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
 
               {/* Right Column: Rewards List (40% width on desktop) */}
@@ -439,14 +501,25 @@ const ProjectDetailPage = ({
                     </div>
                     <div className="p-4 md:p-6 pt-0">
                       <h3 className="text-lg md:text-xl font-bold text-black mb-2">
-                        {reward.title}
+                        エンドロールお名前掲載
                       </h3>
                       <p className="text-2xl md:text-3xl font-bold text-black mb-3 md:mb-4">
                         ¥{(reward.amount || 0).toLocaleString()}
                       </p>
-                      <p className="text-xs md:text-sm text-black whitespace-pre-line mb-4 md:mb-6">
-                        {reward.description}
-                      </p>
+                      {reward.description && (
+                        <div className="text-xs md:text-sm text-black whitespace-pre-line mb-2 md:mb-3">
+                          {reward.description.split('\n').map((line, i) => (
+                            <div key={i} className="mb-1">
+                              {line}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {reward.notes && (
+                        <p className="text-xs md:text-sm text-gray-600 mb-4 md:mb-6">
+                          {reward.notes}
+                        </p>
+                      )}
                       <Link
                         href={`/crowdfunding/${project.id}/support?returnId=${reward.id}`}
                         className="block w-full bg-[#FF0066] hover:bg-[#FF0066]/80 text-white font-bold py-2 md:py-3 px-4 md:px-6 rounded-3xl transition-colors text-center text-sm md:text-base"
@@ -519,11 +592,10 @@ const ProjectDetailPage = ({
                     key={page}
                     type="button"
                     onClick={() => setCurrentPage(page)}
-                    className={`h-8 w-8 flex items-center font-regular text-2xl justify-center rounded-full ${
-                      page === currentPage
+                    className={`h-8 w-8 flex items-center font-regular text-2xl justify-center rounded-full ${page === currentPage
                         ? 'bg-[#FF0066] text-white border border-[#FF0066]'
                         : ' hover:bg-gray-100'
-                    }`}
+                      }`}
                     aria-label={`Page ${page}`}
                   >
                     {page}

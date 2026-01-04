@@ -406,6 +406,55 @@ export const publishProject = async (id: string) => {
   return response.data
 }
 
+/**
+ * プロジェクト実行者情報一覧取得
+ */
+export const getExecutorInfo = async (projectId: string) => {
+  const response = await apiClient.get(`/projects/${projectId}/executor-info`)
+  return response.data
+}
+
+/**
+ * プロジェクト実行者情報作成
+ */
+export const createExecutorInfo = async (
+  projectId: string,
+  data: {
+    name?: string
+    imageUrl?: string
+    introduction?: string
+    userId?: string
+    order?: number
+  }
+) => {
+  const response = await apiClient.post(`/projects/${projectId}/executor-info`, data)
+  return response.data
+}
+
+/**
+ * プロジェクト実行者情報更新
+ */
+export const updateExecutorInfo = async (
+  executorId: string,
+  data: {
+    name?: string
+    imageUrl?: string
+    introduction?: string
+    order?: number
+  }
+) => {
+  const response = await apiClient.put(`/projects/executor-info/${executorId}`, data)
+  return response.data
+}
+
+/**
+ * プロジェクト実行者情報削除
+ */
+export const deleteExecutorInfo = async (executorId: string) => {
+  const response = await apiClient.delete(`/projects/executor-info/${executorId}`)
+  return response.data
+}
+
 // ==================== 決済関連API ====================
 
 /**
@@ -732,6 +781,24 @@ export const getAdminBannerProjects = async () => {
  */
 export const getBannerProjects = async () => {
   const response = await apiClient.get('/projects/banner/list')
+  return response.data
+}
+
+/**
+ * 管理者用：バナー動画を設定（一括）
+ */
+export const setBannerVideos = async (videoIds: string[]) => {
+  const response = await apiClient.post('/admin/banner-videos', {
+    videoIds,
+  })
+  return response.data
+}
+
+/**
+ * 管理者用：バナー動画一覧取得
+ */
+export const getAdminBannerVideos = async () => {
+  const response = await apiClient.get('/admin/banner-videos')
   return response.data
 }
 
