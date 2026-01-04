@@ -19,7 +19,7 @@ interface ProjectCardProps {
 const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
   return (
     <Link href={`/crowdfunding/${project.id}`} passHref>
-      <div className="bg-white rounded-lg overflow-hidden hover:shadow-lg transition-shadow border border-[#E9E9E9] cursor-pointer">
+      <div className="bg-white rounded-lg overflow-hidden hover:shadow-lg transition-shadow border border-[#E9E9E9] cursor-pointer h-full flex flex-col justify-evenly">
         {/* Project Image */}
         <img
           src={project.image}
@@ -27,16 +27,16 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
           className="w-full sm:h-48 h-30 object-cover rounded-t-lg"
         />
 
-        <div className="p-4">
+        <div className="p-4 flex flex-col justify-end h-full">
           {/* Project Title */}
-          <h3 className="font-bold text-center sm:mb-3 mb-1 line-clamp-2 text-black text-sm sm:text-lg">
+          <h3 className="font-bold text-center sm:mb-3 mb-1 line-clamp-2 text-black text-sm sm:text-lg h-full">
             {project.title}
           </h3>
 
           {/* Progress Bar */}
           <div className="w-full border border-black/20 rounded-full h-3 sm:mb-4 mb-1">
             <div
-              className="bg-gradient-to-r from-[#FF0066] to-[#FFA101] h-3 rounded-full"
+              className="bg-linear-to-r from-[#FF0066] to-[#FFA101] h-3 rounded-full"
               style={{ width: `${Math.min(project.achievementRate, 100)}%` }}
             ></div>
           </div>

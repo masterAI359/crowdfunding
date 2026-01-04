@@ -13,6 +13,7 @@ import {
 } from '@/app/lib/api'
 import LoadingSpinner from '@/app/components/loading-spinner'
 import Image from 'next/image'
+import { showError, showSuccess, handleApiError } from '@/app/lib/toast'
 
 export default function AdminReleaseVideoPage() {
   const [videos, setVideos] = useState<any[]>([])
@@ -54,7 +55,7 @@ export default function AdminReleaseVideoPage() {
       setVideos(data.videos || [])
     } catch (error) {
       console.error('Failed to load videos:', error)
-      alert('動画の読み込みに失敗しました')
+      handleApiError(error)
     } finally {
       setLoading(false)
     }
@@ -77,10 +78,11 @@ export default function AdminReleaseVideoPage() {
         price: editForm.price ? parseInt(editForm.price) : undefined,
       })
       setEditingVideo(null)
+      showSuccess('動画を更新しました')
       loadVideos()
     } catch (error) {
       console.error('Failed to update video:', error)
-      alert('動画の更新に失敗しました')
+      handleApiError(error)
     }
   }
 
@@ -88,10 +90,11 @@ export default function AdminReleaseVideoPage() {
     if (!confirm('本当にこの動画を削除しますか？')) return
     try {
       await deleteVideo(videoId)
+      showSuccess('動画を削除しました')
       loadVideos()
     } catch (error) {
       console.error('Failed to delete video:', error)
-      alert('動画の削除に失敗しました')
+      handleApiError(error)
     }
   }
 
@@ -101,7 +104,7 @@ export default function AdminReleaseVideoPage() {
       loadVideos()
     } catch (error) {
       console.error('Failed to update video visibility:', error)
-      alert('動画の表示設定の更新に失敗しました')
+      handleApiError(error)
     }
   }
 
@@ -133,12 +136,12 @@ export default function AdminReleaseVideoPage() {
 
   const handleUpload = async () => {
     if (!uploadForm.title) {
-      alert('タイトルを入力してください')
+      showError('タイトルを入力してください')
       return
     }
 
     if (!selectedVideoFile) {
-      alert('動画ファイルを選択してください')
+      showError('動画ファイルを選択してください')
       return
     }
 
@@ -163,7 +166,7 @@ export default function AdminReleaseVideoPage() {
       })
 
       if (!videoUrl || videoUrl.trim() === '') {
-        alert('動画ファイルのアップロードに失敗しました')
+        showError('動画ファイルのアップロードに失敗しました')
         setIsUploading(false)
         return
       }
@@ -193,10 +196,11 @@ export default function AdminReleaseVideoPage() {
       setSelectedThumbnailFile(null)
       setVideoPreview(null)
       setThumbnailPreview(null)
+      showSuccess('動画をアップロードしました')
       loadVideos()
     } catch (error: any) {
       console.error('Failed to upload video:', error)
-      alert(error.response?.data?.message || '動画のアップロードに失敗しました')
+      handleApiError(error)
     } finally {
       setIsUploading(false)
     }
@@ -227,7 +231,7 @@ export default function AdminReleaseVideoPage() {
       }
     } catch (error) {
       console.error('Failed to toggle comment visibility:', error)
-      alert('コメントの表示設定の更新に失敗しました')
+      handleApiError(error)
     }
   }
 
@@ -731,16 +735,16 @@ export default function AdminReleaseVideoPage() {
               <button
                 onClick={() => {
                   if (!seriesForm.seriesName.trim()) {
-                    alert('シリーズ名を入力してください')
+                    showError('シリーズ名を入力してください')
                     return
                   }
                   if (seriesForm.selectedVideos.length < 2) {
-                    alert('シリーズには2つ以上の動画を選択してください')
+                    showError('シリーズには2つ以上の動画を選択してください')
                     return
                   }
                   // TODO: Implement series save functionality
-                  // For now, just show an alert
-                  alert(
+                  // For now, just show a toast
+                  showSuccess(
                     `シリーズ「${seriesForm.seriesName}」に${seriesForm.selectedVideos.length}本の動画を設定しました。\n\n注意: シリーズ機能の完全な実装には、データベースモデルの追加が必要です。`
                   )
                   setShowSeriesModal(false)

@@ -21,11 +21,13 @@ import {
   updateProject,
   deleteProject,
   publishProject,
+  getProjectById,
 } from '@/app/lib/api'
 import LoadingSpinner from '@/app/components/loading-spinner'
 import Image from 'next/image'
 import { SmartImage } from '@/app/utils/image-helper'
 import dynamic from 'next/dynamic'
+import { showError, showSuccess, handleApiError } from '@/app/lib/toast'
 
 const Chart = dynamic(() => import('react-apexcharts'), { ssr: false })
 
@@ -392,27 +394,12 @@ const SellerDashboardPage = () => {
 // Dashboard Tab Component
 const DashboardTab = ({ stats, videos }: { stats: any; videos: any[] }) => {
   const [dateRange, setDateRange] = useState('7days')
-  const [currency, setCurrency] = useState('USD')
   const [purchaseData, setPurchaseData] = useState<any[]>([])
   const [salesData, setSalesData] = useState<any[]>([])
   const [revenueData, setRevenueData] = useState<any>(null)
   const [isMounted, setIsMounted] = useState(false)
 
-  // USD to JPY conversion rate
-  const USD_TO_JPY = 150
-
-  // Conversion helper function
-  const convertToCurrency = (jpyValue: number) => {
-    if (currency === 'USD') {
-      return Math.round(jpyValue / USD_TO_JPY)
-    }
-    return jpyValue
-  }
-
   const formatCurrency = (value: number) => {
-    if (currency === 'USD') {
-      return `$${value.toLocaleString()}`
-    }
     return `¥${value.toLocaleString()}`
   }
 
@@ -543,16 +530,12 @@ const DashboardTab = ({ stats, videos }: { stats: any; videos: any[] }) => {
   const netRevenueJPY = stats?.totalSales || 0 // All-time high net revenue from backend (JPY)
 
   // Calculate metrics using only real backend data
-  const totalRevenueJPY = totalSalesLast30DaysJPY // Use actual sales data
-  const subscriptionRevenueJPY = 0 // No subscription data available in backend
+  const totalRevenue = totalSalesLast30DaysJPY // Use actual sales data
+  const subscriptionRevenue = 0 // No subscription data available in backend
   const optIns = 0 // No opt-in data available in backend
   const offersSold = totalPurchases // Use actual purchase count
-
-  // Convert to selected currency
-  const totalRevenue = convertToCurrency(totalRevenueJPY)
-  const subscriptionRevenue = convertToCurrency(subscriptionRevenueJPY)
-  const netRevenue = convertToCurrency(netRevenueJPY)
-  const totalSalesLast30Days = convertToCurrency(totalSalesLast30DaysJPY)
+  const netRevenue = netRevenueJPY // All-time high net revenue from backend (JPY)
+  const totalSalesLast30Days = totalSalesLast30DaysJPY
 
   // Main revenue chart configuration
   const mainChartOptions: any = {
@@ -598,21 +581,12 @@ const DashboardTab = ({ stats, videos }: { stats: any; videos: any[] }) => {
           fontSize: '12px',
         },
         formatter: (val: number) => {
-          // Convert JPY value to display currency
-          const displayVal = currency === 'USD' ? val / USD_TO_JPY : val
-          if (currency === 'USD') {
-            if (displayVal >= 1000) {
-              return `$${Math.round(displayVal / 1000)}k`
-            }
-            return `$${Math.round(displayVal)}`
-          } else {
-            if (displayVal >= 1000000) {
-              return `¥${Math.round(displayVal / 1000000)}m`
-            } else if (displayVal >= 1000) {
-              return `¥${Math.round(displayVal / 1000)}k`
-            }
-            return `¥${Math.round(displayVal)}`
+          if (val >= 1000000) {
+            return `¥${Math.round(val / 1000000)}m`
+          } else if (val >= 1000) {
+            return `¥${Math.round(val / 1000)}k`
           }
+          return `¥${Math.round(val)}`
         },
       },
     },
@@ -633,9 +607,7 @@ const DashboardTab = ({ stats, videos }: { stats: any; videos: any[] }) => {
     tooltip: {
       y: {
         formatter: (val: number) => {
-          // val is in JPY, convert if needed
-          const displayVal = currency === 'USD' ? val / USD_TO_JPY : val
-          return formatCurrency(displayVal)
+          return formatCurrency(val)
         },
       },
     },
@@ -645,10 +617,7 @@ const DashboardTab = ({ stats, videos }: { stats: any; videos: any[] }) => {
     ? [
         {
           name: revenueData.previousLabel || '前週',
-          data: revenueData.previous.map((d: any) => {
-            // Convert JPY to selected currency
-            return currency === 'USD' ? d.y / USD_TO_JPY : d.y
-          }),
+          data: revenueData.previous.map((d: any) => d.y),
           stroke: {
             width: 2,
             dashArray: 5,
@@ -656,10 +625,7 @@ const DashboardTab = ({ stats, videos }: { stats: any; videos: any[] }) => {
         },
         {
           name: revenueData.currentLabel || '今週',
-          data: revenueData.current.map((d: any) => {
-            // Convert JPY to selected currency
-            return currency === 'USD' ? d.y / USD_TO_JPY : d.y
-          }),
+          data: revenueData.current.map((d: any) => d.y),
           stroke: {
             width: 3,
           },
@@ -752,9 +718,7 @@ const DashboardTab = ({ stats, videos }: { stats: any; videos: any[] }) => {
       enabled: true,
       y: {
         formatter: (val: number) => {
-          // val is in JPY, convert if needed
-          const displayVal = currency === 'USD' ? val / USD_TO_JPY : val
-          return formatCurrency(displayVal)
+          return formatCurrency(val)
         },
       },
     },
@@ -790,14 +754,6 @@ const DashboardTab = ({ stats, videos }: { stats: any; videos: any[] }) => {
               <option value="7days">過去7日間</option>
               <option value="30days">過去30日間</option>
               <option value="90days">過去90日間</option>
-            </select>
-            <select
-              value={currency}
-              onChange={(e) => setCurrency(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#FF0066] text-black"
-            >
-              <option value="USD">米ドル</option>
-              <option value="JPY">日本円</option>
             </select>
           </div>
           <div className="flex gap-2">
@@ -1068,7 +1024,7 @@ const VideosTab = ({
       onRefresh()
     } catch (error) {
       console.error('Failed to update video:', error)
-      alert('動画の更新に失敗しました')
+      handleApiError(error)
     }
   }
 
@@ -1079,7 +1035,7 @@ const VideosTab = ({
       onRefresh()
     } catch (error) {
       console.error('Failed to delete video:', error)
-      alert('動画の削除に失敗しました')
+      handleApiError(error)
     }
   }
 
@@ -1089,7 +1045,7 @@ const VideosTab = ({
       onRefresh()
     } catch (error) {
       console.error('Failed to update video visibility:', error)
-      alert('動画の表示設定の更新に失敗しました')
+      handleApiError(error)
     }
   }
 
@@ -1121,13 +1077,13 @@ const VideosTab = ({
 
   const handleUpload = async () => {
     if (!uploadForm.title) {
-      alert('タイトルを入力してください')
+      showError('タイトルを入力してください')
       return
     }
 
     // Either file upload or URL must be provided
     if (!selectedVideoFile && !uploadForm.url) {
-      alert('動画ファイルを選択するか、動画URLを入力してください')
+      showError('動画ファイルを選択するか、動画URLを入力してください')
       return
     }
 
@@ -1157,7 +1113,7 @@ const VideosTab = ({
 
       // Ensure videoUrl is valid (either from upload or user input)
       if (!videoUrl || videoUrl.trim() === '') {
-        alert('動画URLが無効です。動画ファイルを選択するか、動画URLを入力してください。')
+        showError('動画URLが無効です。動画ファイルを選択するか、動画URLを入力してください。')
         setIsUploading(false)
         return
       }
@@ -1166,7 +1122,7 @@ const VideosTab = ({
       try {
         new URL(videoUrl)
       } catch (e) {
-        alert('動画URLの形式が正しくありません')
+        showError('動画URLの形式が正しくありません')
         setIsUploading(false)
         return
       }
@@ -1206,7 +1162,7 @@ const VideosTab = ({
       onRefresh()
     } catch (error: any) {
       console.error('Failed to upload video:', error)
-      alert(error.response?.data?.message || '動画のアップロードに失敗しました')
+      handleApiError(error)
     } finally {
       setIsUploading(false)
     }
@@ -1237,7 +1193,7 @@ const VideosTab = ({
       }
     } catch (error) {
       console.error('Failed to toggle comment visibility:', error)
-      alert('コメントの表示設定の更新に失敗しました')
+      handleApiError(error)
     }
   }
 
@@ -1651,43 +1607,75 @@ const CrowdfundingTab = () => {
       setProjects(data.projects || [])
     } catch (error) {
       console.error('Failed to load projects:', error)
-      alert('プロジェクトの読み込みに失敗しました')
+      handleApiError(error)
     } finally {
       setLoading(false)
     }
   }
 
-  const handleEdit = (project: any) => {
+  const handleEdit = async (project: any) => {
     setEditingProject(project.id)
-    setEditForm({
-      title: project.title,
-      description: project.description || '',
-      goalAmount: project.goalAmount.toString(),
-      endDate: project.endDate ? new Date(project.endDate).toISOString().split('T')[0] : '',
-      medias: project.medias || [],
-    })
+    try {
+      // 全メディアを取得するためにgetProjectByIdを使用
+      const fullProject = await getProjectById(project.id)
+      // 既存メディアからid、projectId、createdAtを除外して設定
+      const cleanMedias = (fullProject.medias || []).map((media: any) => ({
+        url: media.url,
+        type: media.type,
+        order: media.order || 0,
+      }))
+      setEditForm({
+        title: fullProject.title,
+        description: fullProject.description || '',
+        goalAmount: fullProject.goalAmount.toString(),
+        endDate: fullProject.endDate ? new Date(fullProject.endDate).toISOString().split('T')[0] : '',
+        medias: cleanMedias,
+      })
+    } catch (error: any) {
+      console.error('Failed to load project details:', error)
+      handleApiError(error)
+      // エラーが発生した場合は既存のデータを使用
+      const cleanMedias = (project.medias || []).map((media: any) => ({
+        url: media.url,
+        type: media.type,
+        order: media.order || 0,
+      }))
+      setEditForm({
+        title: project.title,
+        description: project.description || '',
+        goalAmount: project.goalAmount.toString(),
+        endDate: project.endDate ? new Date(project.endDate).toISOString().split('T')[0] : '',
+        medias: cleanMedias,
+      })
+    }
   }
 
   const handleSave = async (projectId: string) => {
     if (!editForm.title || !editForm.goalAmount || !editForm.endDate) {
-      alert('タイトル、目標金額、終了日は必須です')
+      showError('タイトル、目標金額、終了日は必須です')
       return
     }
 
     try {
       setIsSubmitting(true)
+      // メディアデータからid、projectId、createdAtを除外して送信
+      const cleanMedias = editForm.medias.map((media) => ({
+        url: media.url,
+        type: media.type,
+        order: media.order || 0,
+      }))
       await updateProject(projectId, {
         title: editForm.title,
         description: editForm.description || undefined,
         goalAmount: parseInt(editForm.goalAmount),
         endDate: editForm.endDate,
-        medias: editForm.medias.length > 0 ? editForm.medias : undefined,
+        medias: cleanMedias.length > 0 ? cleanMedias : undefined,
       })
       setEditingProject(null)
       loadProjects()
     } catch (error: any) {
       console.error('Failed to update project:', error)
-      alert(error.response?.data?.message || 'プロジェクトの更新に失敗しました')
+      handleApiError(error)
     } finally {
       setIsSubmitting(false)
     }
@@ -1700,7 +1688,7 @@ const CrowdfundingTab = () => {
       loadProjects()
     } catch (error: any) {
       console.error('Failed to delete project:', error)
-      alert(error.response?.data?.message || 'プロジェクトの削除に失敗しました')
+      handleApiError(error)
     }
   }
 
@@ -1709,16 +1697,16 @@ const CrowdfundingTab = () => {
     try {
       await publishProject(projectId)
       loadProjects()
-      alert('プロジェクトを公開しました')
+      showSuccess('プロジェクトを公開しました')
     } catch (error: any) {
       console.error('Failed to publish project:', error)
-      alert(error.response?.data?.message || 'プロジェクトの公開に失敗しました')
+      handleApiError(error)
     }
   }
 
   const handleCreate = async () => {
     if (!createForm.title || !createForm.goalAmount || !createForm.endDate) {
-      alert('タイトル、目標金額、終了日は必須です')
+      showError('タイトル、目標金額、終了日は必須です')
       return
     }
 
@@ -1757,7 +1745,7 @@ const CrowdfundingTab = () => {
       loadProjects()
     } catch (error: any) {
       console.error('Failed to create project:', error)
-      alert(error.response?.data?.message || 'プロジェクトの作成に失敗しました')
+      handleApiError(error)
     } finally {
       setIsSubmitting(false)
     }
@@ -1772,11 +1760,11 @@ const CrowdfundingTab = () => {
 
     // ファイルタイプの検証
     if (mediaType === 'IMAGE' && !file.type.startsWith('image/')) {
-      alert('画像ファイルを選択してください')
+      showError('画像ファイルを選択してください')
       return
     }
     if (mediaType === 'VIDEO' && !file.type.startsWith('video/')) {
-      alert('動画ファイルを選択してください')
+      showError('動画ファイルを選択してください')
       return
     }
 
@@ -1807,11 +1795,11 @@ const CrowdfundingTab = () => {
           })
         }
       } else {
-        alert('ファイルのアップロードに失敗しました')
+        showError('ファイルのアップロードに失敗しました')
       }
     } catch (error: any) {
       console.error('Failed to upload media:', error)
-      alert(error.response?.data?.message || 'ファイルのアップロードに失敗しました')
+      handleApiError(error)
     } finally {
       setUploadingMedia(false)
     }
@@ -1989,25 +1977,53 @@ const CrowdfundingTab = () => {
                         </div>
                       </div>
                       <div className="space-y-2">
-                        {editForm.medias.map((media, index) => (
-                          <div
-                            key={index}
-                            className="flex items-center gap-2 p-2 bg-gray-50 rounded"
-                          >
-                            <span className="text-sm text-gray-600 flex-1 truncate">
-                              {media.type}:{' '}
-                              {media.url.length > 50
-                                ? `${media.url.substring(0, 50)}...`
-                                : media.url}
-                            </span>
-                            <button
-                              onClick={() => removeMedia('edit', index)}
-                              className="ml-auto text-red-600 hover:text-red-800 text-sm"
+                        {editForm.medias.length === 0 ? (
+                          <p className="text-sm text-gray-500 py-2">メディアが設定されていません</p>
+                        ) : (
+                          editForm.medias.map((media, index) => (
+                            <div
+                              key={index}
+                              className="flex items-center gap-3 p-3 bg-gray-50 rounded border border-gray-200"
                             >
-                              削除
-                            </button>
-                          </div>
-                        ))}
+                              {media.type === 'IMAGE' ? (
+                                <div className="relative w-16 h-16 flex-shrink-0 rounded overflow-hidden bg-gray-200">
+                                  <SmartImage
+                                    src={media.url}
+                                    alt={`画像 ${index + 1}`}
+                                    fill
+                                    className="object-cover"
+                                  />
+                                </div>
+                              ) : (
+                                <div className="relative w-16 h-16 flex-shrink-0 rounded overflow-hidden bg-gray-800 flex items-center justify-center">
+                                  <svg
+                                    className="w-8 h-8 text-white"
+                                    fill="currentColor"
+                                    viewBox="0 0 20 20"
+                                  >
+                                    <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
+                                  </svg>
+                                </div>
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <div className="text-sm font-medium text-gray-900">
+                                  {media.type === 'IMAGE' ? '画像' : '動画'} {index + 1}
+                                </div>
+                                <div className="text-xs text-gray-500 truncate">
+                                  {media.url.length > 60
+                                    ? `${media.url.substring(0, 60)}...`
+                                    : media.url}
+                                </div>
+                              </div>
+                              <button
+                                onClick={() => removeMedia('edit', index)}
+                                className="ml-auto px-3 py-1 text-sm text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors"
+                              >
+                                削除
+                              </button>
+                            </div>
+                          ))
+                        )}
                       </div>
                     </div>
                     <div className="flex gap-2">

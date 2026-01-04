@@ -6,6 +6,7 @@ import LoadingSpinner from '@/app/components/loading-spinner'
 import apiClient from '@/app/lib/api'
 import Link from 'next/link'
 import Image from 'next/image'
+import { handleApiError } from '@/app/lib/toast'
 
 interface Video {
   id: string
@@ -117,7 +118,7 @@ const WatchVideoPage = () => {
       setComments(commentsResponse.data || [])
     } catch (error) {
       console.error('Failed to post comment:', error)
-      alert('コメントの投稿に失敗しました')
+      handleApiError(error)
     } finally {
       setIsSubmittingComment(false)
     }

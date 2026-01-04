@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/app/hooks/useAuth'
 import LoadingSpinner from '@/app/components/loading-spinner'
+import { showInfo } from '@/app/lib/toast'
 
 const AdminLoginPage = () => {
   const router = useRouter()
@@ -161,7 +162,7 @@ const AdminLoginPage = () => {
                 onClick={(e) => {
                   e.preventDefault()
                   // TODO: Implement forgot password functionality
-                  alert('パスワードリセット機能は準備中です')
+                  showInfo('パスワードリセット機能は準備中です')
                 }}
               >
                 パスワードを忘れましたか?
@@ -174,7 +175,7 @@ const AdminLoginPage = () => {
                 onClick={(e) => {
                   e.preventDefault()
                   // TODO: Implement resend confirmation email functionality
-                  alert('確認メール再送信機能は準備中です')
+                  showInfo('確認メール再送信機能は準備中です')
                 }}
               >
                 確認メールが届いていませんか?

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { getProjectById, getProjectReturns } from '@/app/lib/api'
 import { useAuth } from '@/app/hooks/useAuth'
 import LoadingSpinner from '@/app/components/loading-spinner'
+import { showError, handleApiError } from '@/app/lib/toast'
 
 interface Project {
   id: string
@@ -87,9 +88,9 @@ const SupportPage = ({ params: paramsPromise }: { params: Promise<{ projectId: s
         console.error('データの取得に失敗しました:', error)
         // Show user-friendly error message
         if (error.response?.status === 404) {
-          alert('プロジェクトが見つかりません')
+          showError('プロジェクトが見つかりません')
         } else {
-          alert('データの取得に失敗しました。ページを再読み込みしてください。')
+          showError('データの取得に失敗しました。ページを再読み込みしてください。')
         }
       } finally {
         setLoading(false)
@@ -151,7 +152,7 @@ const SupportPage = ({ params: paramsPromise }: { params: Promise<{ projectId: s
           returnItem.stock !== undefined &&
           returnItem.stock < requestedQuantity
         ) {
-          alert(`${returnItem.title}の在庫が不足しています。在庫数: ${returnItem.stock}個`)
+          showError(`${returnItem.title}の在庫が不足しています。在庫数: ${returnItem.stock}個`)
           return false
         }
       }
@@ -164,7 +165,7 @@ const SupportPage = ({ params: paramsPromise }: { params: Promise<{ projectId: s
     if (isProcessing) return
 
     if (selectedRewards.length === 0) {
-      alert('リターンを選択してください')
+      showError('リターンを選択してください')
       return
     }
 
@@ -174,7 +175,7 @@ const SupportPage = ({ params: paramsPromise }: { params: Promise<{ projectId: s
     }
 
     if (!isAuthenticated) {
-      alert('ログインが必要です。ログインページに移動します。')
+      showError('ログインが必要です。ログインページに移動します。')
       router.push('/login')
       return
     }
@@ -189,7 +190,7 @@ const SupportPage = ({ params: paramsPromise }: { params: Promise<{ projectId: s
       )
     } catch (error) {
       console.error('購入処理エラー:', error)
-      alert('購入処理中にエラーが発生しました。もう一度お試しください。')
+      handleApiError(error)
       setIsProcessing(false)
     }
   }

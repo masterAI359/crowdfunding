@@ -1,31 +1,17 @@
 'use client'
 import React, { useState, useEffect } from 'react'
-import Link from 'next/link'
-import { useRouter, usePathname } from 'next/navigation'
-import { useAuth } from '@/app/hooks/useAuth'
-import { getCurrentUser, getPurchaseHistory, updateUserProfile } from '@/app/lib/api'
+import { getCurrentUser, getPurchaseHistory, updateUserProfile, updateCardInfo } from '@/app/lib/api'
 import LoadingSpinner from '@/app/components/loading-spinner'
 
 const UserSettingsPage = () => {
-  const router = useRouter()
-  const pathname = usePathname()
-  const { user, isAuthenticated, loading } = useAuth()
-  const [activeTab, setActiveTab] = useState('account-info')
   const [userData, setUserData] = useState<any>(null)
   const [purchaseData, setPurchaseData] = useState<any>(null)
   const [isLoadingData, setIsLoadingData] = useState(false)
 
   useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      router.push('/login')
-      return
-    }
-
-    if (isAuthenticated) {
-      loadUserData()
-      loadPurchaseData()
-    }
-  }, [isAuthenticated, loading])
+    loadUserData()
+    loadPurchaseData()
+  }, [])
 
   const loadUserData = async () => {
     try {
@@ -48,104 +34,13 @@ const UserSettingsPage = () => {
     }
   }
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-gray-500">読み込み中...</div>
-      </div>
-    )
-  }
-
-  if (!isAuthenticated) {
-    return null
-  }
-
-  const menuItems = [
-    { id: 'my-movies', label: 'マイムービー', href: '/user-settings/movies' },
-    { id: 'account-info', label: 'アカウント情報', href: '/user-settings' },
-    { id: 'account-security', label: 'アカウントセキュリティ', href: '/user-settings/security' },
-    { id: 'privacy-settings', label: 'プライベート設定', href: '/user-settings/privacy' },
-    { id: 'delete-account', label: 'アカウントを閉鎖', href: '/user-settings/delete' },
-  ]
-
-  // Add seller dashboard link if user is a seller
-  if (user?.isSeller || user?.isAdministrator) {
-    menuItems.unshift({ id: 'seller', label: '出品者管理ページ', href: '/user-settings/seller' })
-  }
-
   return (
-    <div className="min-h-screen bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex flex-col lg:flex-row gap-8">
-          {/* Left Sidebar Navigation */}
-          <div className="w-full lg:w-64 flex-shrink-0">
-            <div className="bg-white border border-gray-200 rounded-lg p-6">
-              {/* User Profile Section */}
-              <div className="mb-6">
-                <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center mb-4 mx-auto relative">
-                  <span className="text-2xl text-gray-500">
-                    {userData?.name?.charAt(0)?.toUpperCase() || 'U'}
-                  </span>
-                  <div className="absolute bottom-0 right-0 w-6 h-6 bg-gray-400 rounded-full flex items-center justify-center border-2 border-white">
-                    <svg
-                      className="w-4 h-4 text-white"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
-                      />
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
-                      />
-                    </svg>
-                  </div>
-                </div>
-                <div className="text-center">
-                  <p className="font-semibold text-gray-900">{userData?.name || 'user_name'}</p>
-                  <p className="text-sm text-gray-500">{userData?.email}</p>
-                </div>
-              </div>
-
-              {/* Navigation Menu */}
-              <nav className="space-y-2">
-                {menuItems.map((item) => {
-                  const isActive = pathname === item.href
-                  return (
-                    <Link
-                      key={item.id}
-                      href={item.href}
-                      className={`block px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
-                        isActive ? 'bg-[#FF0066] text-white' : 'text-gray-700 hover:bg-gray-100'
-                      }`}
-                    >
-                      {item.label}
-                    </Link>
-                  )
-                })}
-              </nav>
-            </div>
-          </div>
-
-          {/* Main Content Area */}
-          <div className="flex-1">
-            <AccountInfoContent
-              userData={userData}
-              purchaseData={purchaseData}
-              isLoadingData={isLoadingData}
-              onUpdate={loadUserData}
-            />
-          </div>
-        </div>
-      </div>
-    </div>
+    <AccountInfoContent
+      userData={userData}
+      purchaseData={purchaseData}
+      isLoadingData={isLoadingData}
+      onUpdate={loadUserData}
+    />
   )
 }
 
@@ -196,14 +91,30 @@ const AccountInfoContent = ({
       </div>
 
       {/* Tab Content */}
-      <div className="mt-6">
-        {activeSubTab === 'contact' && (
-          <ContactAndSettingsTab userData={userData} onUpdate={onUpdate} />
-        )}
-        {activeSubTab === 'billing' && <BillingTab />}
-        {activeSubTab === 'purchase-history' && (
-          <PurchaseHistoryTab purchaseData={purchaseData} isLoading={isLoadingData} />
-        )}
+      <div className="mt-6 relative">
+        <div className="grid grid-cols-1">
+          <div
+            className={`col-start-1 row-start-1 transition-opacity duration-200 ease-in-out ${
+              activeSubTab === 'contact' ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
+            }`}
+          >
+            <ContactAndSettingsTab userData={userData} onUpdate={onUpdate} />
+          </div>
+          <div
+            className={`col-start-1 row-start-1 transition-opacity duration-200 ease-in-out ${
+              activeSubTab === 'billing' ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
+            }`}
+          >
+            <BillingTab userData={userData} onUpdate={onUpdate} />
+          </div>
+          <div
+            className={`col-start-1 row-start-1 transition-opacity duration-200 ease-in-out ${
+              activeSubTab === 'purchase-history' ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
+            }`}
+          >
+            <PurchaseHistoryTab purchaseData={purchaseData} isLoading={isLoadingData} />
+          </div>
+        </div>
       </div>
     </div>
   )
@@ -345,23 +256,264 @@ const ContactAndSettingsTab = ({ userData, onUpdate }: { userData: any; onUpdate
 }
 
 // Billing Tab
-const BillingTab = () => {
+const BillingTab = ({ userData, onUpdate }: { userData: any; onUpdate: () => void }) => {
+  const [isEditing, setIsEditing] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
+  const [formData, setFormData] = useState({
+    cardNumber: userData?.cardNumber || '',
+    cardLast4: userData?.cardLast4 || '',
+    cardExpMonth: userData?.cardExpMonth || '',
+    cardExpYear: userData?.cardExpYear || '',
+    cardBrand: userData?.cardBrand || '',
+  })
+  const [showFullCardNumber, setShowFullCardNumber] = useState(false)
+
+  useEffect(() => {
+    if (userData) {
+      setFormData({
+        cardNumber: userData.cardNumber || '',
+        cardLast4: userData.cardLast4 || '',
+        cardExpMonth: userData.cardExpMonth || '',
+        cardExpYear: userData.cardExpYear || '',
+        cardBrand: userData.cardBrand || '',
+      })
+    }
+  }, [userData])
+
+  const handleEdit = () => {
+    setIsEditing(true)
+    setError('')
+    setSuccess('')
+  }
+
+  const handleCancel = () => {
+    setIsEditing(false)
+    setFormData({
+      cardNumber: userData?.cardNumber || '',
+      cardLast4: userData?.cardLast4 || '',
+      cardExpMonth: userData?.cardExpMonth || '',
+      cardExpYear: userData?.cardExpYear || '',
+      cardBrand: userData?.cardBrand || '',
+    })
+    setError('')
+    setSuccess('')
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+    setSuccess('')
+    setIsSaving(true)
+
+    try {
+      // バリデーション
+      if (formData.cardNumber) {
+        const cardNumberDigits = formData.cardNumber.replace(/\D/g, '')
+        if (cardNumberDigits.length < 13 || cardNumberDigits.length > 19) {
+          throw new Error('カード番号は13-19桁の数字である必要があります')
+        }
+      }
+
+      if (formData.cardLast4 && !/^\d{4}$/.test(formData.cardLast4)) {
+        throw new Error('カード番号の下4桁は4桁の数字である必要があります')
+      }
+
+      if (formData.cardExpMonth && (Number(formData.cardExpMonth) < 1 || Number(formData.cardExpMonth) > 12)) {
+        throw new Error('有効期限の月は1-12の間で指定してください')
+      }
+
+      const currentYear = new Date().getFullYear()
+      if (formData.cardExpYear && Number(formData.cardExpYear) < currentYear) {
+        throw new Error('有効期限の年が無効です')
+      }
+
+      await updateCardInfo({
+        cardNumber: formData.cardNumber || undefined,
+        cardLast4: formData.cardLast4 || undefined,
+        cardExpMonth: formData.cardExpMonth ? Number(formData.cardExpMonth) : undefined,
+        cardExpYear: formData.cardExpYear ? Number(formData.cardExpYear) : undefined,
+        cardBrand: formData.cardBrand || undefined,
+      })
+
+      setSuccess('クレジットカード情報が正常に更新されました')
+      setIsEditing(false)
+      onUpdate()
+    } catch (err: any) {
+      setError(err.response?.data?.message || err.message || 'カード情報の更新に失敗しました')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const hasCardInfo = userData?.cardLast4 || userData?.cardExpMonth || userData?.cardExpYear
+
   return (
     <div className="space-y-6">
       <div>
         <h3 className="text-lg font-semibold text-gray-900 mb-4">登録されたクレジットカード</h3>
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-500 mb-1">カード番号</p>
-              <p className="text-lg font-mono">**** **** **** 1234</p>
-              <p className="text-sm text-gray-500 mt-2">有効期限: 12/25</p>
-            </div>
-            <button className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-              変更
-            </button>
+        {!isEditing ? (
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
+            {hasCardInfo ? (
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <p className="text-sm text-gray-500 mb-1">カード番号</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-lg font-mono">
+                      {showFullCardNumber && userData?.cardNumber
+                        ? userData.cardNumber.replace(/(.{4})/g, '$1 ').trim()
+                        : `${userData?.cardBrand ? userData.cardBrand + ' ' : ''}**** **** **** ${userData?.cardLast4 || '****'}`}
+                    </p>
+                    {userData?.cardNumber && (
+                      <button
+                        onMouseDown={() => setShowFullCardNumber(true)}
+                        onMouseUp={() => setShowFullCardNumber(false)}
+                        onMouseLeave={() => setShowFullCardNumber(false)}
+                        onTouchStart={() => setShowFullCardNumber(true)}
+                        onTouchEnd={() => setShowFullCardNumber(false)}
+                        className="px-3 py-1 text-xs bg-gray-200 hover:bg-gray-300 rounded transition-colors"
+                      >
+                        {showFullCardNumber ? '離すと非表示' : '長押しで表示'}
+                      </button>
+                    )}
+                  </div>
+                  {userData?.cardExpMonth && userData?.cardExpYear && (
+                    <p className="text-sm text-gray-500 mt-2">
+                      有効期限: {String(userData.cardExpMonth).padStart(2, '0')}/{String(userData.cardExpYear).slice(-2)}
+                    </p>
+                  )}
+                </div>
+                <button
+                  onClick={handleEdit}
+                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors ml-4"
+                >
+                  変更
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-500">カード情報が登録されていません</p>
+                </div>
+                <button
+                  onClick={handleEdit}
+                  className="px-4 py-2 bg-[#FF0066] text-white rounded-lg hover:bg-[#E6005C] transition-colors"
+                >
+                  カードを登録
+                </button>
+              </div>
+            )}
           </div>
-        </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="bg-gray-50 border border-gray-200 rounded-lg p-6 space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">カード番号</label>
+                <input
+                  type="text"
+                  maxLength={23}
+                  value={formData.cardNumber.replace(/(.{4})/g, '$1 ').trim()}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, '')
+                    setFormData({
+                      ...formData,
+                      cardNumber: value,
+                      cardLast4: value.slice(-4) || formData.cardLast4,
+                    })
+                  }}
+                  placeholder="1234 5678 9012 3456"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF0066] focus:border-transparent font-mono"
+                />
+                <p className="mt-1 text-xs text-gray-500">カード番号を入力してください（数字のみ）</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">カードブランド</label>
+                <select
+                  value={formData.cardBrand}
+                  onChange={(e) => setFormData({ ...formData, cardBrand: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF0066] focus:border-transparent"
+                >
+                  <option value="">選択してください</option>
+                  <option value="Visa">Visa</option>
+                  <option value="Mastercard">Mastercard</option>
+                  <option value="JCB">JCB</option>
+                  <option value="American Express">American Express</option>
+                  <option value="Diners Club">Diners Club</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">カード番号（下4桁）</label>
+                <input
+                  type="text"
+                  maxLength={4}
+                  value={formData.cardLast4}
+                  onChange={(e) => setFormData({ ...formData, cardLast4: e.target.value.replace(/\D/g, '') })}
+                  placeholder="1234"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF0066] focus:border-transparent"
+                  readOnly
+                  disabled
+                />
+                <p className="mt-1 text-xs text-gray-500">カード番号から自動入力されます</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">有効期限（月）</label>
+                <select
+                  value={formData.cardExpMonth}
+                  onChange={(e) => setFormData({ ...formData, cardExpMonth: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF0066] focus:border-transparent"
+                >
+                  <option value="">選択してください</option>
+                  {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
+                    <option key={month} value={month}>
+                      {String(month).padStart(2, '0')}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">有効期限（年）</label>
+                <input
+                  type="number"
+                  min={new Date().getFullYear()}
+                  max={new Date().getFullYear() + 20}
+                  value={formData.cardExpYear}
+                  onChange={(e) => setFormData({ ...formData, cardExpYear: e.target.value })}
+                  placeholder={new Date().getFullYear().toString()}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF0066] focus:border-transparent"
+                />
+              </div>
+            </div>
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+                {error}
+              </div>
+            )}
+            {success && (
+              <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">
+                {success}
+              </div>
+            )}
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={handleCancel}
+                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                disabled={isSaving}
+              >
+                キャンセル
+              </button>
+              <button
+                type="submit"
+                disabled={isSaving}
+                className="px-6 py-2 bg-[#FF0066] text-white rounded-lg hover:bg-[#E6005C] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {isSaving && <LoadingSpinner size="sm" className="text-white" />}
+                保存
+              </button>
+            </div>
+          </form>
+        )}
       </div>
     </div>
   )
@@ -397,7 +549,7 @@ const PurchaseHistoryTab = ({
               key={video.id}
               className="flex items-center gap-4 p-4 border border-gray-200 rounded-lg"
             >
-              <div className="w-24 h-16 bg-gray-200 rounded flex-shrink-0"></div>
+              <div className="w-24 h-16 bg-gray-200 rounded shrink-0"></div>
               <div className="flex-1">
                 <h4 className="font-medium text-gray-900">{video.title || '動画'}</h4>
                 <p className="text-sm text-gray-500">

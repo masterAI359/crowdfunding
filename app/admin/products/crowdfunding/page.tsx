@@ -6,11 +6,19 @@ import {
   getAdminCrowdfundingStats,
   updateProject,
   deleteProject,
+  overrideProjectValue,
+  uploadFiles,
+  getProjectById,
+  getExecutorInfo,
+  createExecutorInfo,
+  updateExecutorInfo,
+  deleteExecutorInfo,
 } from '@/app/lib/api'
 import LoadingSpinner from '@/app/components/loading-spinner'
 import Image from 'next/image'
 import { SmartImage } from '@/app/utils/image-helper'
 import { SlMagnifier } from 'react-icons/sl'
+import { showError, showSuccess, handleApiError } from '@/app/lib/toast'
 
 interface Project {
   id: string
@@ -43,6 +51,29 @@ export default function CrowdfundingProductsPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [isUpdatingStatus, setIsUpdatingStatus] = useState<string | null>(null)
   const [actionMenuOpen, setActionMenuOpen] = useState<string | null>(null)
+  const [editingProject, setEditingProject] = useState<Project | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
+  const [editForm, setEditForm] = useState({
+    title: '',
+    description: '',
+    goalAmount: '',
+    endDate: '',
+    status: 'DRAFT' as 'DRAFT' | 'ACTIVE',
+    totalAmount: '',
+    supporterCount: '',
+    medias: [] as Array<{ url: string; type: 'IMAGE' | 'VIDEO'; order: number }>,
+  })
+  const [executorList, setExecutorList] = useState<Array<{
+    id?: string
+    name?: string
+    imageUrl?: string
+    introduction?: string
+    order?: number
+    userId?: string
+    isNew?: boolean
+  }>>([])
+  const [uploadingMedia, setUploadingMedia] = useState(false)
+  const [uploadingExecutorImage, setUploadingExecutorImage] = useState<string | null>(null)
 
   useEffect(() => {
     loadData()
@@ -121,7 +152,7 @@ export default function CrowdfundingProductsPage() {
       await loadProjects()
     } catch (error) {
       console.error('Failed to update status:', error)
-      alert('ステータスの更新に失敗しました')
+      handleApiError(error)
     } finally {
       setIsUpdatingStatus(null)
     }
@@ -135,10 +166,10 @@ export default function CrowdfundingProductsPage() {
     const link = `${window.location.origin}/crowdfunding/${projectId}`
     try {
       await navigator.clipboard.writeText(link)
-      alert('リンクをコピーしました')
+      showSuccess('リンクをコピーしました')
     } catch (error) {
       console.error('Failed to copy link:', error)
-      alert('リンクのコピーに失敗しました')
+      showError('リンクのコピーに失敗しました')
     }
   }
 
@@ -149,11 +180,272 @@ export default function CrowdfundingProductsPage() {
     try {
       await deleteProject(projectId)
       await loadProjects()
-      alert('プロジェクトを削除しました')
+      showSuccess('プロジェクトを削除しました')
     } catch (error) {
       console.error('Failed to delete project:', error)
-      alert('プロジェクトの削除に失敗しました')
+      handleApiError(error)
     }
+  }
+
+  const handleEdit = async (project: Project) => {
+    setEditingProject(project)
+    try {
+      // 全メディアを取得するためにgetProjectByIdを使用
+      const fullProject = await getProjectById(project.id)
+      // 既存メディアからid、projectId、createdAtを除外して設定
+      const cleanMedias = (fullProject.medias || []).map((media: any) => ({
+        url: media.url,
+        type: media.type,
+        order: media.order || 0,
+      }))
+      setEditForm({
+        title: fullProject.title || '',
+        description: fullProject.description || '',
+        goalAmount: fullProject.goalAmount?.toString() || '',
+        endDate: fullProject.endDate ? new Date(fullProject.endDate).toISOString().split('T')[0] : '',
+        status: fullProject.status === 'ACTIVE' ? 'ACTIVE' : 'DRAFT',
+        totalAmount: fullProject.totalAmount?.toString() || '0',
+        supporterCount: fullProject.supporterCount?.toString() || '0',
+        medias: cleanMedias,
+      })
+      
+      // 実行者情報を取得
+      try {
+        const executorData = await getExecutorInfo(project.id)
+        if (executorData && Array.isArray(executorData)) {
+          setExecutorList(executorData.map((exec: any) => ({
+            id: exec.id,
+            name: exec.name || '',
+            imageUrl: exec.imageUrl || '',
+            introduction: exec.introduction || '',
+            order: exec.order || 0,
+            userId: exec.userId,
+            isNew: false,
+          })))
+        } else {
+          setExecutorList([])
+        }
+      } catch (error) {
+        console.error('Failed to load executor info:', error)
+        setExecutorList([])
+      }
+    } catch (error: any) {
+      console.error('Failed to load project details:', error)
+      handleApiError(error)
+      // エラーが発生した場合は既存のデータを使用
+      const cleanMedias = (project.medias || []).map((media: any) => ({
+        url: media.url,
+        type: media.type,
+        order: media.order || 0,
+      }))
+      setEditForm({
+        title: project.title || '',
+        description: project.description || '',
+        goalAmount: project.goalAmount?.toString() || '',
+        endDate: project.endDate ? new Date(project.endDate).toISOString().split('T')[0] : '',
+        status: project.status === 'ACTIVE' ? 'ACTIVE' : 'DRAFT',
+        totalAmount: project.totalAmount?.toString() || '0',
+        supporterCount: project.supporterCount?.toString() || '0',
+        medias: cleanMedias,
+      })
+      setExecutorList([])
+    }
+    setActionMenuOpen(null)
+  }
+
+  const handleSaveEdit = async () => {
+    if (!editingProject) return
+
+    setIsSaving(true)
+    try {
+      // メディアデータからid、projectId、createdAtを除外して送信
+      const cleanMedias = editForm.medias.map((media) => ({
+        url: media.url,
+        type: media.type,
+        order: media.order || 0,
+      }))
+
+      // 基本情報の更新（メディアも含める）
+      await updateProject(editingProject.id, {
+        title: editForm.title,
+        description: editForm.description,
+        goalAmount: parseInt(editForm.goalAmount, 10),
+        endDate: editForm.endDate,
+        status: editForm.status,
+        medias: cleanMedias.length > 0 ? cleanMedias : undefined,
+      })
+
+      // totalAmountの上書き（0も許可）
+      const totalAmount = parseInt(editForm.totalAmount, 10)
+      if (!isNaN(totalAmount) && totalAmount >= 0) {
+        await overrideProjectValue(editingProject.id, 'amount', totalAmount, true)
+      }
+
+      // supporterCountの上書き（0も許可）
+      const supporterCount = parseInt(editForm.supporterCount, 10)
+      if (!isNaN(supporterCount) && supporterCount >= 0) {
+        await overrideProjectValue(editingProject.id, 'supporterCount', supporterCount, true)
+      }
+
+      // 実行者情報の保存（新規作成・更新）
+      for (const executor of executorList) {
+        if (executor.isNew) {
+          // 新規作成
+          if (executor.name || executor.imageUrl || executor.introduction) {
+            await createExecutorInfo(editingProject.id, {
+              name: executor.name,
+              imageUrl: executor.imageUrl,
+              introduction: executor.introduction,
+              order: executor.order,
+            })
+          }
+        } else if (executor.id) {
+          // 既存の更新
+          await updateExecutorInfo(executor.id, {
+            name: executor.name,
+            imageUrl: executor.imageUrl,
+            introduction: executor.introduction,
+            order: executor.order,
+          })
+        }
+      }
+      // 注意: 削除はremoveExecutor関数内で既に処理されている
+
+      await loadProjects()
+      setEditingProject(null)
+      showSuccess('プロジェクトを更新しました')
+    } catch (error) {
+      console.error('Failed to update project:', error)
+      handleApiError(error)
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const handleCancelEdit = () => {
+    setEditingProject(null)
+    setEditForm({
+      title: '',
+      description: '',
+      goalAmount: '',
+      endDate: '',
+      status: 'DRAFT',
+      totalAmount: '',
+      supporterCount: '',
+      medias: [],
+    })
+    setExecutorList([])
+  }
+
+  const addExecutor = () => {
+    const maxOrder = executorList.length > 0 
+      ? Math.max(...executorList.map(e => e.order || 0))
+      : -1
+    setExecutorList([
+      ...executorList,
+      {
+        name: '',
+        imageUrl: '',
+        introduction: '',
+        order: maxOrder + 1,
+        isNew: true,
+      },
+    ])
+  }
+
+  const removeExecutor = async (index: number) => {
+    const executor = executorList[index]
+    if (executor.id && !executor.isNew) {
+      // 既存の実行者を削除
+      try {
+        await deleteExecutorInfo(executor.id)
+      } catch (error) {
+        console.error('Failed to delete executor:', error)
+        handleApiError(error)
+        return // エラー時は削除をキャンセル
+      }
+    }
+    setExecutorList(executorList.filter((_, i) => i !== index))
+  }
+
+  const updateExecutor = (index: number, field: 'name' | 'imageUrl' | 'introduction' | 'order', value: string | number) => {
+    const newList = [...executorList]
+    newList[index] = { ...newList[index], [field]: value }
+    setExecutorList(newList)
+  }
+
+  const handleExecutorImageUpload = async (index: number, file: File) => {
+    try {
+      setUploadingExecutorImage(`uploading-${index}`)
+      const uploadResult = await uploadFiles([file])
+      const uploadedFiles = uploadResult.files || []
+
+      if (uploadedFiles.length > 0) {
+        const uploadedFile = uploadedFiles[0]
+        updateExecutor(index, 'imageUrl', uploadedFile.url)
+      } else {
+        showError('ファイルのアップロードに失敗しました')
+      }
+    } catch (error: any) {
+      console.error('Failed to upload executor image:', error)
+      handleApiError(error)
+    } finally {
+      setUploadingExecutorImage(null)
+    }
+  }
+
+  const removeExecutorImage = (index: number) => {
+    updateExecutor(index, 'imageUrl', '')
+  }
+
+  const handleMediaFileSelect = async (mediaType: 'IMAGE' | 'VIDEO', file: File | null) => {
+    if (!file) return
+
+    // ファイルタイプの検証
+    if (mediaType === 'IMAGE' && !file.type.startsWith('image/')) {
+      showError('画像ファイルを選択してください')
+      return
+    }
+    if (mediaType === 'VIDEO' && !file.type.startsWith('video/')) {
+      showError('動画ファイルを選択してください')
+      return
+    }
+
+    try {
+      setUploadingMedia(true)
+      const uploadResult = await uploadFiles([file])
+      const uploadedFiles = uploadResult.files || []
+
+      if (uploadedFiles.length > 0) {
+        const uploadedFile = uploadedFiles[0]
+        const mediaUrl = uploadedFile.url
+
+        setEditForm({
+          ...editForm,
+          medias: [
+            ...editForm.medias,
+            { url: mediaUrl, type: mediaType, order: editForm.medias.length },
+          ],
+        })
+      } else {
+        showError('ファイルのアップロードに失敗しました')
+      }
+    } catch (error: any) {
+      console.error('Failed to upload media:', error)
+      handleApiError(error)
+    } finally {
+      setUploadingMedia(false)
+    }
+  }
+
+  const removeMedia = (index: number) => {
+    setEditForm({
+      ...editForm,
+      medias: editForm.medias.filter((_, i) => i !== index).map((media, i) => ({
+        ...media,
+        order: i,
+      })),
+    })
   }
 
   const formatCurrency = (amount: number) => {
@@ -299,7 +591,7 @@ export default function CrowdfundingProductsPage() {
                             >
                               <td className="py-4 px-4">
                                 <div className="flex items-center gap-3">
-                                  <div className="relative rounded overflow-hidden flex-shrink-0">
+                                  <div className="relative rounded overflow-hidden shrink-0">
                                     <SmartImage
                                       src={getProjectImage(project)}
                                       alt={project.title}
@@ -546,16 +838,37 @@ export default function CrowdfundingProductsPage() {
                                           className="fixed inset-0 z-10 w-auto"
                                           onClick={() => setActionMenuOpen(null)}
                                         />
-                                        <div className="w-[40px] absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg z-20 border border-gray-200">
+                                        <div className="w-48 absolute right-0 mt-2 bg-white rounded-lg shadow-lg z-20 border border-gray-200">
+                                          <button
+                                            onClick={() => {
+                                              handleEdit(project)
+                                            }}
+                                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-t-lg flex items-center gap-2"
+                                          >
+                                            <svg
+                                              className="w-5 h-5"
+                                              fill="none"
+                                              stroke="currentColor"
+                                              viewBox="0 0 24 24"
+                                            >
+                                              <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                              />
+                                            </svg>
+                                            編集
+                                          </button>
                                           <button
                                             onClick={() => {
                                               handlePreview(project.id)
                                               setActionMenuOpen(null)
                                             }}
-                                            className="w-full text-left px-2 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-t-lg flex items-center"
+                                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
                                           >
                                             <svg
-                                              className="w-6 h-6"
+                                              className="w-5 h-5"
                                               fill="none"
                                               stroke="currentColor"
                                               viewBox="0 0 24 24"
@@ -573,16 +886,17 @@ export default function CrowdfundingProductsPage() {
                                                 d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
                                               />
                                             </svg>
+                                            プレビュー
                                           </button>
                                           <button
                                             onClick={() => {
                                               handleCopyLink(project.id)
                                               setActionMenuOpen(null)
                                             }}
-                                            className="w-full text-left px-2 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2 text-wrap break-words"
+                                            className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
                                           >
                                             <svg
-                                              className="w-6 h-6"
+                                              className="w-5 h-5"
                                               fill="none"
                                               stroke="currentColor"
                                               viewBox="0 0 24 24"
@@ -594,16 +908,17 @@ export default function CrowdfundingProductsPage() {
                                                 d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
                                               />
                                             </svg>
+                                            リンクをコピー
                                           </button>
                                           <button
                                             onClick={() => {
                                               handleDelete(project.id)
                                               setActionMenuOpen(null)
                                             }}
-                                            className="w-full text-left px-2 py-2 text-sm text-red-600 hover:bg-red-50 rounded-b-lg flex items-center gap-2 text-wrap break-words"
+                                            className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-b-lg flex items-center gap-2"
                                           >
                                             <svg
-                                              className="w-6 h-6"
+                                              className="w-5 h-5"
                                               fill="none"
                                               stroke="currentColor"
                                               viewBox="0 0 24 24"
@@ -615,6 +930,7 @@ export default function CrowdfundingProductsPage() {
                                                 d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                                               />
                                             </svg>
+                                            削除
                                           </button>
                                         </div>
                                       </>
@@ -636,6 +952,384 @@ export default function CrowdfundingProductsPage() {
           </div>
         </div>
       </div>
+
+      {/* Edit Modal */}
+      {editingProject && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">プロジェクトを編集</h2>
+              
+              <div className="space-y-6">
+                {/* Basic Information Section */}
+                <div className="border-b border-gray-200 pb-4">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">基本情報</h3>
+                  <div className="space-y-4">
+                    {/* Title */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        タイトル
+                      </label>
+                      <input
+                        type="text"
+                        value={editForm.title}
+                        onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF0066]"
+                      />
+                    </div>
+
+                    {/* Description */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        説明
+                      </label>
+                      <textarea
+                        value={editForm.description}
+                        onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                        rows={4}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF0066]"
+                      />
+                    </div>
+
+                    {/* Goal Amount */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        目標金額（円）
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="1"
+                        value={editForm.goalAmount}
+                        onChange={(e) => setEditForm({ ...editForm, goalAmount: e.target.value })}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF0066]"
+                      />
+                    </div>
+
+                    {/* End Date */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        募集終了日
+                      </label>
+                      <input
+                        type="date"
+                        value={editForm.endDate}
+                        onChange={(e) => setEditForm({ ...editForm, endDate: e.target.value })}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF0066]"
+                      />
+                    </div>
+
+                    {/* Status */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        ステータス
+                      </label>
+                      <select
+                        value={editForm.status}
+                        onChange={(e) => setEditForm({ ...editForm, status: e.target.value as 'DRAFT' | 'ACTIVE' })}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF0066]"
+                      >
+                        <option value="DRAFT">Draft</option>
+                        <option value="ACTIVE">Published</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Statistics Section */}
+                <div className="border-b border-gray-200 pb-4">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">統計情報（上書き可能）</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Total Amount (Current Support Amount) */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        現在の支援総額（円）
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="1"
+                        value={editForm.totalAmount}
+                        onChange={(e) => setEditForm({ ...editForm, totalAmount: e.target.value })}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF0066]"
+                      />
+                    </div>
+
+                    {/* Supporter Count */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        支援者数
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="1"
+                        value={editForm.supporterCount}
+                        onChange={(e) => setEditForm({ ...editForm, supporterCount: e.target.value })}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF0066]"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Media Section */}
+                <div className="border-b border-gray-200 pb-4">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">メディア</h3>
+                  <div className="space-y-2 mb-2">
+                    <div className="flex gap-2">
+                      <label className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 cursor-pointer">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0] || null
+                            if (file) {
+                              handleMediaFileSelect('IMAGE', file)
+                            }
+                            e.target.value = '' // Reset input
+                          }}
+                          disabled={uploadingMedia}
+                        />
+                        {uploadingMedia ? 'アップロード中...' : '画像をアップロード'}
+                      </label>
+                      <label className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 cursor-pointer">
+                        <input
+                          type="file"
+                          accept="video/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0] || null
+                            if (file) {
+                              handleMediaFileSelect('VIDEO', file)
+                            }
+                            e.target.value = '' // Reset input
+                          }}
+                          disabled={uploadingMedia}
+                        />
+                        {uploadingMedia ? 'アップロード中...' : '動画をアップロード'}
+                      </label>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    {editForm.medias.length === 0 ? (
+                      <p className="text-sm text-gray-500 py-2">メディアが設定されていません</p>
+                    ) : (
+                      editForm.medias.map((media, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center gap-3 p-3 bg-gray-50 rounded border border-gray-200"
+                        >
+                          {media.type === 'IMAGE' ? (
+                            <div className="relative w-16 h-16 shrink-0 rounded overflow-hidden bg-gray-200">
+                              <SmartImage
+                                src={media.url}
+                                alt={`画像 ${index + 1}`}
+                                fill={true}
+                                className="object-cover"
+                              />
+                            </div>
+                          ) : (
+                            <div className="relative w-16 h-16 shrink-0 rounded overflow-hidden bg-gray-800 flex items-center justify-center">
+                              <svg
+                                className="w-8 h-8 text-white"
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                              >
+                                <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
+                              </svg>
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium text-gray-900">
+                              {media.type === 'IMAGE' ? '画像' : '動画'} {index + 1}
+                            </div>
+                            <div className="text-xs text-gray-500 truncate">
+                              {media.url.length > 60
+                                ? `${media.url.substring(0, 60)}...`
+                                : media.url}
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => removeMedia(index)}
+                            className="ml-auto px-3 py-1 text-sm text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors"
+                          >
+                            削除
+                          </button>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+                {/* Executor Info Section */}
+                <div>
+                  <div className="flex justify-between items-center mb-4">
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">プロジェクト実行者について</h3>
+                      <p className="text-sm text-gray-600 mt-1">
+                        複数の実行者を追加できます。購入者は自動的に実行者として追加されます。
+                      </p>
+                    </div>
+                    <button
+                      onClick={addExecutor}
+                      className="px-4 py-2 bg-[#FF0066] text-white rounded-lg hover:bg-[#E6005C] text-sm font-medium transition-colors flex items-center gap-2"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
+                      実行者を追加
+                    </button>
+                  </div>
+                  <div className="space-y-4">
+                    {executorList.length === 0 ? (
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                        <p className="text-sm text-gray-500 mb-4">実行者が設定されていません</p>
+                        <button
+                          onClick={addExecutor}
+                          className="px-4 py-2 bg-[#FF0066] text-white rounded-lg hover:bg-[#E6005C] text-sm font-medium"
+                        >
+                          最初の実行者を追加
+                        </button>
+                      </div>
+                    ) : (
+                      executorList.map((executor, index) => (
+                        <div key={executor.id || `new-${index}`} className="border-2 border-gray-300 rounded-lg p-5 space-y-4 bg-gray-50">
+                          <div className="flex justify-between items-center pb-2 border-b border-gray-200">
+                            <h4 className="text-sm font-semibold text-gray-900">
+                              実行者 {index + 1}
+                              {executor.userId && (
+                                <span className="ml-2 text-xs text-gray-500">(購入者から自動追加)</span>
+                              )}
+                            </h4>
+                            <button
+                              onClick={() => removeExecutor(index)}
+                              className="text-sm text-red-600 hover:text-red-800 hover:bg-red-50 px-2 py-1 rounded transition-colors"
+                            >
+                              削除
+                            </button>
+                          </div>
+
+                          {/* Executor Name */}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              実行者名
+                            </label>
+                            <input
+                              type="text"
+                              value={executor.name || ''}
+                              onChange={(e) => updateExecutor(index, 'name', e.target.value)}
+                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF0066]"
+                              placeholder="実行者名を入力..."
+                            />
+                          </div>
+
+                          {/* Executor Image */}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              画像 <span className="text-xs text-gray-500">(1枚のみ)</span>
+                            </label>
+                            {executor.imageUrl ? (
+                              <div className="space-y-3">
+                                <div className="relative w-full h-48 rounded-lg overflow-hidden bg-gray-200 border border-gray-300">
+                                  <SmartImage
+                                    src={executor.imageUrl}
+                                    alt="実行者画像"
+                                    fill={true}
+                                    className="object-cover"
+                                  />
+                                </div>
+                                <div className="flex gap-2">
+                                  <label className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 cursor-pointer text-sm">
+                                    <input
+                                      type="file"
+                                      accept="image/*"
+                                      className="hidden"
+                                      onChange={(e) => {
+                                        const file = e.target.files?.[0] || null
+                                        if (file) {
+                                          handleExecutorImageUpload(index, file)
+                                        }
+                                        e.target.value = ''
+                                      }}
+                                      disabled={uploadingExecutorImage === `uploading-${index}`}
+                                    />
+                                    {uploadingExecutorImage === `uploading-${index}` ? 'アップロード中...' : '画像を変更'}
+                                  </label>
+                                  <button
+                                    onClick={() => removeExecutorImage(index)}
+                                    className="px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 text-sm transition-colors"
+                                  >
+                                    画像を削除
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <label className="block">
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  className="hidden"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0] || null
+                                    if (file) {
+                                      handleExecutorImageUpload(index, file)
+                                    }
+                                    e.target.value = ''
+                                  }}
+                                  disabled={uploadingExecutorImage === `uploading-${index}`}
+                                />
+                                <span className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 cursor-pointer text-sm font-medium transition-colors">
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                  </svg>
+                                  {uploadingExecutorImage === `uploading-${index}` ? 'アップロード中...' : '画像をアップロード'}
+                                </span>
+                              </label>
+                            )}
+                          </div>
+
+                          {/* Introduction */}
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              紹介文 <span className="text-xs text-gray-500">(長文可・改行対応)</span>
+                            </label>
+                            <textarea
+                              value={executor.introduction || ''}
+                              onChange={(e) => updateExecutor(index, 'introduction', e.target.value)}
+                              rows={6}
+                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF0066] text-sm"
+                              placeholder="プロジェクト実行者についての紹介文を入力してください..."
+                            />
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex justify-end gap-4 mt-6">
+                <button
+                  onClick={handleCancelEdit}
+                  disabled={isSaving}
+                  className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  キャンセル
+                </button>
+                <button
+                  onClick={handleSaveEdit}
+                  disabled={isSaving}
+                  className="px-4 py-2 text-white bg-[#FF0066] rounded-lg hover:bg-[#E6005C] disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSaving ? '保存中...' : '保存'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

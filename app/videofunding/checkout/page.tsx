@@ -4,6 +4,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { getVideoById, createVideoPayment } from '@/app/lib/api'
 import LoadingSpinner from '@/app/components/loading-spinner'
+import { showError, handleApiError } from '@/app/lib/toast'
 
 interface Project {
   id: string
@@ -126,7 +127,7 @@ const CheckoutPage = ({
 
     // Check if user is logged in or has email
     if (!isLoggedIn && !email) {
-      alert('メールアドレスを入力してください')
+      showError('メールアドレスを入力してください')
       return
     }
 
@@ -149,7 +150,7 @@ const CheckoutPage = ({
       else if (seriesOptions.length > 0) {
         const selectedSeries = seriesOptions.filter((s) => s.checked)
         if (selectedSeries.length === 0) {
-          alert('購入する動画を選択してください')
+          showError('購入する動画を選択してください')
           setIsProcessing(false)
           return
         }
@@ -166,13 +167,13 @@ const CheckoutPage = ({
           0
         )
       } else {
-        alert('購入する動画を選択してください')
+        showError('購入する動画を選択してください')
         setIsProcessing(false)
         return
       }
 
       if (paymentAmount <= 0) {
-        alert('有効な金額を入力してください')
+        showError('有効な金額を入力してください')
         setIsProcessing(false)
         return
       }
@@ -186,7 +187,7 @@ const CheckoutPage = ({
       } else if (payment.clientSecret) {
         // Fallback to Payment Intent (if Checkout Session is not available)
         // This would require a custom payment page with Stripe Elements
-        alert('決済画面へのリダイレクトに失敗しました。もう一度お試しください。')
+        showError('決済画面へのリダイレクトに失敗しました。もう一度お試しください。')
         setIsProcessing(false)
       } else {
         throw new Error('決済情報の取得に失敗しました')
@@ -212,7 +213,7 @@ const CheckoutPage = ({
         errorMessage = error.message || '決済処理に失敗しました'
       }
 
-      alert(errorMessage)
+      handleApiError(error)
       setIsProcessing(false)
     }
   }

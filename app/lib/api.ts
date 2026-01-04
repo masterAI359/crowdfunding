@@ -186,6 +186,20 @@ export const updateUserProfile = async (data: {
 }
 
 /**
+ * クレジットカード情報更新
+ */
+export const updateCardInfo = async (data: {
+  cardNumber?: string
+  cardLast4?: string
+  cardExpMonth?: number
+  cardExpYear?: number
+  cardBrand?: string
+}) => {
+  const response = await apiClient.put('/users/card', data)
+  return response.data
+}
+
+/**
  * パスワード変更
  */
 export const changePassword = async (oldPassword: string, newPassword: string) => {
@@ -389,6 +403,55 @@ export const deleteProject = async (id: string) => {
  */
 export const publishProject = async (id: string) => {
   const response = await apiClient.post(`/projects/${id}/publish`)
+  return response.data
+}
+
+/**
+ * プロジェクト実行者情報一覧取得
+ */
+export const getExecutorInfo = async (projectId: string) => {
+  const response = await apiClient.get(`/projects/${projectId}/executor-info`)
+  return response.data
+}
+
+/**
+ * プロジェクト実行者情報作成
+ */
+export const createExecutorInfo = async (
+  projectId: string,
+  data: {
+    name?: string
+    imageUrl?: string
+    introduction?: string
+    userId?: string
+    order?: number
+  }
+) => {
+  const response = await apiClient.post(`/projects/${projectId}/executor-info`, data)
+  return response.data
+}
+
+/**
+ * プロジェクト実行者情報更新
+ */
+export const updateExecutorInfo = async (
+  executorId: string,
+  data: {
+    name?: string
+    imageUrl?: string
+    introduction?: string
+    order?: number
+  }
+) => {
+  const response = await apiClient.put(`/projects/executor-info/${executorId}`, data)
+  return response.data
+}
+
+/**
+ * プロジェクト実行者情報削除
+ */
+export const deleteExecutorInfo = async (executorId: string) => {
+  const response = await apiClient.delete(`/projects/executor-info/${executorId}`)
   return response.data
 }
 
@@ -626,6 +689,23 @@ export const getAdminCrowdfundingStats = async () => {
 }
 
 /**
+ * 管理者用：プロジェクトの数値を上書き
+ */
+export const overrideProjectValue = async (
+  projectId: string,
+  field: 'amount' | 'achievementRate' | 'supporterCount',
+  value: number,
+  isActive: boolean = true
+) => {
+  const response = await apiClient.post(`/admin/projects/${projectId}/override`, {
+    field,
+    value,
+    isActive,
+  })
+  return response.data
+}
+
+/**
  * 管理者用：全動画取得（表示状態問わず）
  */
 export const getAdminVideos = async (page: number = 1, limit: number = 100, search?: string) => {
@@ -660,6 +740,65 @@ export const updateAdminVideo = async (
   }
 ) => {
   const response = await apiClient.put(`/admin/videos/${id}`, data)
+  return response.data
+}
+
+/**
+ * 管理者用：レコメンドプロジェクトを設定
+ */
+export const setRecommendedProject = async (
+  projectId: string,
+  order: number,
+  isActive: boolean = true
+) => {
+  const response = await apiClient.post(`/admin/projects/${projectId}/recommend`, {
+    order,
+    isActive,
+  })
+  return response.data
+}
+
+/**
+ * 管理者用：バナープロジェクトを設定（一括）
+ */
+export const setBannerProjects = async (projectIds: string[]) => {
+  const response = await apiClient.post('/admin/banner-projects', {
+    projectIds,
+  })
+  return response.data
+}
+
+/**
+ * 管理者用：バナープロジェクト一覧取得
+ */
+export const getAdminBannerProjects = async () => {
+  const response = await apiClient.get('/admin/banner-projects')
+  return response.data
+}
+
+/**
+ * バナープロジェクト取得（公開用）
+ */
+export const getBannerProjects = async () => {
+  const response = await apiClient.get('/projects/banner/list')
+  return response.data
+}
+
+/**
+ * 管理者用：バナー動画を設定（一括）
+ */
+export const setBannerVideos = async (videoIds: string[]) => {
+  const response = await apiClient.post('/admin/banner-videos', {
+    videoIds,
+  })
+  return response.data
+}
+
+/**
+ * 管理者用：バナー動画一覧取得
+ */
+export const getAdminBannerVideos = async () => {
+  const response = await apiClient.get('/admin/banner-videos')
   return response.data
 }
 
