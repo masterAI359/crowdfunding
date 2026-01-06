@@ -218,12 +218,12 @@ const SupportPage = ({ params: paramsPromise }: { params: Promise<{ projectId: s
         {/* Project Info */}
         <div className="bg-[#ECEBD9] max-w-5xl mx-auto rounded-lg mb-6 sm:mb-8 flex flex-col md:flex-row overflow-hidden">
           {/* Left Image */}
-          <div className="w-full md:w-1/3 relative h-[200px] sm:h-[230px] md:h-auto">
+          <div className="w-full md:w-1/3 relative h-[230px] sm:h-[240px] md:h-[250px]">
             <Image
               src={project.image}
               alt={project.title}
               fill
-              className="object-cover h-full w-full"
+              className="w-full h-full bg-position-center"
             />
           </div>
 
@@ -260,7 +260,7 @@ const SupportPage = ({ params: paramsPromise }: { params: Promise<{ projectId: s
 
             {/* Description */}
             <div className="md:w-1/2 px-3 sm:px-4 text-left my-auto">
-              <p className="text-sm sm:text-lg  text-black">{project.description}</p>
+              <p className="text-sm sm:text-lg  text-black h-full text-ellipsis line-clamp-2 overflow-hidden">{project.description}</p>
             </div>
           </div>
         </div>
@@ -370,7 +370,7 @@ const SupportPage = ({ params: paramsPromise }: { params: Promise<{ projectId: s
                         src={returnItem.imageUrl || project.image}
                         alt={returnItem.title}
                         fill
-                        className="object-cover"
+                        className="object-cover w-full h-full"
                       />
                     </div>
                   </div>
