@@ -5,7 +5,6 @@ import { Inter, Roboto } from 'next/font/google'
 import Footer from './components/Footer'
 import './globals.css'
 import NavbarWrapper from './components/NavbarWrapper'
-import ClientWrapper from './components/ClientWrapper'
 import ToastProvider from './components/ToastProvider'
 
 // Configure Inter font for general text
@@ -54,7 +53,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <div className="min-h-screen maw-w-[1440px] flex flex-col">
           <NavbarWrapper />
           <main className="pt-25 md:pt-20 bg-[#f5f7f9]">{children}</main>
-          <ClientWrapper />
           <Footer />
           <ToastProvider />
         </div>

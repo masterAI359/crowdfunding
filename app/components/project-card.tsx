@@ -24,7 +24,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
         <img
           src={project.image}
           alt={project.title}
-          className="w-full sm:h-48 h-30 object-cover rounded-t-lg"
+          className="w-full sm:h-48 h-30 object-fill rounded-t-lg"
         />
 
         <div className="p-4 flex flex-col justify-end h-full">

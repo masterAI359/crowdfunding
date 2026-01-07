@@ -1,5 +1,5 @@
 'use client'
-import React, { useState } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { SmartImage } from '@/app/utils/image-helper'
 import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react'
 
@@ -9,26 +9,69 @@ interface ImageGalleryProps {
 
 const ImageGallery: React.FC<ImageGalleryProps> = ({ images }) => {
   const [selectedImage, setSelectedImage] = useState(0)
+  const [isTransitioning, setIsTransitioning] = useState(false)
+  const [direction, setDirection] = useState<'left' | 'right'>('right')
+  const thumbnailRefs = useRef<(HTMLDivElement | null)[]>([])
+  const thumbnailContainerRef = useRef<HTMLDivElement | null>(null)
+
+  // 選択された画像が変更された時に、対応するサムネイルをスクロールして表示
+  useEffect(() => {
+    const selectedThumbnail = thumbnailRefs.current[selectedImage]
+    if (selectedThumbnail && thumbnailContainerRef.current) {
+      selectedThumbnail.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+        inline: 'center',
+      })
+    }
+  }, [selectedImage])
 
   const handlePrevious = () => {
-    setSelectedImage((prev) => (prev > 0 ? prev - 1 : images.length - 1))
+    setDirection('left')
+    setIsTransitioning(true)
+    setTimeout(() => {
+      setSelectedImage((prev) => (prev > 0 ? prev - 1 : images.length - 1))
+      setIsTransitioning(false)
+    }, 150)
   }
 
   const handleNext = () => {
-    setSelectedImage((prev) => (prev < images.length - 1 ? prev + 1 : 0))
+    setDirection('right')
+    setIsTransitioning(true)
+    setTimeout(() => {
+      setSelectedImage((prev) => (prev < images.length - 1 ? prev + 1 : 0))
+      setIsTransitioning(false)
+    }, 150)
+  }
+
+  const handleThumbnailClick = (index: number) => {
+    setDirection(index > selectedImage ? 'right' : 'left')
+    setIsTransitioning(true)
+    setTimeout(() => {
+      setSelectedImage(index)
+      setIsTransitioning(false)
+    }, 150)
   }
 
   return (
     <div className="lg:h-full h-[400px] md:h-[500px]">
       {/* Main Image Display with Navigation */}
-      <div className="relative h-[60%] md:h-[70%] bg-gray-200 rounded-lg mb-3 md:mb-4 flex items-center justify-center">
+      <div className="relative h-[60%] md:h-[70%] bg-gray-200 rounded-lg mb-3 md:mb-4 flex items-center justify-center overflow-hidden">
         {images && images.length > 0 ? (
-          <SmartImage
-            src={images[selectedImage]}
-            alt={`Project image ${selectedImage + 1}`}
-            fill
-            className="object-cover rounded-lg"
-          />
+          <div className="relative w-full h-full">
+            <SmartImage
+              src={images[selectedImage]}
+              alt={`Project image ${selectedImage + 1}`}
+              fill
+              className={`object-cover rounded-lg transition-all duration-300 ease-in-out ${
+                isTransitioning
+                  ? direction === 'right'
+                    ? 'opacity-0 translate-x-4'
+                    : 'opacity-0 -translate-x-4'
+                  : 'opacity-100 translate-x-0'
+              }`}
+            />
+          </div>
         ) : (
           // Placeholder for when there are no images
           <div className="text-gray-400 text-4xl md:text-6xl">
@@ -50,21 +93,21 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ images }) => {
         )}
 
         {/* Navigation Buttons */}
-        {images && images.length > 1 && (
+        {images && images.length > 0 && (
           <>
             <button
               onClick={handlePrevious}
-              className="absolute cursor-pointer left-1 md:left-2 top-1/2 transform -translate-y-1/2 bg-black/80 hover:bg-black/70 active:bg-black/90 text-white font-extrabold rounded-full w-8 h-8 md:w-10 md:h-10 flex items-center justify-center transition-colors z-10 touch-manipulation"
+              className="absolute cursor-pointer left-2 md:left-4 top-1/2 transform -translate-y-1/2 bg-black/90 hover:bg-black/80 shadow-lg hover:shadow-xl active:bg-black/80 text-white-800 font-extrabold rounded-full w-10 h-10 md:w-12 md:h-12 flex items-center justify-center transition-all duration-200 z-10 touch-manipulation group"
               aria-label="Previous image"
             >
-              <ChevronLeftIcon className="w-4 h-4 md:w-6 md:h-6 text-white" />
+              <ChevronLeftIcon className="w-5 h-5 md:w-6 md:h-6 text-white group-hover:scale-110 transition-transform" />
             </button>
             <button
               onClick={handleNext}
-              className="absolute cursor-pointer right-1 md:right-2 top-1/2 transform -translate-y-1/2 bg-black/80 hover:bg-black/70 active:bg-black/90 text-white font-extrabold rounded-full w-8 h-8 md:w-10 md:h-10 flex items-center justify-center transition-colors z-10 touch-manipulation"
+              className="absolute cursor-pointer right-2 md:right-4 top-1/2 transform -translate-y-1/2 bg-black/90 hover:bg-black/80 shadow-lg hover:shadow-xl active:bg-black/80 text-white-800 font-extrabold rounded-full w-10 h-10 md:w-12 md:h-12 flex items-center justify-center transition-all duration-200 z-10 touch-manipulation group"
               aria-label="Next image"
             >
-              <ChevronRightIcon className="w-4 h-4 md:w-6 md:h-6 text-white" />
+              <ChevronRightIcon className="w-5 h-5 md:w-6 md:h-6 text-white group-hover:scale-110 transition-transform" />
             </button>
           </>
         )}
@@ -72,12 +115,18 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ images }) => {
 
       {/* Thumbnail Slider */}
       {images && images.length > 0 && (
-        <div className="flex overflow-x-auto w-full hide-scrollbar pb-1 snap-x snap-mandatory">
+        <div
+          ref={thumbnailContainerRef}
+          className="flex overflow-x-auto w-full hide-scrollbar pb-1 snap-x snap-mandatory"
+        >
           {images.map((image, index) => (
             <div
               key={index}
-              onClick={() => setSelectedImage(index)}
-              className="flex-shrink-0 w-1/3 md:w-1/4 h-20 md:h-36 cursor-pointer px-1 overflow-hidden snap-center touch-manipulation"
+              ref={(el) => {
+                thumbnailRefs.current[index] = el
+              }}
+              onClick={() => handleThumbnailClick(index)}
+              className="shrink-0 w-1/3 md:w-1/4 h-20 md:h-36 cursor-pointer px-1 overflow-hidden snap-center touch-manipulation"
             >
               <button
                 className={`border-2 rounded-lg w-full h-full ${
