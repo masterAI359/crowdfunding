@@ -1,5 +1,6 @@
 'use client'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
+import Link from 'next/link'
 import { SmartImage } from '@/app/utils/image-helper'
 
 type CategoryType = 'バラエティー' | 'スピリチュアル' | 'ミュージック' | 'ドキュメンタリー'
@@ -113,7 +114,8 @@ const VideoCarousel: React.FC<VideoCarouselProps> = ({ videos }) => {
               } ${isCenter ? 'scale-100 opacity-100' : 'scale-100 brightness-50'}`}
             >
               {/* Wrapper with responsive layout */}
-              <div className="relative w-full h-[28rem] sm:h-[32rem] md:h-[28rem] lg:h-[32rem] xl:h-[28rem] shadow-lg overflow-hidden flex flex-col md:block rounded-2xl md:rounded-2xl">
+              <Link href={`/videofunding/${video.id}`} className="block">
+                <div className="relative w-full h-[28rem] sm:h-[32rem] md:h-[28rem] lg:h-[32rem] xl:h-[28rem] shadow-lg overflow-hidden flex flex-col md:block rounded-2xl md:rounded-2xl cursor-pointer hover:shadow-xl transition-shadow">
                 {/* === Image Section === */}
                 <div className="relative w-full h-1/2 md:h-full">
                   <SmartImage
@@ -139,7 +141,8 @@ const VideoCarousel: React.FC<VideoCarouselProps> = ({ videos }) => {
                 </div>
 
                 {/* === Info Section === */}
-              </div>
+                </div>
+              </Link>
             </div>
           )
         })}

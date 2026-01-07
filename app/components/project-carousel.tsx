@@ -1,5 +1,6 @@
 'use client'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
+import Link from 'next/link'
 import { SmartImage } from '@/app/utils/image-helper'
 
 interface BannerProject {
@@ -106,9 +107,10 @@ const ProjectCarousel: React.FC<ProjectCarouselProps> = ({ projects, lightMode =
               } ${isCenter ? 'scale-100 opacity-100' : 'scale-100 brightness-50'}`}
             >
               {/* Wrapper with responsive layout */}
-              <div
-                className={`relative w-full shadow-lg overflow-hidden flex flex-col md:block rounded-2xl md:rounded-2xl ${lightMode ? 'h-[20rem]' : 'h-[28rem] sm:h-[32rem] md:h-[28rem] lg:h-[32rem] xl:h-[28rem]'}`}
-              >
+              <Link href={`/crowdfunding/${project.id}`} className="block">
+                <div
+                  className={`relative w-full shadow-lg overflow-hidden flex flex-col md:block rounded-2xl md:rounded-2xl cursor-pointer hover:shadow-xl transition-shadow ${lightMode ? 'h-[20rem]' : 'h-[28rem] sm:h-[32rem] md:h-[28rem] lg:h-[32rem] xl:h-[28rem]'}`}
+                >
                 {/* === Image Section === */}
                 <div
                   className={`relative w-full ${lightMode ? 'h-2/3 md:h-full' : 'h-1/2 md:h-full'}`}
@@ -191,7 +193,8 @@ const ProjectCarousel: React.FC<ProjectCarouselProps> = ({ projects, lightMode =
                     </div>
                   </div>
                 </>
-              </div>
+                </div>
+              </Link>
             </div>
           )
         })}
