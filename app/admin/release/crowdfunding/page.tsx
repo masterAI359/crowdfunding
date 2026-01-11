@@ -10,6 +10,7 @@ import {
 } from '@/app/lib/api'
 import LoadingSpinner from '@/app/components/loading-spinner'
 import Image from 'next/image'
+import { SmartImage } from '@/app/utils/image-helper'
 import { showError, showSuccess, handleApiError } from '@/app/lib/toast'
 
 export default function AdminReleaseCrowdfundingPage() {
@@ -21,7 +22,7 @@ export default function AdminReleaseCrowdfundingPage() {
     description: '',
     goalAmount: '',
     endDate: '',
-    medias: [] as Array<{ url: string; type: 'IMAGE'; order: number }>,
+    medias: [] as Array<{ url: string; type: 'IMAGE' | 'VIDEO'; order: number }>,
   })
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [createForm, setCreateForm] = useState({
@@ -29,7 +30,7 @@ export default function AdminReleaseCrowdfundingPage() {
     description: '',
     goalAmount: '',
     endDate: '',
-    medias: [] as Array<{ url: string; type: 'IMAGE'; order: number }>,
+    medias: [] as Array<{ url: string; type: 'IMAGE' | 'VIDEO'; order: number }>,
     returns: [] as Array<{
       title: string
       amount: string
@@ -44,6 +45,36 @@ export default function AdminReleaseCrowdfundingPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [uploadingMedia, setUploadingMedia] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+
+  // メディアオブジェクトをクリーンアップするヘルパー関数（id、projectId、createdAtを除外）
+  // フォーム状態用（orderは必須）
+  const cleanMediaForForm = (media: any): { url: string; type: 'IMAGE' | 'VIDEO'; order: number } => {
+    const orderValue =
+      typeof media.order === 'number' && !isNaN(media.order) && isFinite(media.order)
+        ? Math.floor(media.order)
+        : parseInt(String(media.order || 0), 10)
+    return {
+      url: String(media.url || ''),
+      type: (media.type === 'VIDEO' ? 'VIDEO' : 'IMAGE') as 'IMAGE' | 'VIDEO',
+      order: !isNaN(orderValue) && isFinite(orderValue) ? orderValue : 0,
+    }
+  }
+
+  // API送信用（orderはオプショナル）
+  const cleanMediaForAPI = (media: any): { url: string; type: 'IMAGE' | 'VIDEO'; order?: number } => {
+    const cleaned: { url: string; type: 'IMAGE' | 'VIDEO'; order?: number } = {
+      url: String(media.url || ''),
+      type: (media.type === 'VIDEO' ? 'VIDEO' : 'IMAGE') as 'IMAGE' | 'VIDEO',
+    }
+    const orderValue =
+      typeof media.order === 'number' && !isNaN(media.order) && isFinite(media.order)
+        ? Math.floor(media.order)
+        : parseInt(String(media.order || 0), 10)
+    if (!isNaN(orderValue) && isFinite(orderValue)) {
+      cleaned.order = orderValue
+    }
+    return cleaned
+  }
 
   useEffect(() => {
     loadProjects()
@@ -64,12 +95,14 @@ export default function AdminReleaseCrowdfundingPage() {
 
   const handleEdit = (project: any) => {
     setEditingProject(project.id)
+    // メディアをクリーンアップして設定
+    const cleanMedias = (project.medias || []).map((media: any) => cleanMediaForForm(media))
     setEditForm({
       title: project.title,
       description: project.description || '',
       goalAmount: project.goalAmount.toString(),
       endDate: project.endDate ? new Date(project.endDate).toISOString().split('T')[0] : '',
-      medias: project.medias || [],
+      medias: cleanMedias,
     })
   }
 
@@ -81,12 +114,14 @@ export default function AdminReleaseCrowdfundingPage() {
 
     try {
       setIsSubmitting(true)
+      // メディアをクリーンアップして送信
+      const cleanMedias = editForm.medias.map((media) => cleanMediaForAPI(media))
       await updateProject(projectId, {
         title: editForm.title,
         description: editForm.description || undefined,
         goalAmount: parseInt(editForm.goalAmount),
         endDate: editForm.endDate,
-        medias: editForm.medias.length > 0 ? editForm.medias : undefined,
+        medias: cleanMedias.length > 0 ? cleanMedias : undefined,
       })
       setEditingProject(null)
       showSuccess('プロジェクトを更新しました')
@@ -131,25 +166,27 @@ export default function AdminReleaseCrowdfundingPage() {
 
     try {
       setIsSubmitting(true)
+      // メディアをクリーンアップして送信
+      const cleanMedias = createForm.medias.map((media) => cleanMediaForAPI(media))
       await createProject({
         title: createForm.title,
         description: createForm.description || undefined,
         goalAmount: parseInt(createForm.goalAmount),
         endDate: createForm.endDate,
         status: 'DRAFT',
-        medias: createForm.medias.length > 0 ? createForm.medias : undefined,
+        medias: cleanMedias.length > 0 ? cleanMedias : undefined,
         returns:
           createForm.returns.length > 0
             ? createForm.returns.map((ret, index) => ({
-                title: ret.title,
-                amount: parseInt(ret.amount) || 0,
-                description: ret.description || undefined,
-                notes: ret.notes || undefined,
-                stock: ret.stock ? parseInt(ret.stock) : null,
-                order: ret.order !== undefined ? ret.order : index,
-                isVisible: ret.isVisible !== undefined ? ret.isVisible : true,
-                imageUrl: ret.imageUrl || undefined,
-              }))
+              title: ret.title,
+              amount: parseInt(ret.amount) || 0,
+              description: ret.description || undefined,
+              notes: ret.notes || undefined,
+              stock: ret.stock ? parseInt(ret.stock) : null,
+              order: ret.order !== undefined ? ret.order : index,
+              isVisible: ret.isVisible !== undefined ? ret.isVisible : true,
+              imageUrl: ret.imageUrl || undefined,
+            }))
             : undefined,
       })
       showSuccess('プロジェクトを作成しました')
@@ -248,12 +285,16 @@ export default function AdminReleaseCrowdfundingPage() {
     if (formType === 'edit') {
       setEditForm({
         ...editForm,
-        medias: editForm.medias.filter((_, i) => i !== index),
+        medias: editForm.medias
+          .filter((_, i) => i !== index)
+          .map((media, i) => cleanMediaForForm({ ...media, order: i })),
       })
     } else {
       setCreateForm({
         ...createForm,
-        medias: createForm.medias.filter((_, i) => i !== index),
+        medias: createForm.medias
+          .filter((_, i) => i !== index)
+          .map((media, i) => cleanMediaForForm({ ...media, order: i })),
       })
     }
   }
@@ -307,6 +348,38 @@ export default function AdminReleaseCrowdfundingPage() {
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('ja-JP')
+  }
+
+  const getProjectImage = (project: any) => {
+    if (project.medias && project.medias.length > 0) {
+      const firstImage = project.medias.find((m: any) => m.type === 'IMAGE')
+      if (firstImage) return firstImage.url
+    }
+    return project.image || '/assets/crowdfunding/cf-1.png'
+  }
+
+  const getAchievementRate = (totalAmount: number, goalAmount: number) => {
+    if (!goalAmount || goalAmount === 0) return 0
+    return Math.round((totalAmount / goalAmount) * 100)
+  }
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'ACTIVE':
+        return '公開中'
+      case 'DRAFT':
+        return '下書き'
+      case 'COMPLETED':
+        return '完了'
+      case 'CANCELLED':
+        return 'キャンセル'
+      default:
+        return status
+    }
+  }
+
+  const handlePreview = (projectId: string) => {
+    window.open(`/crowdfunding/${projectId}`, '_blank')
   }
 
   return (
@@ -450,68 +523,94 @@ export default function AdminReleaseCrowdfundingPage() {
                     </div>
                   ) : (
                     <>
-                      <div className="flex gap-6">
-                        {project.image && (
-                          <div className="w-48 h-32 bg-gray-200 rounded-lg flex-shrink-0 relative overflow-hidden">
-                            <Image
-                              src={project.image}
-                              alt={project.title}
-                              fill
-                              className="object-cover"
-                            />
+                      <div className="flex gap-6 relative">
+                        {/* Thumbnail Image */}
+                        <div className="w-48 h-32 bg-gray-200 rounded-lg shrink-0 relative overflow-hidden">
+                          <SmartImage
+                            src={getProjectImage(project)}
+                            alt={project.title}
+                            fill={true}
+                            className="object-cover rounded-lg"
+                          />
+                        </div>
+
+                        {/* Content Section */}
+                        <div className="flex-1 relative">
+                          {/* Status Badge - Top Right */}
+                          <div className="absolute top-0 right-0">
+                            <span
+                              className={`px-3 py-1 rounded-full text-sm font-medium ${project.status === 'ACTIVE'
+                                  ? 'bg-[#ECFBF1] text-green-700'
+                                  : project.status === 'DRAFT'
+                                    ? 'bg-gray-200 text-gray-700'
+                                    : 'bg-gray-200 text-gray-700'
+                                }`}
+                            >
+                              {getStatusLabel(project.status)}
+                            </span>
                           </div>
-                        )}
-                        <div className="flex-1">
-                          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+
+                          {/* Title */}
+                          <h3 className="text-xl font-bold text-gray-900 mb-2 pr-24">
                             {project.title}
                           </h3>
+
+                          {/* Description */}
                           <p className="text-sm text-gray-600 mb-4">
                             {project.description || '説明なし'}
                           </p>
+
+                          {/* Financial Information */}
                           <div className="grid grid-cols-4 gap-4 mb-4">
-                            <div>
-                              <div className="text-sm text-gray-500">目標金額</div>
+                            <div className="flex gap-2 items-center justify-center">
+                              <div className="text-lg text-gray-500">目標金額</div>
                               <div className="text-lg font-semibold text-gray-900">
                                 {formatCurrency(project.goalAmount)}
                               </div>
                             </div>
-                            <div>
-                              <div className="text-sm text-gray-500">調達金額</div>
+                            <div className="flex gap-2 items-center">
+                              <div className="text-lg text-gray-500">
+                                調達金額
+                              </div>
                               <div className="text-lg font-semibold text-gray-900">
                                 {formatCurrency(project.totalAmount || 0)}
                               </div>
                             </div>
-                            <div>
-                              <div className="text-sm text-gray-500">支援者数</div>
+                            <div className="flex gap-2 items-center">
+                              <div className="text-lg text-gray-500">達成率</div>
                               <div className="text-lg font-semibold text-gray-900">
-                                {project.supporterCount || 0}人
+                                {getAchievementRate(project.totalAmount || 0, project.goalAmount)}%
                               </div>
                             </div>
-                            <div>
-                              <div className="text-sm text-gray-500">ステータス</div>
-                              <div className="text-lg font-semibold text-gray-900">
-                                {project.status}
+                            {/* End Date */}
+                            {project.endDate && (
+                              <div className="flex gap-2 items-center">
+                                <div className="text-lg text-gray-500">終了日</div>
+                                <div className="text-lg font-bold text-gray-900">
+                                  {formatDate(project.endDate)}
+                                </div>
                               </div>
-                            </div>
+                            )}
                           </div>
-                          <div className="flex gap-2">
+
+
+                          {/* Action Buttons */}
+                          <div className="flex gap-2 mt-4">
+                            <button
+                              onClick={() => handlePreview(project.id)}
+                              className="px-4 py-2 bg-[#ECFBF1] text-green-700 rounded-lg hover:bg-green-100 transition-colors text-sm font-medium"
+                            >
+                              公開ページ
+                            </button>
                             <button
                               onClick={() => handleEdit(project)}
-                              className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                              className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors text-sm font-medium"
                             >
                               編集
                             </button>
-                            {project.status === 'DRAFT' && (
-                              <button
-                                onClick={() => handlePublish(project.id)}
-                                className="px-4 py-2 bg-green-200 text-green-800 rounded-lg hover:bg-green-300"
-                              >
-                                公開
-                              </button>
-                            )}
                             <button
                               onClick={() => handleDelete(project.id)}
-                              className="px-4 py-2 bg-red-200 text-red-800 rounded-lg hover:bg-red-300"
+                              className="px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors text-sm font-medium"
                             >
                               削除
                             </button>

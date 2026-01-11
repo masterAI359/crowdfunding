@@ -75,6 +75,36 @@ export default function CrowdfundingProductsPage() {
   const [uploadingMedia, setUploadingMedia] = useState(false)
   const [uploadingExecutorImage, setUploadingExecutorImage] = useState<string | null>(null)
 
+  // メディアオブジェクトをクリーンアップするヘルパー関数（id、projectId、createdAtを除外）
+  // フォーム状態用（orderは必須）
+  const cleanMediaForForm = (media: any): { url: string; type: 'IMAGE' | 'VIDEO'; order: number } => {
+    const orderValue =
+      typeof media.order === 'number' && !isNaN(media.order) && isFinite(media.order)
+        ? Math.floor(media.order)
+        : parseInt(String(media.order || 0), 10)
+    return {
+      url: String(media.url || ''),
+      type: (media.type === 'VIDEO' ? 'VIDEO' : 'IMAGE') as 'IMAGE' | 'VIDEO',
+      order: !isNaN(orderValue) && isFinite(orderValue) ? orderValue : 0,
+    }
+  }
+
+  // API送信用（orderはオプショナル）
+  const cleanMediaForAPI = (media: any): { url: string; type: 'IMAGE' | 'VIDEO'; order?: number } => {
+    const cleaned: { url: string; type: 'IMAGE' | 'VIDEO'; order?: number } = {
+      url: String(media.url || ''),
+      type: (media.type === 'VIDEO' ? 'VIDEO' : 'IMAGE') as 'IMAGE' | 'VIDEO',
+    }
+    const orderValue =
+      typeof media.order === 'number' && !isNaN(media.order) && isFinite(media.order)
+        ? Math.floor(media.order)
+        : parseInt(String(media.order || 0), 10)
+    if (!isNaN(orderValue) && isFinite(orderValue)) {
+      cleaned.order = orderValue
+    }
+    return cleaned
+  }
+
   useEffect(() => {
     loadData()
   }, [])
@@ -193,11 +223,7 @@ export default function CrowdfundingProductsPage() {
       // 全メディアを取得するためにgetProjectByIdを使用
       const fullProject = await getProjectById(project.id)
       // 既存メディアからid、projectId、createdAtを除外して設定
-      const cleanMedias = (fullProject.medias || []).map((media: any) => ({
-        url: media.url,
-        type: media.type,
-        order: media.order || 0,
-      }))
+      const cleanMedias = (fullProject.medias || []).map((media: any) => cleanMediaForForm(media))
       setEditForm({
         title: fullProject.title || '',
         description: fullProject.description || '',
@@ -233,11 +259,7 @@ export default function CrowdfundingProductsPage() {
       console.error('Failed to load project details:', error)
       handleApiError(error)
       // エラーが発生した場合は既存のデータを使用
-      const cleanMedias = (project.medias || []).map((media: any) => ({
-        url: media.url,
-        type: media.type,
-        order: media.order || 0,
-      }))
+      const cleanMedias = (project.medias || []).map((media: any) => cleanMediaForForm(media))
       setEditForm({
         title: project.title || '',
         description: project.description || '',
@@ -259,16 +281,12 @@ export default function CrowdfundingProductsPage() {
     setIsSaving(true)
     try {
       // メディアデータからid、projectId、createdAtを除外して送信
-      const cleanMedias = editForm.medias.map((media) => ({
-        url: media.url,
-        type: media.type,
-        order: media.order || 0,
-      }))
+      const cleanMedias = editForm.medias.map((media) => cleanMediaForAPI(media))
 
       // 基本情報の更新（メディアも含める）
       await updateProject(editingProject.id, {
         title: editForm.title,
-        description: editForm.description,
+        description: editForm.description || undefined,
         goalAmount: parseInt(editForm.goalAmount, 10),
         endDate: editForm.endDate,
         status: editForm.status,
@@ -441,10 +459,9 @@ export default function CrowdfundingProductsPage() {
   const removeMedia = (index: number) => {
     setEditForm({
       ...editForm,
-      medias: editForm.medias.filter((_, i) => i !== index).map((media, i) => ({
-        ...media,
-        order: i,
-      })),
+      medias: editForm.medias
+        .filter((_, i) => i !== index)
+        .map((media, i) => cleanMediaForForm({ ...media, order: i })),
     })
   }
 
