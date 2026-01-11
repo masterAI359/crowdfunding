@@ -562,7 +562,7 @@ export default function AdminReleaseCrowdfundingPage() {
 
                           {/* Financial Information */}
                           <div className="grid grid-cols-4 gap-4 mb-4">
-                            <div className="flex gap-2 items-center justify-center">
+                            <div className="flex gap-2 items-center">
                               <div className="text-lg text-gray-500">目標金額</div>
                               <div className="text-lg font-semibold text-gray-900">
                                 {formatCurrency(project.goalAmount)}
