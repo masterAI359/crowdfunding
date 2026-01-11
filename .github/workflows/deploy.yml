@@ -74,7 +74,7 @@ jobs:
             fi
             echo "Build completed successfully"
             echo "Reloading PM2 process..."
-            pm2 reload 2
+            pm2 reload 0
             echo "PM2 process reloaded"
             echo "Verifying deployment..."
             
