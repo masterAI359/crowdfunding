@@ -79,7 +79,7 @@ jobs:
             echo "Verifying deployment..."
             
             # Check if PM2 process is running
-            if pm2 describe 2 | grep -q "online"; then
+            if pm2 describe 0 | grep -q "online"; then
               echo "PM2 process is running"
             else
               echo "PM2 process is not running"
